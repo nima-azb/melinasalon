@@ -1,26 +1,221 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Typography */
+  --font-sans: var(--font-vazirmatn);
+  --font-heading: var(--font-vazirmatn);
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+
+  /* Shadcn semantic colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Radius */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* =========================================================
+   MELINA SALON — DESIGN TOKENS
+   ========================================================= */
+
+:root {
+  /* Brand palette */
+  --bg-cream: #f7f1e8;
+  --bg-card: #ffffff;
+  --bg-card-warm: #fcfaf7;
+
+  --brand-crimson: #8f1833;
+  --brand-crimson-dark: #5a0b1e;
+  --brand-crimson-hover: #751229;
+  --brand-crimson-light: #f8edef;
+
+  --text-primary: #241417;
+  --text-secondary: #6b5b5e;
+
+  --border-beige: #e8dfc8;
+  --border-subtle: #efe8da;
+
+  --accent-gold: #c5a059;
+
+  /* Shadcn semantic theme */
+  --background: var(--bg-cream);
+  --foreground: var(--text-primary);
+
+  --card: var(--bg-card);
+  --card-foreground: var(--text-primary);
+
+  --popover: var(--bg-card);
+  --popover-foreground: var(--text-primary);
+
+  --primary: var(--brand-crimson);
+  --primary-foreground: #ffffff;
+
+  --secondary: var(--bg-card-warm);
+  --secondary-foreground: var(--text-primary);
+
+  --muted: var(--bg-card-warm);
+  --muted-foreground: var(--text-secondary);
+
+  --accent: var(--brand-crimson-light);
+  --accent-foreground: var(--brand-crimson-dark);
+
+  --destructive: #b4233f;
+
+  --border: var(--border-beige);
+  --input: var(--border-beige);
+  --ring: var(--brand-crimson);
+
+  /* Charts */
+  --chart-1: var(--brand-crimson);
+  --chart-2: var(--accent-gold);
+  --chart-3: #6b5b5e;
+  --chart-4: var(--brand-crimson-dark);
+  --chart-5: #b88972;
+
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Admin sidebar */
+  --sidebar: var(--bg-card);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--brand-crimson);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--brand-crimson-light);
+  --sidebar-accent-foreground: var(--brand-crimson-dark);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--brand-crimson);
+}
+
+/* =========================================================
+   DARK MODE
+   =========================================================
+   We are keeping this available because shadcn components
+   expect a dark theme structure. We won't use dark mode in
+   the initial public salon experience.
+   ========================================================= */
+
+.dark {
+  --background: #241417;
+  --foreground: #f7f1e8;
+
+  --card: #321b20;
+  --card-foreground: #f7f1e8;
+
+  --popover: #321b20;
+  --popover-foreground: #f7f1e8;
+
+  --primary: #b52d4f;
+  --primary-foreground: #ffffff;
+
+  --secondary: #40242a;
+  --secondary-foreground: #f7f1e8;
+
+  --muted: #40242a;
+  --muted-foreground: #d2c1c4;
+
+  --accent: #4b242f;
+  --accent-foreground: #f8edef;
+
+  --destructive: #e05a73;
+
+  --border: #5a3b42;
+  --input: #5a3b42;
+  --ring: #b52d4f;
+
+  --chart-1: #b52d4f;
+  --chart-2: #c5a059;
+  --chart-3: #a88d91;
+  --chart-4: #8f1833;
+  --chart-5: #d3a58d;
+
+  --sidebar: #321b20;
+  --sidebar-foreground: #f7f1e8;
+  --sidebar-primary: #b52d4f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #4b242f;
+  --sidebar-accent-foreground: #f8edef;
+  --sidebar-border: #5a3b42;
+  --sidebar-ring: #b52d4f;
+}
+
+/* =========================================================
+   GLOBAL BASE STYLES
+   ========================================================= */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  html {
+    font-family: var(--font-vazirmatn), sans-serif;
+    direction: rtl;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-vazirmatn), sans-serif;
+    direction: rtl;
+    min-height: 100vh;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
 }
