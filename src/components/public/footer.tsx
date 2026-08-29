@@ -5,7 +5,7 @@ import { MapPin, Phone, Clock3, ArrowUp } from "lucide-react";
 const navigation = [
   { title: "خانه", href: "/" },
   { title: "خدمات", href: "#services" },
-  { title: "آرایشگر هوش مصنوعی", href: "#ai-hairdresser" },
+  { title: "آرایشگر هوش مصنوعی", href: "/ai-hairdresser" },
   { title: "نمونه کارها", href: "#gallery" },
   { title: "رزرو نوبت", href: "#booking" },
 ];
@@ -160,7 +160,7 @@ export function Footer() {
           </p>
 
           <Link
-            href="#"
+            href="#top"
             className="group inline-flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--brand-crimson)]"
           >
             بازگشت به بالا

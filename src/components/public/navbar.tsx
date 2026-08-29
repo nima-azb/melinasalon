@@ -71,7 +71,7 @@ export function Navbar() {
             </Link>
 
             <Link
-              href="/services"
+              href="#services"
               className="text-sm font-medium text-[var(--text-primary)] transition-colors hover:text-[var(--brand-crimson)]"
             >
               خدمات
@@ -110,7 +110,7 @@ export function Navbar() {
 
             {/* Booking CTA */}
             <Link
-              href="/booking"
+              href="#booking"
               className="rounded-xl bg-[var(--brand-crimson)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--brand-crimson-hover)]"
             >
               رزرو نوبت

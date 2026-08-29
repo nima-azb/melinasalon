@@ -81,7 +81,7 @@ export function Hero() {
             {/* CTAs */}
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/booking"
+                href="#booking"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand-crimson)] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_8px_25px_rgba(143,24,51,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[var(--brand-crimson-hover)]"
               >
                 <CalendarDays size={18} />
