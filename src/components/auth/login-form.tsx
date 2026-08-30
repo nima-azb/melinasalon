@@ -1,11 +1,79 @@
 "use client";
 
-import { Eye, EyeOff, LockKeyhole, LogIn, Phone } from "lucide-react";
+import { LogIn, Phone, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function LoginForm() {
-  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+
+  const [step, setStep] = useState<"phone" | "otp">("phone");
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function sendOtp() {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "خطا در ارسال کد");
+      }
+
+      setStep("otp");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطایی رخ داد");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verifyOtp() {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone,
+          code,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "کد اشتباه است");
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطایی رخ داد");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="w-full max-w-md">
@@ -25,104 +93,112 @@ export function LoginForm() {
         </Link>
       </div>
 
-      {/* Card */}
       <div className="rounded-[2rem] border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6 shadow-[0_20px_60px_rgba(36,20,23,0.08)] sm:p-8">
-        {/* Heading */}
         <div className="text-center">
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">
             خوش آمدید
           </h1>
 
           <p className="mt-2 text-sm text-[var(--text-secondary)]">
-            برای ادامه وارد حساب کاربری خود شوید.
+            {step === "phone"
+              ? "شماره موبایل خود را وارد کنید."
+              : "کد تایید ارسال شده را وارد کنید."}
           </p>
         </div>
 
-        {/* Form */}
-        <form className="mt-8 space-y-5">
-          {/* Phone */}
-          <div>
-            <label
-              htmlFor="phone"
-              className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
-            >
-              شماره موبایل
-            </label>
+        <form
+          className="mt-8 space-y-5"
+          onSubmit={(event) => {
+            event.preventDefault();
 
-            <div className="relative">
-              <Phone
-                size={18}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
-              />
-
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                dir="ltr"
-                placeholder="۰۹۱۲ ۱۲۳ ۴۵۶۷"
-                className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] py-3 pr-10 pl-4 text-sm text-[var(--text-primary)] outline-none transition-all placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--brand-crimson)] focus:ring-3 focus:ring-[var(--brand-crimson)]/10"
-              />
-            </div>
-          </div>
-
-          {/* Password */}
-          <div>
-            <div className="mb-2 flex items-center justify-between">
+            if (step === "phone") {
+              sendOtp();
+            } else {
+              verifyOtp();
+            }
+          }}
+        >
+          {step === "phone" ? (
+            <div>
               <label
-                htmlFor="password"
-                className="block text-sm font-medium text-[var(--text-primary)]"
+                htmlFor="phone"
+                className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
               >
-                رمز عبور
+                شماره موبایل
               </label>
 
-              <Link
-                href="#"
-                className="text-xs font-medium text-[var(--brand-crimson)] hover:underline"
-              >
-                رمز عبور را فراموش کرده‌اید؟
-              </Link>
-            </div>
+              <div className="relative">
+                <Phone
+                  size={18}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+                />
 
-            <div className="relative">
-              <LockKeyhole
-                size={18}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
-              />
+                <input
+                  id="phone"
+                  type="tel"
+                  dir="ltr"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="09121234567"
+                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] py-3 pr-10 pl-4 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)]"
+                  required
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label
+                htmlFor="code"
+                className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
+              >
+                کد تایید
+              </label>
 
               <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
+                id="code"
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
                 dir="ltr"
-                placeholder="رمز عبور"
-                className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] py-3 pr-10 pl-11 text-sm text-[var(--text-primary)] outline-none transition-all placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--brand-crimson)] focus:ring-3 focus:ring-[var(--brand-crimson)]/10"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="123456"
+                className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] py-3 px-4 text-center text-lg tracking-[0.5em] text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)]"
+                required
               />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword((value) => !value)}
-                aria-label={
-                  showPassword ? "مخفی کردن رمز عبور" : "نمایش رمز عبور"
-                }
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] transition-colors hover:text-[var(--brand-crimson)]"
-              >
-                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-              </button>
             </div>
-          </div>
+          )}
 
-          {/* Submit */}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-crimson)] px-5 py-3.5 text-sm font-bold text-white transition-all hover:bg-[var(--brand-crimson-hover)] hover:shadow-lg hover:shadow-[var(--brand-crimson)]/15"
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-crimson)] px-5 py-3.5 text-sm font-bold text-white transition-all hover:bg-[var(--brand-crimson-hover)] disabled:opacity-60"
           >
-            <LogIn size={17} />
-            ورود به حساب
+            {step === "otp" ? <LogIn size={17} /> : <ArrowRight size={17} />}
+
+            {loading
+              ? "لطفا صبر کنید..."
+              : step === "phone"
+                ? "دریافت کد"
+                : "ورود به حساب"}
           </button>
+
+          {step === "otp" && (
+            <button
+              type="button"
+              onClick={() => {
+                setStep("phone");
+                setCode("");
+              }}
+              className="w-full text-sm text-[var(--brand-crimson)]"
+            >
+              تغییر شماره موبایل
+            </button>
+          )}
         </form>
 
-        {/* Register */}
         <div className="mt-7 border-t border-[var(--border-subtle)] pt-6 text-center">
           <p className="text-sm text-[var(--text-secondary)]">
             حساب کاربری ندارید؟
@@ -136,11 +212,10 @@ export function LoginForm() {
         </div>
       </div>
 
-      {/* Back to homepage */}
       <div className="mt-6 text-center">
         <Link
           href="/"
-          className="text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--brand-crimson)]"
+          className="text-xs text-[var(--text-secondary)] hover:text-[var(--brand-crimson)]"
         >
           بازگشت به صفحه اصلی
         </Link>
