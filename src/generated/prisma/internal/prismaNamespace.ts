@@ -1026,7 +1026,6 @@ export type ServiceScalarFieldEnum = (typeof ServiceScalarFieldEnum)[keyof typeo
 
 export const TimeSlotScalarFieldEnum = {
   id: 'id',
-  serviceId: 'serviceId',
   startsAt: 'startsAt',
   endsAt: 'endsAt',
   capacity: 'capacity',

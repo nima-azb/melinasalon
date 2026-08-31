@@ -236,7 +236,6 @@ export type ServiceWhereInput = {
   price?: Prisma.IntNullableFilter<"Service"> | number | null
   isActive?: Prisma.BoolFilter<"Service"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Service"> | Date | string
-  timeSlots?: Prisma.TimeSlotListRelationFilter
   bookings?: Prisma.BookingListRelationFilter
 }
 
@@ -248,7 +247,6 @@ export type ServiceOrderByWithRelationInput = {
   price?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  timeSlots?: Prisma.TimeSlotOrderByRelationAggregateInput
   bookings?: Prisma.BookingOrderByRelationAggregateInput
 }
 
@@ -263,7 +261,6 @@ export type ServiceWhereUniqueInput = Prisma.AtLeast<{
   price?: Prisma.IntNullableFilter<"Service"> | number | null
   isActive?: Prisma.BoolFilter<"Service"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Service"> | Date | string
-  timeSlots?: Prisma.TimeSlotListRelationFilter
   bookings?: Prisma.BookingListRelationFilter
 }, "id">
 
@@ -303,7 +300,6 @@ export type ServiceCreateInput = {
   price?: number | null
   isActive?: boolean
   createdAt?: Date | string
-  timeSlots?: Prisma.TimeSlotCreateNestedManyWithoutServiceInput
   bookings?: Prisma.BookingCreateNestedManyWithoutServiceInput
 }
 
@@ -315,7 +311,6 @@ export type ServiceUncheckedCreateInput = {
   price?: number | null
   isActive?: boolean
   createdAt?: Date | string
-  timeSlots?: Prisma.TimeSlotUncheckedCreateNestedManyWithoutServiceInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutServiceInput
 }
 
@@ -327,7 +322,6 @@ export type ServiceUpdateInput = {
   price?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  timeSlots?: Prisma.TimeSlotUpdateManyWithoutServiceNestedInput
   bookings?: Prisma.BookingUpdateManyWithoutServiceNestedInput
 }
 
@@ -339,7 +333,6 @@ export type ServiceUncheckedUpdateInput = {
   price?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  timeSlots?: Prisma.TimeSlotUncheckedUpdateManyWithoutServiceNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutServiceNestedInput
 }
 
@@ -434,20 +427,6 @@ export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
-export type ServiceCreateNestedOneWithoutTimeSlotsInput = {
-  create?: Prisma.XOR<Prisma.ServiceCreateWithoutTimeSlotsInput, Prisma.ServiceUncheckedCreateWithoutTimeSlotsInput>
-  connectOrCreate?: Prisma.ServiceCreateOrConnectWithoutTimeSlotsInput
-  connect?: Prisma.ServiceWhereUniqueInput
-}
-
-export type ServiceUpdateOneRequiredWithoutTimeSlotsNestedInput = {
-  create?: Prisma.XOR<Prisma.ServiceCreateWithoutTimeSlotsInput, Prisma.ServiceUncheckedCreateWithoutTimeSlotsInput>
-  connectOrCreate?: Prisma.ServiceCreateOrConnectWithoutTimeSlotsInput
-  upsert?: Prisma.ServiceUpsertWithoutTimeSlotsInput
-  connect?: Prisma.ServiceWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ServiceUpdateToOneWithWhereWithoutTimeSlotsInput, Prisma.ServiceUpdateWithoutTimeSlotsInput>, Prisma.ServiceUncheckedUpdateWithoutTimeSlotsInput>
-}
-
 export type ServiceCreateNestedOneWithoutBookingsInput = {
   create?: Prisma.XOR<Prisma.ServiceCreateWithoutBookingsInput, Prisma.ServiceUncheckedCreateWithoutBookingsInput>
   connectOrCreate?: Prisma.ServiceCreateOrConnectWithoutBookingsInput
@@ -462,66 +441,6 @@ export type ServiceUpdateOneRequiredWithoutBookingsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ServiceUpdateToOneWithWhereWithoutBookingsInput, Prisma.ServiceUpdateWithoutBookingsInput>, Prisma.ServiceUncheckedUpdateWithoutBookingsInput>
 }
 
-export type ServiceCreateWithoutTimeSlotsInput = {
-  id?: string
-  name: string
-  description?: string | null
-  duration: number
-  price?: number | null
-  isActive?: boolean
-  createdAt?: Date | string
-  bookings?: Prisma.BookingCreateNestedManyWithoutServiceInput
-}
-
-export type ServiceUncheckedCreateWithoutTimeSlotsInput = {
-  id?: string
-  name: string
-  description?: string | null
-  duration: number
-  price?: number | null
-  isActive?: boolean
-  createdAt?: Date | string
-  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutServiceInput
-}
-
-export type ServiceCreateOrConnectWithoutTimeSlotsInput = {
-  where: Prisma.ServiceWhereUniqueInput
-  create: Prisma.XOR<Prisma.ServiceCreateWithoutTimeSlotsInput, Prisma.ServiceUncheckedCreateWithoutTimeSlotsInput>
-}
-
-export type ServiceUpsertWithoutTimeSlotsInput = {
-  update: Prisma.XOR<Prisma.ServiceUpdateWithoutTimeSlotsInput, Prisma.ServiceUncheckedUpdateWithoutTimeSlotsInput>
-  create: Prisma.XOR<Prisma.ServiceCreateWithoutTimeSlotsInput, Prisma.ServiceUncheckedCreateWithoutTimeSlotsInput>
-  where?: Prisma.ServiceWhereInput
-}
-
-export type ServiceUpdateToOneWithWhereWithoutTimeSlotsInput = {
-  where?: Prisma.ServiceWhereInput
-  data: Prisma.XOR<Prisma.ServiceUpdateWithoutTimeSlotsInput, Prisma.ServiceUncheckedUpdateWithoutTimeSlotsInput>
-}
-
-export type ServiceUpdateWithoutTimeSlotsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  bookings?: Prisma.BookingUpdateManyWithoutServiceNestedInput
-}
-
-export type ServiceUncheckedUpdateWithoutTimeSlotsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  bookings?: Prisma.BookingUncheckedUpdateManyWithoutServiceNestedInput
-}
-
 export type ServiceCreateWithoutBookingsInput = {
   id?: string
   name: string
@@ -530,7 +449,6 @@ export type ServiceCreateWithoutBookingsInput = {
   price?: number | null
   isActive?: boolean
   createdAt?: Date | string
-  timeSlots?: Prisma.TimeSlotCreateNestedManyWithoutServiceInput
 }
 
 export type ServiceUncheckedCreateWithoutBookingsInput = {
@@ -541,7 +459,6 @@ export type ServiceUncheckedCreateWithoutBookingsInput = {
   price?: number | null
   isActive?: boolean
   createdAt?: Date | string
-  timeSlots?: Prisma.TimeSlotUncheckedCreateNestedManyWithoutServiceInput
 }
 
 export type ServiceCreateOrConnectWithoutBookingsInput = {
@@ -568,7 +485,6 @@ export type ServiceUpdateWithoutBookingsInput = {
   price?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  timeSlots?: Prisma.TimeSlotUpdateManyWithoutServiceNestedInput
 }
 
 export type ServiceUncheckedUpdateWithoutBookingsInput = {
@@ -579,7 +495,6 @@ export type ServiceUncheckedUpdateWithoutBookingsInput = {
   price?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  timeSlots?: Prisma.TimeSlotUncheckedUpdateManyWithoutServiceNestedInput
 }
 
 
@@ -588,12 +503,10 @@ export type ServiceUncheckedUpdateWithoutBookingsInput = {
  */
 
 export type ServiceCountOutputType = {
-  timeSlots: number
   bookings: number
 }
 
 export type ServiceCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  timeSlots?: boolean | ServiceCountOutputTypeCountTimeSlotsArgs
   bookings?: boolean | ServiceCountOutputTypeCountBookingsArgs
 }
 
@@ -605,13 +518,6 @@ export type ServiceCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exte
    * Select specific fields to fetch from the ServiceCountOutputType
    */
   select?: Prisma.ServiceCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * ServiceCountOutputType without action
- */
-export type ServiceCountOutputTypeCountTimeSlotsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.TimeSlotWhereInput
 }
 
 /**
@@ -630,7 +536,6 @@ export type ServiceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   price?: boolean
   isActive?: boolean
   createdAt?: boolean
-  timeSlots?: boolean | Prisma.Service$timeSlotsArgs<ExtArgs>
   bookings?: boolean | Prisma.Service$bookingsArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["service"]>
@@ -667,7 +572,6 @@ export type ServiceSelectScalar = {
 
 export type ServiceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "duration" | "price" | "isActive" | "createdAt", ExtArgs["result"]["service"]>
 export type ServiceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  timeSlots?: boolean | Prisma.Service$timeSlotsArgs<ExtArgs>
   bookings?: boolean | Prisma.Service$bookingsArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -677,7 +581,6 @@ export type ServiceIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type $ServicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Service"
   objects: {
-    timeSlots: Prisma.$TimeSlotPayload<ExtArgs>[]
     bookings: Prisma.$BookingPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1082,7 +985,6 @@ readonly fields: ServiceFieldRefs;
  */
 export interface Prisma__ServiceClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  timeSlots<T extends Prisma.Service$timeSlotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Service$timeSlotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TimeSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bookings<T extends Prisma.Service$bookingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Service$bookingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1510,30 +1412,6 @@ export type ServiceDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Limit how many Services to delete.
    */
   limit?: number
-}
-
-/**
- * Service.timeSlots
- */
-export type Service$timeSlotsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the TimeSlot
-   */
-  select?: Prisma.TimeSlotSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the TimeSlot
-   */
-  omit?: Prisma.TimeSlotOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TimeSlotInclude<ExtArgs> | null
-  where?: Prisma.TimeSlotWhereInput
-  orderBy?: Prisma.TimeSlotOrderByWithRelationInput | Prisma.TimeSlotOrderByWithRelationInput[]
-  cursor?: Prisma.TimeSlotWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.TimeSlotScalarFieldEnum | Prisma.TimeSlotScalarFieldEnum[]
 }
 
 /**

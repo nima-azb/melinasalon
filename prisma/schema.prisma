@@ -62,24 +62,21 @@ model Service {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 
-  timeSlots TimeSlot[]
-  bookings  Booking[]
+  bookings Booking[]
 
   @@map("services")
 }
 
 model TimeSlot {
   id        String   @id @default(cuid())
-  serviceId String
   startsAt  DateTime
   endsAt    DateTime
   capacity  Int      @default(1)
   createdAt DateTime @default(now())
 
-  service  Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   bookings Booking[]
 
-  @@unique([serviceId, startsAt])
+  @@unique([startsAt])
   @@index([startsAt])
   @@map("time_slots")
 }

@@ -1,4 +1,5 @@
 import { ServiceManagement } from "@/components/admin/service-management";
+import { TimeSlotManagement } from "@/components/admin/time-slot-management";
 
 export default function AdminPage() {
   return (
@@ -13,6 +14,8 @@ export default function AdminPage() {
         </p>
 
         <ServiceManagement />
+
+        <TimeSlotManagement />
       </div>
     </main>
   );
