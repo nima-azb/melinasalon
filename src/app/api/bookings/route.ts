@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { prisma } from "@/lib/prisma";
+import { smsProvider } from "@/lib/sms";
 
 export async function POST(request: NextRequest) {
   try {
@@ -93,9 +94,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const now = new Date();
-
-    if (timeSlot.startsAt <= now) {
+    if (timeSlot.startsAt <= new Date()) {
       return NextResponse.json(
         {
           success: false,
@@ -169,6 +168,20 @@ export async function POST(request: NextRequest) {
         },
       });
     });
+
+    // Development booking confirmation SMS.
+    // SMS failures must not cancel an already-created booking.
+    try {
+      await smsProvider.sendBookingConfirmation({
+        phoneNumber: user.phoneNumber,
+        serviceName: booking.service.name,
+        startsAt: booking.timeSlot.startsAt,
+        endsAt: booking.timeSlot.endsAt,
+        status: booking.status,
+      });
+    } catch (smsError) {
+      console.error("Booking confirmation SMS error:", smsError);
+    }
 
     return NextResponse.json(
       {
