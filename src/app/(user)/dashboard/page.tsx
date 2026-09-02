@@ -1,5 +1,6 @@
-import { requireUser } from "@/lib/auth/require-user";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { MyBookings } from "@/components/user/my-bookings";
+import { requireUser } from "@/lib/auth/require-user";
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -20,8 +21,11 @@ export default async function DashboardPage() {
             <p className="mt-2 font-medium text-[var(--text-primary)]">
               {user.phoneNumber}
             </p>
+
             <LogoutButton />
           </div>
+
+          <MyBookings />
         </div>
       </div>
     </main>

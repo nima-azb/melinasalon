@@ -4,6 +4,66 @@ import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { prisma } from "@/lib/prisma";
 import { smsProvider } from "@/lib/sms";
 
+export async function GET() {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Authentication required.",
+        },
+        { status: 401 },
+      );
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        userId: user.id,
+      },
+      orderBy: {
+        timeSlot: {
+          startsAt: "asc",
+        },
+      },
+      include: {
+        service: {
+          select: {
+            id: true,
+            name: true,
+            duration: true,
+            price: true,
+          },
+        },
+        timeSlot: {
+          select: {
+            id: true,
+            startsAt: true,
+            endsAt: true,
+            capacity: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      bookings,
+    });
+  } catch (error) {
+    console.error("GET /api/bookings error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to load bookings.",
+      },
+      { status: 500 },
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
