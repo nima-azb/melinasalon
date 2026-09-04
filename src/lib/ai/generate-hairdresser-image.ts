@@ -1,5 +1,7 @@
 const AVALAI_IMAGES_EDIT_ENDPOINT = "https://api.avalai.ir/v1/images/edits";
 
+const AVALAI_TIMEOUT_MS = 90_000;
+
 type GenerateHairdresserImageInput = {
   imageBuffer: Buffer;
   imageType: string;
@@ -10,6 +12,16 @@ type GeneratedImageResult = {
   buffer: Buffer;
   contentType: string;
 };
+
+function createTimeoutController(timeoutMs: number) {
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
+
+  return { controller, timeout };
+}
 
 export async function generateHairdresserImage({
   imageBuffer,
@@ -40,16 +52,6 @@ export async function generateHairdresserImage({
     },
   );
 
-  // Switched from flux.1-kontext-pro (provider-side "Model not supported
-  // with Responses API" error on AvalAI, unresolved as of the support
-  // ticket) to gpt-image-1.5. Payload matches AvalAI's own documented,
-  // working example for this model exactly:
-  //   POST /v1/images/edits, multipart: model + image + prompt + size
-  // Deliberately no response_format here, matching AvalAI's documented
-  // edit example for this model (their /generations examples include
-  // response_format, but their /edits example for gpt-image-1.5 does
-  // not — and we've already learned the hard way that undocumented
-  // extra fields get rejected).
   const formData = new FormData();
 
   formData.append("model", "gpt-image-1.5");
@@ -57,28 +59,58 @@ export async function generateHairdresserImage({
   formData.append("prompt", prompt);
   formData.append("size", "1024x1024");
 
-  const response = await fetch(AVALAI_IMAGES_EDIT_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: formData,
-  });
+  const { controller, timeout } = createTimeoutController(AVALAI_TIMEOUT_MS);
+
+  let response: Response;
+
+  try {
+    response = await fetch(AVALAI_IMAGES_EDIT_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: formData,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(
+        "AvalAI image generation timed out. Please try again later.",
+      );
+    }
+
+    throw new Error(
+      `AvalAI image generation request failed: ${
+        error instanceof Error ? error.message : "Unknown network error."
+      }`,
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
 
     throw new Error(
-      `AvalAI image editing failed (${response.status}): ${errorText}`,
+      `AvalAI image generation failed with status ${response.status}: ${errorText.slice(
+        0,
+        1000,
+      )}`,
     );
   }
 
-  const result: {
+  let result: {
     data?: Array<{
       b64_json?: string;
       url?: string;
     }>;
-  } = await response.json();
+  };
+
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error("AvalAI returned an invalid JSON response.");
+  }
 
   const imageData = result.data?.[0];
 
@@ -87,14 +119,47 @@ export async function generateHairdresserImage({
   }
 
   if (imageData.b64_json) {
+    let buffer: Buffer;
+
+    try {
+      buffer = Buffer.from(imageData.b64_json, "base64");
+    } catch {
+      throw new Error("AvalAI returned invalid base64 image data.");
+    }
+
+    if (buffer.length === 0) {
+      throw new Error("AvalAI returned an empty base64 image.");
+    }
+
     return {
-      buffer: Buffer.from(imageData.b64_json, "base64"),
+      buffer,
       contentType: "image/png",
     };
   }
 
   if (imageData.url) {
-    const imageResponse = await fetch(imageData.url);
+    const { controller: downloadController, timeout: downloadTimeout } =
+      createTimeoutController(AVALAI_TIMEOUT_MS);
+
+    let imageResponse: Response;
+
+    try {
+      imageResponse = await fetch(imageData.url, {
+        signal: downloadController.signal,
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw new Error("Downloading the AvalAI generated image timed out.");
+      }
+
+      throw new Error(
+        `Failed to download AvalAI generated image: ${
+          error instanceof Error ? error.message : "Unknown network error."
+        }`,
+      );
+    } finally {
+      clearTimeout(downloadTimeout);
+    }
 
     if (!imageResponse.ok) {
       throw new Error(
@@ -102,8 +167,14 @@ export async function generateHairdresserImage({
       );
     }
 
+    const buffer = Buffer.from(await imageResponse.arrayBuffer());
+
+    if (buffer.length === 0) {
+      throw new Error("AvalAI generated image download was empty.");
+    }
+
     return {
-      buffer: Buffer.from(await imageResponse.arrayBuffer()),
+      buffer,
       contentType: imageResponse.headers.get("content-type") || "image/png",
     };
   }

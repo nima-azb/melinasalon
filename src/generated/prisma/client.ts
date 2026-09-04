@@ -76,3 +76,8 @@ export type Booking = Prisma.BookingModel
  * 
  */
 export type Generation = Prisma.GenerationModel
+/**
+ * Model AiGenerationRequest
+ * 
+ */
+export type AiGenerationRequest = Prisma.AiGenerationRequestModel

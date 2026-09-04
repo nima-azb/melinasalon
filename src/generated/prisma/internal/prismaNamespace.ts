@@ -403,7 +403,8 @@ export const ModelName = {
   Service: 'Service',
   TimeSlot: 'TimeSlot',
   Booking: 'Booking',
-  Generation: 'Generation'
+  Generation: 'Generation',
+  AiGenerationRequest: 'AiGenerationRequest'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -419,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "otpCode" | "otpRequest" | "service" | "timeSlot" | "booking" | "generation"
+    modelProps: "user" | "otpCode" | "otpRequest" | "service" | "timeSlot" | "booking" | "generation" | "aiGenerationRequest"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -941,6 +942,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AiGenerationRequest: {
+      payload: Prisma.$AiGenerationRequestPayload<ExtArgs>
+      fields: Prisma.AiGenerationRequestFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AiGenerationRequestFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiGenerationRequestPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AiGenerationRequestFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiGenerationRequestPayload>
+        }
+        findFirst: {
+          args: Prisma.AiGenerationRequestFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiGenerationRequestPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AiGenerationRequestFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiGenerationRequestPayload>
+        }
+        findMany: {
+          args: Prisma.AiGenerationRequestFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiGenerationRequestPayload>[]
+        }
+        create: {
+          args: Prisma.AiGenerationRequestCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiGenerationRequestPayload>
+        }
+        createMany: {
+          args: Prisma.AiGenerationRequestCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AiGenerationRequestCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiGenerationRequestPayload>[]
+        }
+        delete: {
+          args: Prisma.AiGenerationRequestDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiGenerationRequestPayload>
+        }
+        update: {
+          args: Prisma.AiGenerationRequestUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiGenerationRequestPayload>
+        }
+        deleteMany: {
+          args: Prisma.AiGenerationRequestDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AiGenerationRequestUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AiGenerationRequestUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiGenerationRequestPayload>[]
+        }
+        upsert: {
+          args: Prisma.AiGenerationRequestUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiGenerationRequestPayload>
+        }
+        aggregate: {
+          args: Prisma.AiGenerationRequestAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAiGenerationRequest>
+        }
+        groupBy: {
+          args: Prisma.AiGenerationRequestGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AiGenerationRequestGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AiGenerationRequestCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AiGenerationRequestCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1059,6 +1134,15 @@ export const GenerationScalarFieldEnum = {
 } as const
 
 export type GenerationScalarFieldEnum = (typeof GenerationScalarFieldEnum)[keyof typeof GenerationScalarFieldEnum]
+
+
+export const AiGenerationRequestScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  requestedAt: 'requestedAt'
+} as const
+
+export type AiGenerationRequestScalarFieldEnum = (typeof AiGenerationRequestScalarFieldEnum)[keyof typeof AiGenerationRequestScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1339,6 +1423,7 @@ export type GlobalOmitConfig = {
   timeSlot?: Prisma.TimeSlotOmit
   booking?: Prisma.BookingOmit
   generation?: Prisma.GenerationOmit
+  aiGenerationRequest?: Prisma.AiGenerationRequestOmit
 }
 
 /* Types for Logging */

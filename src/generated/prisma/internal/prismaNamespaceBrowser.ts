@@ -57,7 +57,8 @@ export const ModelName = {
   Service: 'Service',
   TimeSlot: 'TimeSlot',
   Booking: 'Booking',
-  Generation: 'Generation'
+  Generation: 'Generation',
+  AiGenerationRequest: 'AiGenerationRequest'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -155,6 +156,15 @@ export const GenerationScalarFieldEnum = {
 } as const
 
 export type GenerationScalarFieldEnum = (typeof GenerationScalarFieldEnum)[keyof typeof GenerationScalarFieldEnum]
+
+
+export const AiGenerationRequestScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  requestedAt: 'requestedAt'
+} as const
+
+export type AiGenerationRequestScalarFieldEnum = (typeof AiGenerationRequestScalarFieldEnum)[keyof typeof AiGenerationRequestScalarFieldEnum]
 
 
 export const SortOrder = {

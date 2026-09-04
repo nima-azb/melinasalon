@@ -1,4 +1,8 @@
-import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { arvanS3, ARVAN_S3_BUCKET } from "./arvan";
@@ -22,6 +26,15 @@ export async function uploadToArvan({
   );
 
   return key;
+}
+
+export async function deleteFromArvan(key: string) {
+  await arvanS3.send(
+    new DeleteObjectCommand({
+      Bucket: ARVAN_S3_BUCKET,
+      Key: key,
+    }),
+  );
 }
 
 // Generates a temporary, signed read URL for a private object.

@@ -12,6 +12,7 @@ import {
 } from "@/lib/ai/ai-hairdresser-options";
 
 import { buildHairdresserPrompt } from "@/lib/ai/build-hairdresser-prompt";
+import { reserveGenerationSlot } from "@/lib/ai/check-generation-rate-limit";
 import { generateHairdresserImage } from "@/lib/ai/generate-hairdresser-image";
 
 import { prisma } from "@/lib/prisma";
@@ -117,7 +118,7 @@ export async function POST(request: Request) {
     }
 
     // ---------------------------------------------------------
-    // 4. Validate hair color
+    // 4. Validate options
     // ---------------------------------------------------------
 
     if (typeof hairColor !== "string" || !isValidHairColor(hairColor)) {
@@ -130,10 +131,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // ---------------------------------------------------------
-    // 5. Validate hairstyle
-    // ---------------------------------------------------------
-
     if (typeof hairstyle !== "string" || !isValidHairstyle(hairstyle)) {
       return NextResponse.json(
         {
@@ -144,10 +141,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // ---------------------------------------------------------
-    // 6. Validate makeup
-    // ---------------------------------------------------------
-
     if (typeof makeup !== "string" || !isValidMakeupStyle(makeup)) {
       return NextResponse.json(
         {
@@ -157,10 +150,6 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-
-    // ---------------------------------------------------------
-    // 7. Validate additional instructions
-    // ---------------------------------------------------------
 
     if (instructions !== null && typeof instructions !== "string") {
       return NextResponse.json(
@@ -176,7 +165,27 @@ export async function POST(request: Request) {
       typeof instructions === "string" ? instructions.trim() : undefined;
 
     // ---------------------------------------------------------
-    // 8. Build server-side prompt
+    // 5. AI generation rate limit
+    // ---------------------------------------------------------
+
+    const rateLimit = await reserveGenerationSlot(user.id);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "You have reached the maximum number of AI generations allowed in 24 hours.",
+          retryAfterSeconds: rateLimit.retryAfterSeconds,
+        },
+        {
+          status: 429,
+        },
+      );
+    }
+
+    // ---------------------------------------------------------
+    // 6. Build prompt
     // ---------------------------------------------------------
 
     const prompt = buildHairdresserPrompt({
@@ -187,27 +196,20 @@ export async function POST(request: Request) {
     });
 
     // ---------------------------------------------------------
-    // 9. Convert uploaded File -> Buffer
+    // 7. Convert File -> Buffer
     // ---------------------------------------------------------
 
     const imageBuffer = Buffer.from(await image.arrayBuffer());
 
-    // ---------------------------------------------------------
-    // 10. Determine image type and extension
-    // ---------------------------------------------------------
-
     const imageType = image.type as AllowedImageType;
+
     const extension = getExtensionFromImageType(imageType);
 
     // ---------------------------------------------------------
-    // 11. Create unique original image key
+    // 8. Upload original image
     // ---------------------------------------------------------
 
     const originalKey = createAIOriginalKey(user.id, extension);
-
-    // ---------------------------------------------------------
-    // 12. Upload original image to ArvanCloud
-    // ---------------------------------------------------------
 
     await uploadToArvan({
       key: originalKey,
@@ -216,7 +218,7 @@ export async function POST(request: Request) {
     });
 
     // ---------------------------------------------------------
-    // 13. Generate AI result with AvalAI
+    // 9. Generate AI image
     // ---------------------------------------------------------
 
     const generatedImage = await generateHairdresserImage({
@@ -226,7 +228,7 @@ export async function POST(request: Request) {
     });
 
     // ---------------------------------------------------------
-    // 14. Create unique result image key
+    // 10. Upload result
     // ---------------------------------------------------------
 
     const resultExtension =
@@ -238,10 +240,6 @@ export async function POST(request: Request) {
 
     const resultKey = createAIResultKey(user.id, resultExtension);
 
-    // ---------------------------------------------------------
-    // 15. Upload generated result to ArvanCloud
-    // ---------------------------------------------------------
-
     await uploadToArvan({
       key: resultKey,
       body: generatedImage.buffer,
@@ -249,27 +247,8 @@ export async function POST(request: Request) {
     });
 
     // ---------------------------------------------------------
-    // 16. Persist generation record
+    // 11. Save generation
     // ---------------------------------------------------------
-
-    // const generation = await prisma.generation.create({
-    //   data: {
-    //     userId: user.id,
-    //     originalPhotoUrl: originalKey,
-    //     resultPhotoUrl: resultKey,
-    //     styleChosen: JSON.stringify({
-    //       hairColor,
-    //       hairstyle,
-    //       makeup,
-    //     }),
-    //   },
-    // });
-
-    console.log("AI generation: creating database record", {
-      userId: user.id,
-      originalKey,
-      resultKey,
-    });
 
     const generation = await prisma.generation.create({
       data: {
@@ -284,19 +263,15 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log("AI generation: database record created", {
-      generationId: generation.id,
-      userId: generation.userId,
-    });
-
     // ---------------------------------------------------------
-    // 17. Successful response
+    // 12. Response
     // ---------------------------------------------------------
 
     return NextResponse.json({
       success: true,
       message: "AI Hairdresser image generated successfully.",
       generationId: generation.id,
+      remainingGenerations: rateLimit.remaining - 1,
       images: {
         originalKey,
         resultKey,
@@ -306,7 +281,6 @@ export async function POST(request: Request) {
         hairstyle,
         makeup,
       },
-      promptPrepared: Boolean(prompt),
     });
   } catch (error) {
     console.error("POST /api/ai-hairdresser error:", error);
@@ -316,7 +290,9 @@ export async function POST(request: Request) {
         success: false,
         message: "Failed to process AI Hairdresser request.",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }
