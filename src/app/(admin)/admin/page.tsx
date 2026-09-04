@@ -1,4 +1,5 @@
 import { BookingManagement } from "@/components/admin/booking-management";
+import { GenerationManagement } from "@/components/admin/generation-management";
 import { ServiceManagement } from "@/components/admin/service-management";
 import { TimeSlotManagement } from "@/components/admin/time-slot-management";
 
@@ -19,6 +20,8 @@ export default function AdminPage() {
         <TimeSlotManagement />
 
         <BookingManagement />
+
+        <GenerationManagement />
       </div>
     </main>
   );

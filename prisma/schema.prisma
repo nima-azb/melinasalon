@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -7,24 +8,11 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole {
-  USER
-  ADMIN
-}
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  COMPLETED
-}
-
 model User {
-  id          String   @id @default(cuid())
-  phoneNumber String   @unique
-  role        UserRole @default(USER)
-  createdAt   DateTime @default(now())
-
+  id          String       @id @default(cuid())
+  phoneNumber String       @unique
+  role        UserRole     @default(USER)
+  createdAt   DateTime     @default(now())
   bookings    Booking[]
   generations Generation[]
 
@@ -54,29 +42,26 @@ model OtpRequest {
 }
 
 model Service {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   description String?
   duration    Int
   price       Int?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-
-  bookings Booking[]
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  bookings    Booking[]
 
   @@map("services")
 }
 
 model TimeSlot {
-  id        String   @id @default(cuid())
-  startsAt  DateTime
+  id        String    @id @default(cuid())
+  startsAt  DateTime  @unique
   endsAt    DateTime
-  capacity  Int      @default(1)
-  createdAt DateTime @default(now())
+  capacity  Int       @default(1)
+  createdAt DateTime  @default(now())
+  bookings  Booking[]
 
-  bookings Booking[]
-
-  @@unique([startsAt])
   @@index([startsAt])
   @@map("time_slots")
 }
@@ -91,9 +76,9 @@ model Booking {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
+  service  Service  @relation(fields: [serviceId], references: [id])
+  timeSlot TimeSlot @relation(fields: [timeSlotId], references: [id])
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  service  Service  @relation(fields: [serviceId], references: [id], onDelete: Restrict)
-  timeSlot TimeSlot @relation(fields: [timeSlotId], references: [id], onDelete: Restrict)
 
   @@index([userId])
   @@index([serviceId])
@@ -114,4 +99,16 @@ model Generation {
 
   @@index([userId, createdAt])
   @@map("generations")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
 }
