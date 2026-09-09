@@ -25,3 +25,11 @@ export const BookingStatus = {
 } as const
 
 export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus]
+
+
+export const OtpPurpose = {
+  LOGIN: 'LOGIN',
+  REGISTER: 'REGISTER'
+} as const
+
+export type OtpPurpose = (typeof OtpPurpose)[keyof typeof OtpPurpose]

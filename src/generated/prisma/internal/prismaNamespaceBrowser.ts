@@ -80,6 +80,8 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const UserScalarFieldEnum = {
   id: 'id',
   phoneNumber: 'phoneNumber',
+  fullName: 'fullName',
+  birthDate: 'birthDate',
   role: 'role',
   createdAt: 'createdAt'
 } as const
@@ -93,7 +95,10 @@ export const OtpCodeScalarFieldEnum = {
   codeHash: 'codeHash',
   expiresAt: 'expiresAt',
   attempts: 'attempts',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  purpose: 'purpose',
+  fullName: 'fullName',
+  birthDate: 'birthDate'
 } as const
 
 export type OtpCodeScalarFieldEnum = (typeof OtpCodeScalarFieldEnum)[keyof typeof OtpCodeScalarFieldEnum]
