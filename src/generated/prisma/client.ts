@@ -62,10 +62,10 @@ export type OtpRequest = Prisma.OtpRequestModel
  */
 export type Service = Prisma.ServiceModel
 /**
- * Model TimeSlot
+ * Model BlockedTime
  * 
  */
-export type TimeSlot = Prisma.TimeSlotModel
+export type BlockedTime = Prisma.BlockedTimeModel
 /**
  * Model Booking
  * 

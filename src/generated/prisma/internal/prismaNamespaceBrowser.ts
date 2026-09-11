@@ -55,7 +55,7 @@ export const ModelName = {
   OtpCode: 'OtpCode',
   OtpRequest: 'OtpRequest',
   Service: 'Service',
-  TimeSlot: 'TimeSlot',
+  BlockedTime: 'BlockedTime',
   Booking: 'Booking',
   Generation: 'Generation',
   AiGenerationRequest: 'AiGenerationRequest'
@@ -126,24 +126,24 @@ export const ServiceScalarFieldEnum = {
 export type ServiceScalarFieldEnum = (typeof ServiceScalarFieldEnum)[keyof typeof ServiceScalarFieldEnum]
 
 
-export const TimeSlotScalarFieldEnum = {
+export const BlockedTimeScalarFieldEnum = {
   id: 'id',
   startsAt: 'startsAt',
   endsAt: 'endsAt',
-  capacity: 'capacity',
+  reason: 'reason',
   createdAt: 'createdAt'
 } as const
 
-export type TimeSlotScalarFieldEnum = (typeof TimeSlotScalarFieldEnum)[keyof typeof TimeSlotScalarFieldEnum]
+export type BlockedTimeScalarFieldEnum = (typeof BlockedTimeScalarFieldEnum)[keyof typeof BlockedTimeScalarFieldEnum]
 
 
 export const BookingScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   serviceId: 'serviceId',
-  timeSlotId: 'timeSlotId',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
   status: 'status',
-  paymentStatus: 'paymentStatus',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

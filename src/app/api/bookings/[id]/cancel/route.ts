@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { prisma } from "@/lib/prisma";
@@ -9,7 +9,7 @@ type RouteContext = {
   }>;
 };
 
-export async function POST(_request: Request, { params }: RouteContext) {
+export async function POST(_request: NextRequest, context: RouteContext) {
   try {
     const user = await getCurrentUser();
 
@@ -23,7 +23,7 @@ export async function POST(_request: Request, { params }: RouteContext) {
       );
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     if (!id) {
       return NextResponse.json(
@@ -35,53 +35,55 @@ export async function POST(_request: Request, { params }: RouteContext) {
       );
     }
 
-    const booking = await prisma.booking.updateMany({
+    const booking = await prisma.booking.findFirst({
       where: {
         id,
         userId: user.id,
-        status: {
-          in: ["PENDING", "CONFIRMED"],
-        },
       },
-      data: {
-        status: "CANCELLED",
+      select: {
+        id: true,
+        status: true,
+        startsAt: true,
+        endsAt: true,
       },
     });
 
-    if (booking.count === 0) {
-      const existingBooking = await prisma.booking.findFirst({
-        where: {
-          id,
-          userId: user.id,
-        },
-        select: {
-          id: true,
-          status: true,
-        },
-      });
-
-      if (!existingBooking) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Booking not found.",
-          },
-          { status: 404 },
-        );
-      }
-
+    if (!booking) {
       return NextResponse.json(
         {
           success: false,
-          message: "This booking cannot be cancelled.",
+          message: "Booking not found.",
+        },
+        { status: 404 },
+      );
+    }
+
+    if (booking.status !== "CONFIRMED") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Only confirmed bookings can be cancelled.",
         },
         { status: 409 },
       );
     }
 
-    const cancelledBooking = await prisma.booking.findUnique({
+    if (booking.startsAt <= new Date()) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "A booking that has already started cannot be cancelled.",
+        },
+        { status: 409 },
+      );
+    }
+
+    const cancelledBooking = await prisma.booking.update({
       where: {
-        id,
+        id: booking.id,
+      },
+      data: {
+        status: "CANCELLED",
       },
       include: {
         service: {
@@ -90,14 +92,6 @@ export async function POST(_request: Request, { params }: RouteContext) {
             name: true,
             duration: true,
             price: true,
-          },
-        },
-        timeSlot: {
-          select: {
-            id: true,
-            startsAt: true,
-            endsAt: true,
-            capacity: true,
           },
         },
       },

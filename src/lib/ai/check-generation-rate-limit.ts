@@ -7,6 +7,7 @@ export type GenerationRateLimitResult =
   | {
       allowed: true;
       remaining: number;
+      requestId: string;
     }
   | {
       allowed: false;
@@ -56,7 +57,7 @@ export async function reserveGenerationSlot(
       };
     }
 
-    await tx.aiGenerationRequest.create({
+    const request = await tx.aiGenerationRequest.create({
       data: {
         userId,
       },
@@ -65,6 +66,15 @@ export async function reserveGenerationSlot(
     return {
       allowed: true,
       remaining: MAX_GENERATIONS - recentRequests.length - 1,
+      requestId: request.id,
     };
+  });
+}
+
+export async function releaseGenerationSlot(requestId: string): Promise<void> {
+  await prisma.aiGenerationRequest.delete({
+    where: {
+      id: requestId,
+    },
   });
 }

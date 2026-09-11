@@ -401,7 +401,7 @@ export const ModelName = {
   OtpCode: 'OtpCode',
   OtpRequest: 'OtpRequest',
   Service: 'Service',
-  TimeSlot: 'TimeSlot',
+  BlockedTime: 'BlockedTime',
   Booking: 'Booking',
   Generation: 'Generation',
   AiGenerationRequest: 'AiGenerationRequest'
@@ -420,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "otpCode" | "otpRequest" | "service" | "timeSlot" | "booking" | "generation" | "aiGenerationRequest"
+    modelProps: "user" | "otpCode" | "otpRequest" | "service" | "blockedTime" | "booking" | "generation" | "aiGenerationRequest"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -720,77 +720,77 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    TimeSlot: {
-      payload: Prisma.$TimeSlotPayload<ExtArgs>
-      fields: Prisma.TimeSlotFieldRefs
+    BlockedTime: {
+      payload: Prisma.$BlockedTimePayload<ExtArgs>
+      fields: Prisma.BlockedTimeFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.TimeSlotFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimeSlotPayload> | null
+          args: Prisma.BlockedTimeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlockedTimePayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.TimeSlotFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimeSlotPayload>
+          args: Prisma.BlockedTimeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlockedTimePayload>
         }
         findFirst: {
-          args: Prisma.TimeSlotFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimeSlotPayload> | null
+          args: Prisma.BlockedTimeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlockedTimePayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.TimeSlotFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimeSlotPayload>
+          args: Prisma.BlockedTimeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlockedTimePayload>
         }
         findMany: {
-          args: Prisma.TimeSlotFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimeSlotPayload>[]
+          args: Prisma.BlockedTimeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlockedTimePayload>[]
         }
         create: {
-          args: Prisma.TimeSlotCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimeSlotPayload>
+          args: Prisma.BlockedTimeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlockedTimePayload>
         }
         createMany: {
-          args: Prisma.TimeSlotCreateManyArgs<ExtArgs>
+          args: Prisma.BlockedTimeCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.TimeSlotCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimeSlotPayload>[]
+          args: Prisma.BlockedTimeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlockedTimePayload>[]
         }
         delete: {
-          args: Prisma.TimeSlotDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimeSlotPayload>
+          args: Prisma.BlockedTimeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlockedTimePayload>
         }
         update: {
-          args: Prisma.TimeSlotUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimeSlotPayload>
+          args: Prisma.BlockedTimeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlockedTimePayload>
         }
         deleteMany: {
-          args: Prisma.TimeSlotDeleteManyArgs<ExtArgs>
+          args: Prisma.BlockedTimeDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.TimeSlotUpdateManyArgs<ExtArgs>
+          args: Prisma.BlockedTimeUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.TimeSlotUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimeSlotPayload>[]
+          args: Prisma.BlockedTimeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlockedTimePayload>[]
         }
         upsert: {
-          args: Prisma.TimeSlotUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TimeSlotPayload>
+          args: Prisma.BlockedTimeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BlockedTimePayload>
         }
         aggregate: {
-          args: Prisma.TimeSlotAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateTimeSlot>
+          args: Prisma.BlockedTimeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBlockedTime>
         }
         groupBy: {
-          args: Prisma.TimeSlotGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TimeSlotGroupByOutputType>[]
+          args: Prisma.BlockedTimeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BlockedTimeGroupByOutputType>[]
         }
         count: {
-          args: Prisma.TimeSlotCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TimeSlotCountAggregateOutputType> | number
+          args: Prisma.BlockedTimeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BlockedTimeCountAggregateOutputType> | number
         }
       }
     }
@@ -1104,24 +1104,24 @@ export const ServiceScalarFieldEnum = {
 export type ServiceScalarFieldEnum = (typeof ServiceScalarFieldEnum)[keyof typeof ServiceScalarFieldEnum]
 
 
-export const TimeSlotScalarFieldEnum = {
+export const BlockedTimeScalarFieldEnum = {
   id: 'id',
   startsAt: 'startsAt',
   endsAt: 'endsAt',
-  capacity: 'capacity',
+  reason: 'reason',
   createdAt: 'createdAt'
 } as const
 
-export type TimeSlotScalarFieldEnum = (typeof TimeSlotScalarFieldEnum)[keyof typeof TimeSlotScalarFieldEnum]
+export type BlockedTimeScalarFieldEnum = (typeof BlockedTimeScalarFieldEnum)[keyof typeof BlockedTimeScalarFieldEnum]
 
 
 export const BookingScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   serviceId: 'serviceId',
-  timeSlotId: 'timeSlotId',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
   status: 'status',
-  paymentStatus: 'paymentStatus',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1439,7 +1439,7 @@ export type GlobalOmitConfig = {
   otpCode?: Prisma.OtpCodeOmit
   otpRequest?: Prisma.OtpRequestOmit
   service?: Prisma.ServiceOmit
-  timeSlot?: Prisma.TimeSlotOmit
+  blockedTime?: Prisma.BlockedTimeOmit
   booking?: Prisma.BookingOmit
   generation?: Prisma.GenerationOmit
   aiGenerationRequest?: Prisma.AiGenerationRequestOmit

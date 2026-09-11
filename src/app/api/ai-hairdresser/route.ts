@@ -12,7 +12,11 @@ import {
 } from "@/lib/ai/ai-hairdresser-options";
 
 import { buildHairdresserPrompt } from "@/lib/ai/build-hairdresser-prompt";
-import { reserveGenerationSlot } from "@/lib/ai/check-generation-rate-limit";
+import { hasEligibleBooking } from "@/lib/ai/has-eligible-booking";
+import {
+  releaseGenerationSlot,
+  reserveGenerationSlot,
+} from "@/lib/ai/check-generation-rate-limit";
 import { generateHairdresserImage } from "@/lib/ai/generate-hairdresser-image";
 
 import { prisma } from "@/lib/prisma";
@@ -54,6 +58,9 @@ function getExtensionFromImageType(type: AllowedImageType) {
 }
 
 export async function POST(request: Request) {
+  let reservedRequestId: string | null = null;
+  let generationSaved = false;
+
   try {
     // ---------------------------------------------------------
     // 1. Authentication
@@ -72,7 +79,23 @@ export async function POST(request: Request) {
     }
 
     // ---------------------------------------------------------
-    // 2. Read multipart/form-data
+    // 2. Confirmed booking eligibility
+    // ---------------------------------------------------------
+
+    const eligible = await hasEligibleBooking(user.id);
+
+    if (!eligible) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "A confirmed booking is required to use AI Hairdresser.",
+        },
+        { status: 403 },
+      );
+    }
+
+    // ---------------------------------------------------------
+    // 3. Read multipart/form-data
     // ---------------------------------------------------------
 
     const formData = await request.formData();
@@ -84,7 +107,7 @@ export async function POST(request: Request) {
     const instructions = formData.get("instructions");
 
     // ---------------------------------------------------------
-    // 3. Validate image
+    // 4. Validate image
     // ---------------------------------------------------------
 
     if (!(image instanceof File)) {
@@ -118,7 +141,7 @@ export async function POST(request: Request) {
     }
 
     // ---------------------------------------------------------
-    // 4. Validate options
+    // 5. Validate options
     // ---------------------------------------------------------
 
     if (typeof hairColor !== "string" || !isValidHairColor(hairColor)) {
@@ -165,7 +188,7 @@ export async function POST(request: Request) {
       typeof instructions === "string" ? instructions.trim() : undefined;
 
     // ---------------------------------------------------------
-    // 5. AI generation rate limit
+    // 6. AI generation rate limit
     // ---------------------------------------------------------
 
     const rateLimit = await reserveGenerationSlot(user.id);
@@ -184,8 +207,10 @@ export async function POST(request: Request) {
       );
     }
 
+    reservedRequestId = rateLimit.requestId;
+
     // ---------------------------------------------------------
-    // 6. Build prompt
+    // 7. Build prompt
     // ---------------------------------------------------------
 
     const prompt = buildHairdresserPrompt({
@@ -196,7 +221,7 @@ export async function POST(request: Request) {
     });
 
     // ---------------------------------------------------------
-    // 7. Convert File -> Buffer
+    // 8. Convert File -> Buffer
     // ---------------------------------------------------------
 
     const imageBuffer = Buffer.from(await image.arrayBuffer());
@@ -206,7 +231,7 @@ export async function POST(request: Request) {
     const extension = getExtensionFromImageType(imageType);
 
     // ---------------------------------------------------------
-    // 8. Upload original image
+    // 9. Upload original image
     // ---------------------------------------------------------
 
     const originalKey = createAIOriginalKey(user.id, extension);
@@ -218,7 +243,7 @@ export async function POST(request: Request) {
     });
 
     // ---------------------------------------------------------
-    // 9. Generate AI image
+    // 10. Generate AI image
     // ---------------------------------------------------------
 
     const generatedImage = await generateHairdresserImage({
@@ -228,7 +253,7 @@ export async function POST(request: Request) {
     });
 
     // ---------------------------------------------------------
-    // 10. Upload result
+    // 11. Upload result
     // ---------------------------------------------------------
 
     const resultExtension =
@@ -247,7 +272,7 @@ export async function POST(request: Request) {
     });
 
     // ---------------------------------------------------------
-    // 11. Save generation
+    // 12. Save generation
     // ---------------------------------------------------------
 
     const generation = await prisma.generation.create({
@@ -263,15 +288,17 @@ export async function POST(request: Request) {
       },
     });
 
+    generationSaved = true;
+
     // ---------------------------------------------------------
-    // 12. Response
+    // 13. Response
     // ---------------------------------------------------------
 
     return NextResponse.json({
       success: true,
       message: "AI Hairdresser image generated successfully.",
       generationId: generation.id,
-      remainingGenerations: rateLimit.remaining - 1,
+      remainingGenerations: rateLimit.remaining,
       images: {
         originalKey,
         resultKey,
@@ -284,6 +311,14 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("POST /api/ai-hairdresser error:", error);
+
+    if (reservedRequestId && !generationSaved) {
+      try {
+        await releaseGenerationSlot(reservedRequestId);
+      } catch (releaseError) {
+        console.error("Failed to release AI generation slot:", releaseError);
+      }
+    }
 
     return NextResponse.json(
       {

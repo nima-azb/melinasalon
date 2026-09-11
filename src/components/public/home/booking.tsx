@@ -13,20 +13,21 @@ type Service = {
   isActive: boolean;
 };
 
-type TimeSlot = {
-  id: string;
+type AvailabilityTimeSlot = {
   startsAt: string;
   endsAt: string;
-  capacity: number;
-  bookedCount: number;
-  remainingCapacity: number;
   available: boolean;
 };
 
 type AvailabilityResponse = {
   success: boolean;
   date: string;
-  timeSlots: TimeSlot[];
+  service?: {
+    id: string;
+    name: string;
+    duration: number;
+  };
+  timeSlots: AvailabilityTimeSlot[];
   message?: string;
 };
 
@@ -36,16 +37,13 @@ type BookingResponse = {
   booking?: {
     id: string;
     status: string;
+    startsAt: string;
+    endsAt: string;
     service: {
       id: string;
       name: string;
       duration: number;
       price: number;
-    };
-    timeSlot: {
-      id: string;
-      startsAt: string;
-      endsAt: string;
     };
   };
 };
@@ -92,6 +90,7 @@ export function Booking() {
 
     for (let index = 0; index < 7; index += 1) {
       const date = new Date(today);
+
       date.setHours(0, 0, 0, 0);
       date.setDate(today.getDate() + index);
 
@@ -105,28 +104,17 @@ export function Booking() {
     return result;
   }, []);
 
-  /*
-   * Important:
-   * selectedDate is initialized directly from dates.
-   *
-   * We do NOT use:
-   *
-   * useEffect(() => {
-   *   setSelectedDate(...);
-   * }, [dates]);
-   *
-   * This avoids the React cascading-render lint error.
-   */
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
+
     return getDateKey(today);
   });
 
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<string | null>(null);
 
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+  const [timeSlots, setTimeSlots] = useState<AvailabilityTimeSlot[]>([]);
+  const [selectedStartsAt, setSelectedStartsAt] = useState<string | null>(null);
 
   const [loadingServices, setLoadingServices] = useState(true);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
@@ -140,11 +128,11 @@ export function Booking() {
   );
 
   const selectedTimeSlotData = timeSlots.find(
-    (slot) => slot.id === selectedTimeSlot,
+    (slot) => slot.startsAt === selectedStartsAt,
   );
 
   /*
-   * Load services from the database.
+   * Load active services.
    */
   useEffect(() => {
     let cancelled = false;
@@ -195,24 +183,36 @@ export function Booking() {
   }, []);
 
   /*
-   * Load availability whenever the selected date changes.
+   * Load availability whenever the selected date or service changes.
+   *
+   * The service duration determines which start times are available,
+   * therefore both date and service are required.
    */
+
   useEffect(() => {
+    const serviceId = selectedService;
+
+    if (serviceId === null) {
+      return;
+    }
+
     let cancelled = false;
 
-    async function loadAvailability() {
+    async function loadAvailability(serviceId: string) {
       setLoadingAvailability(true);
-      setSelectedTimeSlot(null);
+      setSelectedStartsAt(null);
       setError("");
 
       try {
-        const response = await fetch(
-          `/api/availability?date=${encodeURIComponent(selectedDate)}`,
-          {
-            method: "GET",
-            cache: "no-store",
-          },
-        );
+        const params = new URLSearchParams();
+
+        params.set("date", selectedDate);
+        params.set("serviceId", serviceId);
+
+        const response = await fetch(`/api/availability?${params.toString()}`, {
+          method: "GET",
+          cache: "no-store",
+        });
 
         const data: AvailabilityResponse = await response.json();
 
@@ -226,6 +226,7 @@ export function Booking() {
       } catch (err) {
         if (!cancelled) {
           setTimeSlots([]);
+
           setError(
             err instanceof Error ? err.message : "خطا در دریافت زمان‌های خالی.",
           );
@@ -237,12 +238,12 @@ export function Booking() {
       }
     }
 
-    loadAvailability();
+    loadAvailability(serviceId);
 
     return () => {
       cancelled = true;
     };
-  }, [selectedDate]);
+  }, [selectedDate, selectedService]);
 
   function handleDateChange(date: string) {
     if (booking) {
@@ -251,7 +252,8 @@ export function Booking() {
 
     setSelectedDate(date);
     setBookingSuccess(false);
-    setSelectedTimeSlot(null);
+    setSelectedStartsAt(null);
+    setError("");
   }
 
   function handleServiceChange(serviceId: string) {
@@ -261,21 +263,59 @@ export function Booking() {
 
     setSelectedService(serviceId);
     setBookingSuccess(false);
+    setSelectedStartsAt(null);
+    setError("");
   }
 
-  function handleTimeSlotChange(timeSlotId: string) {
-    const slot = timeSlots.find((item) => item.id === timeSlotId);
+  function handleTimeSlotChange(startsAt: string) {
+    const slot = timeSlots.find((item) => item.startsAt === startsAt);
 
     if (!slot?.available || booking) {
       return;
     }
 
-    setSelectedTimeSlot(timeSlotId);
+    setSelectedStartsAt(startsAt);
     setBookingSuccess(false);
+    setError("");
+  }
+
+  async function refreshAvailability() {
+    if (selectedService === null) {
+      return;
+    }
+
+    const serviceId: string = selectedService;
+
+    try {
+      const params = new URLSearchParams();
+
+      params.set("date", selectedDate);
+      params.set("serviceId", serviceId);
+
+      const response = await fetch(`/api/availability?${params.toString()}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data: AvailabilityResponse = await response.json();
+
+      if (data.success) {
+        setTimeSlots(data.timeSlots ?? []);
+      }
+    } catch {
+      /*
+       * The booking itself already succeeded.
+       * Availability refresh is only a UI update.
+       */
+    }
   }
 
   async function handleBooking() {
-    if (!selectedService || !selectedTimeSlot) {
+    if (!selectedService || !selectedStartsAt) {
       setError("لطفاً خدمت و زمان موردنظر خود را انتخاب کنید.");
       return;
     }
@@ -292,7 +332,7 @@ export function Booking() {
         },
         body: JSON.stringify({
           serviceId: selectedService,
-          timeSlotId: selectedTimeSlot,
+          startsAt: selectedStartsAt,
         }),
       });
 
@@ -308,28 +348,9 @@ export function Booking() {
       }
 
       setBookingSuccess(true);
+      setSelectedStartsAt(null);
 
-      /*
-       * Refresh availability so the just-booked slot becomes unavailable.
-       */
-      setSelectedTimeSlot(null);
-
-      const availabilityResponse = await fetch(
-        `/api/availability?date=${encodeURIComponent(selectedDate)}`,
-        {
-          method: "GET",
-          cache: "no-store",
-        },
-      );
-
-      if (availabilityResponse.ok) {
-        const availabilityData: AvailabilityResponse =
-          await availabilityResponse.json();
-
-        if (availabilityData.success) {
-          setTimeSlots(availabilityData.timeSlots ?? []);
-        }
-      }
+      await refreshAvailability();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "ثبت نوبت با خطا مواجه شد.",
@@ -498,7 +519,14 @@ export function Booking() {
                 <div className="mt-5">
                   <div className="mb-3 flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]">
                     <Clock3 size={14} />
-                    ساعت‌های موجود
+
+                    <span>ساعت‌های موجود</span>
+
+                    {selectedServiceData && (
+                      <span className="text-[10px]">
+                        ({selectedServiceData.duration} دقیقه)
+                      </span>
+                    )}
                   </div>
 
                   {loadingAvailability ? (
@@ -508,19 +536,19 @@ export function Booking() {
                     </div>
                   ) : timeSlots.length === 0 ? (
                     <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] p-5 text-center text-sm text-[var(--text-secondary)]">
-                      برای این تاریخ زمانی برای رزرو وجود ندارد.
+                      برای این تاریخ و خدمت زمانی برای رزرو وجود ندارد.
                     </div>
                   ) : (
                     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                       {timeSlots.map((slot) => {
-                        const active = selectedTimeSlot === slot.id;
+                        const active = selectedStartsAt === slot.startsAt;
 
                         return (
                           <button
-                            key={slot.id}
+                            key={slot.startsAt}
                             type="button"
                             disabled={!slot.available || booking}
-                            onClick={() => handleTimeSlotChange(slot.id)}
+                            onClick={() => handleTimeSlotChange(slot.startsAt)}
                             className={`rounded-lg border px-2 py-2.5 text-xs font-medium transition-all ${
                               !slot.available
                                 ? "cursor-not-allowed border-[var(--border-subtle)] bg-gray-100 text-gray-400 line-through"
@@ -546,8 +574,8 @@ export function Booking() {
 
               {bookingSuccess && (
                 <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm leading-6 text-green-700">
-                  نوبت شما با موفقیت ثبت شد. اطلاعات نوبت از طریق پیامک برای
-                  شماره موبایل شما ارسال خواهد شد.
+                  نوبت شما با موفقیت ثبت شد و تأیید گردید. اطلاعات نوبت از طریق
+                  پیامک برای شماره موبایل شما ارسال خواهد شد.
                 </div>
               )}
             </div>
@@ -589,13 +617,23 @@ export function Booking() {
                   </div>
 
                   {selectedServiceData && (
-                    <div>
-                      <p className="text-[10px] text-white/50">مبلغ</p>
+                    <>
+                      <div>
+                        <p className="text-[10px] text-white/50">مدت زمان</p>
 
-                      <p className="mt-1 text-sm font-semibold">
-                        {formatPrice(selectedServiceData.price)} تومان
-                      </p>
-                    </div>
+                        <p className="mt-1 text-sm font-semibold">
+                          {selectedServiceData.duration} دقیقه
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] text-white/50">مبلغ</p>
+
+                        <p className="mt-1 text-sm font-semibold">
+                          {formatPrice(selectedServiceData.price)} تومان
+                        </p>
+                      </div>
+                    </>
                   )}
                 </div>
 
@@ -608,7 +646,7 @@ export function Booking() {
                       loadingServices ||
                       loadingAvailability ||
                       !selectedService ||
-                      !selectedTimeSlot
+                      !selectedStartsAt
                     }
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-[var(--brand-crimson-dark)] transition-all hover:bg-[var(--bg-cream)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
