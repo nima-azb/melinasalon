@@ -58,6 +58,7 @@ export async function generateHairdresserImage({
   formData.append("image", imageFile);
   formData.append("prompt", prompt);
   formData.append("size", "1024x1024");
+  formData.append("n", "1");
 
   const { controller, timeout } = createTimeoutController(AVALAI_TIMEOUT_MS);
 

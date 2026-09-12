@@ -11,9 +11,12 @@ import {
   type MakeupStyleId,
 } from "@/lib/ai/ai-hairdresser-options";
 
+type Workflow = "custom" | "recommendation";
+
 type ApiResponse = {
   success: boolean;
   message?: string;
+  workflowType?: Workflow;
   images?: {
     originalKey: string;
     resultKey: string;
@@ -21,7 +24,10 @@ type ApiResponse = {
 };
 
 export function AIHairdresserForm() {
+  const [workflow, setWorkflow] = useState<Workflow>("custom");
+
   const [image, setImage] = useState<File | null>(null);
+
   const [hairColor, setHairColor] = useState<HairColorId | "">("");
   const [hairstyle, setHairstyle] = useState<HairstyleId | "">("");
   const [makeup, setMakeup] = useState<MakeupStyleId | "">("");
@@ -30,6 +36,12 @@ export function AIHairdresserForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [resultKey, setResultKey] = useState("");
+
+  function handleWorkflowChange(nextWorkflow: Workflow) {
+    setWorkflow(nextWorkflow);
+    setError("");
+    setResultKey("");
+  }
 
   function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
     const selectedImage = event.target.files?.[0] ?? null;
@@ -50,7 +62,7 @@ export function AIHairdresserForm() {
       return;
     }
 
-    if (!hairColor || !hairstyle || !makeup) {
+    if (workflow === "custom" && (!hairColor || !hairstyle || !makeup)) {
       setError("Please select a hair color, hairstyle, and makeup style.");
       return;
     }
@@ -61,37 +73,24 @@ export function AIHairdresserForm() {
       const formData = new FormData();
 
       formData.append("image", image);
-      formData.append("hairColor", hairColor);
-      formData.append("hairstyle", hairstyle);
-      formData.append("makeup", makeup);
+      formData.append("mode", workflow);
 
-      if (instructions.trim()) {
-        formData.append("instructions", instructions.trim());
+      if (workflow === "custom") {
+        formData.append("hairColor", hairColor);
+        formData.append("hairstyle", hairstyle);
+        formData.append("makeup", makeup);
+
+        if (instructions.trim()) {
+          formData.append("instructions", instructions.trim());
+        }
       }
-
-      // const response = await fetch("/api/ai-hairdresser", {
-      //   method: "POST",
-      //   body: formData,
-      // });
-
-      // const data: ApiResponse = await response.json();
-
-      console.log("AI Hairdresser: sending request...");
 
       const response = await fetch("/api/ai-hairdresser", {
         method: "POST",
         body: formData,
       });
 
-      console.log(
-        "AI Hairdresser: response received",
-        response.status,
-        response.statusText,
-      );
-
       const responseText = await response.text();
-
-      console.log("AI Hairdresser: raw response", responseText);
 
       let data: ApiResponse;
 
@@ -128,6 +127,63 @@ export function AIHairdresserForm() {
       onSubmit={handleSubmit}
       className="mt-8 space-y-8 rounded-2xl bg-white p-6 shadow-sm"
     >
+      {/* Workflow selection */}
+      <section>
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+          Choose your AI experience
+        </h2>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => handleWorkflowChange("custom")}
+            disabled={isSubmitting}
+            className={`rounded-2xl border p-5 text-left transition ${
+              workflow === "custom"
+                ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-white"
+                : "border-gray-200 bg-white text-[var(--text-primary)] hover:border-gray-400"
+            } disabled:cursor-not-allowed disabled:opacity-60`}
+          >
+            <p className="font-semibold">Create my chosen look</p>
+
+            <p
+              className={`mt-2 text-sm ${
+                workflow === "custom"
+                  ? "text-white/80"
+                  : "text-[var(--text-secondary)]"
+              }`}
+            >
+              Choose your hair color, hairstyle, makeup, and additional
+              instructions.
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleWorkflowChange("recommendation")}
+            disabled={isSubmitting}
+            className={`rounded-2xl border p-5 text-left transition ${
+              workflow === "recommendation"
+                ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-white"
+                : "border-gray-200 bg-white text-[var(--text-primary)] hover:border-gray-400"
+            } disabled:cursor-not-allowed disabled:opacity-60`}
+          >
+            <p className="font-semibold">Recommend looks for my face</p>
+
+            <p
+              className={`mt-2 text-sm ${
+                workflow === "recommendation"
+                  ? "text-white/80"
+                  : "text-[var(--text-secondary)]"
+              }`}
+            >
+              AI analyzes your features and creates two personalized beauty
+              looks in one image.
+            </p>
+          </button>
+        </div>
+      </section>
+
       {/* Photo */}
       <section>
         <h2 className="text-lg font-semibold text-[var(--text-primary)]">
@@ -163,105 +219,130 @@ export function AIHairdresserForm() {
         </label>
       </section>
 
-      {/* Hair color */}
-      <section>
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-          Hair color
-        </h2>
+      {/* Recommendation explanation */}
+      {workflow === "recommendation" && (
+        <section className="rounded-2xl bg-[var(--bg-cream)] p-5">
+          <h2 className="font-semibold text-[var(--text-primary)]">
+            Personalized recommendations
+          </h2>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {hairColors.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setHairColor(option.id)}
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+            Our AI will analyze your visible facial features, proportions,
+            complexion, and overall appearance and create two different looks
+            specifically suited to you.
+          </p>
+
+          <p className="mt-3 text-sm font-medium text-[var(--text-primary)]">
+            Both looks are generated together in one image and use one AI
+            generation credit.
+          </p>
+        </section>
+      )}
+
+      {/* Custom controls */}
+      {workflow === "custom" && (
+        <>
+          {/* Hair color */}
+          <section>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+              Hair color
+            </h2>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {hairColors.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setHairColor(option.id)}
+                  disabled={isSubmitting}
+                  className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                    hairColor === option.id
+                      ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-white"
+                      : "border-gray-200 bg-white text-[var(--text-primary)] hover:border-gray-400"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Hairstyle */}
+          <section>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+              Hairstyle
+            </h2>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {hairstyles.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setHairstyle(option.id)}
+                  disabled={isSubmitting}
+                  className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                    hairstyle === option.id
+                      ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-white"
+                      : "border-gray-200 bg-white text-[var(--text-primary)] hover:border-gray-400"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Makeup */}
+          <section>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+              Makeup
+            </h2>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {makeupStyles.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setMakeup(option.id)}
+                  disabled={isSubmitting}
+                  className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                    makeup === option.id
+                      ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-white"
+                      : "border-gray-200 bg-white text-[var(--text-primary)] hover:border-gray-400"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Additional instructions */}
+          <section>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+              Additional instructions
+            </h2>
+
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              Tell the AI anything else you would like to consider.
+            </p>
+
+            <textarea
+              value={instructions}
+              onChange={(event) => setInstructions(event.target.value)}
+              rows={5}
+              maxLength={1000}
               disabled={isSubmitting}
-              className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                hairColor === option.id
-                  ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-white"
-                  : "border-gray-200 bg-white text-[var(--text-primary)] hover:border-gray-400"
-              } disabled:cursor-not-allowed disabled:opacity-60`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </section>
+              placeholder="For example: Keep my face natural and make the result look realistic."
+              className="mt-4 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-gray-400 disabled:bg-gray-50"
+            />
 
-      {/* Hairstyle */}
-      <section>
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-          Hairstyle
-        </h2>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {hairstyles.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setHairstyle(option.id)}
-              disabled={isSubmitting}
-              className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                hairstyle === option.id
-                  ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-white"
-                  : "border-gray-200 bg-white text-[var(--text-primary)] hover:border-gray-400"
-              } disabled:cursor-not-allowed disabled:opacity-60`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Makeup */}
-      <section>
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-          Makeup
-        </h2>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {makeupStyles.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setMakeup(option.id)}
-              disabled={isSubmitting}
-              className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                makeup === option.id
-                  ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-white"
-                  : "border-gray-200 bg-white text-[var(--text-primary)] hover:border-gray-400"
-              } disabled:cursor-not-allowed disabled:opacity-60`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Additional instructions */}
-      <section>
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-          Additional instructions
-        </h2>
-
-        <p className="mt-1 text-sm text-[var(--text-secondary)]">
-          Tell the AI anything else you would like to consider.
-        </p>
-
-        <textarea
-          value={instructions}
-          onChange={(event) => setInstructions(event.target.value)}
-          rows={5}
-          maxLength={1000}
-          disabled={isSubmitting}
-          placeholder="For example: Keep my face natural and make the result look realistic."
-          className="mt-4 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-gray-400 disabled:bg-gray-50"
-        />
-
-        <p className="mt-1 text-left text-xs text-[var(--text-secondary)]">
-          {instructions.length}/1000
-        </p>
-      </section>
+            <p className="mt-1 text-left text-xs text-[var(--text-secondary)]">
+              {instructions.length}/1000
+            </p>
+          </section>
+        </>
+      )}
 
       {/* Error */}
       {error && (
@@ -279,7 +360,13 @@ export function AIHairdresserForm() {
         disabled={isSubmitting}
         className="w-full rounded-xl bg-[var(--text-primary)] px-6 py-4 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "Generating your look..." : "Generate my look"}
+        {isSubmitting
+          ? workflow === "recommendation"
+            ? "Creating your two personalized looks..."
+            : "Generating your look..."
+          : workflow === "recommendation"
+            ? "Recommend two looks for me"
+            : "Generate my look"}
       </button>
 
       {/* Result */}
@@ -290,7 +377,9 @@ export function AIHairdresserForm() {
           </h2>
 
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Your image has been generated successfully.
+            {workflow === "recommendation"
+              ? "Your two personalized looks have been generated in one image."
+              : "Your image has been generated successfully."}
           </p>
 
           <p className="mt-3 break-all text-xs text-[var(--text-secondary)]">

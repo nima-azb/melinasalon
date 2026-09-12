@@ -94,16 +94,18 @@ model Booking {
 }
 
 model Generation {
-  id               String   @id @default(cuid())
+  id               String         @id @default(cuid())
   userId           String
+  workflowType     AiWorkflowType @default(CUSTOM)
   originalPhotoUrl String
   resultPhotoUrl   String
   styleChosen      String?
-  createdAt        DateTime @default(now())
+  createdAt        DateTime       @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([userId, workflowType])
   @@map("generations")
 }
 
@@ -132,4 +134,9 @@ enum BookingStatus {
 enum OtpPurpose {
   LOGIN
   REGISTER
+}
+
+enum AiWorkflowType {
+  CUSTOM
+  RECOMMENDATION
 }

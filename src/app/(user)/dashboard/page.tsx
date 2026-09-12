@@ -17,6 +17,7 @@ export default async function DashboardPage() {
     },
     select: {
       id: true,
+      workflowType: true,
       originalPhotoUrl: true,
       resultPhotoUrl: true,
       styleChosen: true,
@@ -33,6 +34,7 @@ export default async function DashboardPage() {
 
       return {
         id: generation.id,
+        workflowType: generation.workflowType,
         originalUrl,
         resultUrl,
         styleChosen: generation.styleChosen,

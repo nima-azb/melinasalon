@@ -12,6 +12,7 @@ import {
 } from "@/lib/ai/ai-hairdresser-options";
 
 import { buildHairdresserPrompt } from "@/lib/ai/build-hairdresser-prompt";
+import { buildRecommendationPrompt } from "@/lib/ai/build-recommendation-prompt";
 import { hasEligibleBooking } from "@/lib/ai/has-eligible-booking";
 import {
   releaseGenerationSlot,
@@ -33,6 +34,8 @@ const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
 type AllowedImageType = (typeof ALLOWED_IMAGE_TYPES)[number];
+
+type WorkflowType = "custom" | "recommendation";
 
 function isValidHairColor(value: string): value is HairColorId {
   return hairColors.some((option) => option.id === value);
@@ -57,15 +60,17 @@ function getExtensionFromImageType(type: AllowedImageType) {
   }
 }
 
+function isWorkflowType(
+  value: FormDataEntryValue | null,
+): value is WorkflowType {
+  return value === "custom" || value === "recommendation";
+}
+
 export async function POST(request: Request) {
   let reservedRequestId: string | null = null;
   let generationSaved = false;
 
   try {
-    // ---------------------------------------------------------
-    // 1. Authentication
-    // ---------------------------------------------------------
-
     const user = await getCurrentUser();
 
     if (!user) {
@@ -77,10 +82,6 @@ export async function POST(request: Request) {
         { status: 401 },
       );
     }
-
-    // ---------------------------------------------------------
-    // 2. Confirmed booking eligibility
-    // ---------------------------------------------------------
 
     const eligible = await hasEligibleBooking(user.id);
 
@@ -94,21 +95,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // ---------------------------------------------------------
-    // 3. Read multipart/form-data
-    // ---------------------------------------------------------
-
     const formData = await request.formData();
 
     const image = formData.get("image");
-    const hairColor = formData.get("hairColor");
-    const hairstyle = formData.get("hairstyle");
-    const makeup = formData.get("makeup");
-    const instructions = formData.get("instructions");
+    const mode = formData.get("mode");
 
-    // ---------------------------------------------------------
-    // 4. Validate image
-    // ---------------------------------------------------------
+    if (!isWorkflowType(mode)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid AI Hairdresser workflow.",
+        },
+        { status: 400 },
+      );
+    }
 
     if (!(image instanceof File)) {
       return NextResponse.json(
@@ -140,56 +140,79 @@ export async function POST(request: Request) {
       );
     }
 
-    // ---------------------------------------------------------
-    // 5. Validate options
-    // ---------------------------------------------------------
+    let prompt: string;
+    let styleChosen: string;
 
-    if (typeof hairColor !== "string" || !isValidHairColor(hairColor)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid hair color option.",
-        },
-        { status: 400 },
-      );
+    if (mode === "custom") {
+      const hairColor = formData.get("hairColor");
+      const hairstyle = formData.get("hairstyle");
+      const makeup = formData.get("makeup");
+      const instructions = formData.get("instructions");
+
+      if (typeof hairColor !== "string" || !isValidHairColor(hairColor)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Invalid hair color option.",
+          },
+          { status: 400 },
+        );
+      }
+
+      if (typeof hairstyle !== "string" || !isValidHairstyle(hairstyle)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Invalid hairstyle option.",
+          },
+          { status: 400 },
+        );
+      }
+
+      if (typeof makeup !== "string" || !isValidMakeupStyle(makeup)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Invalid makeup style option.",
+          },
+          { status: 400 },
+        );
+      }
+
+      if (instructions !== null && typeof instructions !== "string") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Invalid additional instructions.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const cleanedInstructions =
+        typeof instructions === "string" ? instructions.trim() : undefined;
+
+      prompt = buildHairdresserPrompt({
+        hairColor,
+        hairstyle,
+        makeup,
+        instructions: cleanedInstructions,
+      });
+
+      styleChosen = JSON.stringify({
+        hairColor,
+        hairstyle,
+        makeup,
+        instructions: cleanedInstructions ?? null,
+      });
+    } else {
+      prompt = buildRecommendationPrompt();
+
+      styleChosen = JSON.stringify({
+        type: "face_based_recommendations",
+        lookCount: 2,
+      });
     }
-
-    if (typeof hairstyle !== "string" || !isValidHairstyle(hairstyle)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid hairstyle option.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (typeof makeup !== "string" || !isValidMakeupStyle(makeup)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid makeup style option.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (instructions !== null && typeof instructions !== "string") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid additional instructions.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const cleanedInstructions =
-      typeof instructions === "string" ? instructions.trim() : undefined;
-
-    // ---------------------------------------------------------
-    // 6. AI generation rate limit
-    // ---------------------------------------------------------
 
     const rateLimit = await reserveGenerationSlot(user.id);
 
@@ -201,38 +224,15 @@ export async function POST(request: Request) {
             "You have reached the maximum number of AI generations allowed in 24 hours.",
           retryAfterSeconds: rateLimit.retryAfterSeconds,
         },
-        {
-          status: 429,
-        },
+        { status: 429 },
       );
     }
 
     reservedRequestId = rateLimit.requestId;
 
-    // ---------------------------------------------------------
-    // 7. Build prompt
-    // ---------------------------------------------------------
-
-    const prompt = buildHairdresserPrompt({
-      hairColor,
-      hairstyle,
-      makeup,
-      instructions: cleanedInstructions,
-    });
-
-    // ---------------------------------------------------------
-    // 8. Convert File -> Buffer
-    // ---------------------------------------------------------
-
     const imageBuffer = Buffer.from(await image.arrayBuffer());
-
     const imageType = image.type as AllowedImageType;
-
     const extension = getExtensionFromImageType(imageType);
-
-    // ---------------------------------------------------------
-    // 9. Upload original image
-    // ---------------------------------------------------------
 
     const originalKey = createAIOriginalKey(user.id, extension);
 
@@ -242,19 +242,11 @@ export async function POST(request: Request) {
       contentType: imageType,
     });
 
-    // ---------------------------------------------------------
-    // 10. Generate AI image
-    // ---------------------------------------------------------
-
     const generatedImage = await generateHairdresserImage({
       imageBuffer,
       imageType,
       prompt,
     });
-
-    // ---------------------------------------------------------
-    // 11. Upload result
-    // ---------------------------------------------------------
 
     const resultExtension =
       generatedImage.contentType === "image/jpeg"
@@ -271,42 +263,30 @@ export async function POST(request: Request) {
       contentType: generatedImage.contentType,
     });
 
-    // ---------------------------------------------------------
-    // 12. Save generation
-    // ---------------------------------------------------------
-
     const generation = await prisma.generation.create({
       data: {
         userId: user.id,
+        workflowType: mode === "recommendation" ? "RECOMMENDATION" : "CUSTOM",
         originalPhotoUrl: originalKey,
         resultPhotoUrl: resultKey,
-        styleChosen: JSON.stringify({
-          hairColor,
-          hairstyle,
-          makeup,
-        }),
+        styleChosen,
       },
     });
 
     generationSaved = true;
 
-    // ---------------------------------------------------------
-    // 13. Response
-    // ---------------------------------------------------------
-
     return NextResponse.json({
       success: true,
-      message: "AI Hairdresser image generated successfully.",
+      message:
+        mode === "recommendation"
+          ? "Two personalized AI looks generated successfully."
+          : "AI Hairdresser image generated successfully.",
       generationId: generation.id,
+      workflowType: mode,
       remainingGenerations: rateLimit.remaining,
       images: {
         originalKey,
         resultKey,
-      },
-      options: {
-        hairColor,
-        hairstyle,
-        makeup,
       },
     });
   } catch (error) {
@@ -325,9 +305,7 @@ export async function POST(request: Request) {
         success: false,
         message: "Failed to process AI Hairdresser request.",
       },
-      {
-        status: 500,
-      },
+      { status: 500 },
     );
   }
 }

@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 
+type WorkflowType = "CUSTOM" | "RECOMMENDATION";
+
 type Generation = {
   id: string;
+  workflowType: WorkflowType;
   originalUrl: string;
   resultUrl: string;
   styleChosen: string | null;
@@ -18,6 +21,7 @@ type SelectedStyles = {
   hairColor?: string;
   hairstyle?: string;
   makeup?: string;
+  instructions?: string | null;
 };
 
 function formatDate(dateString: string) {
@@ -58,6 +62,8 @@ function parseStyles(styleChosen: string | null): SelectedStyles {
       hairstyle:
         typeof parsed.hairstyle === "string" ? parsed.hairstyle : undefined,
       makeup: typeof parsed.makeup === "string" ? parsed.makeup : undefined,
+      instructions:
+        typeof parsed.instructions === "string" ? parsed.instructions : null,
     };
   } catch {
     return {};
@@ -87,6 +93,8 @@ export function MyGenerations({ generations }: MyGenerationsProps) {
         <div className="grid gap-6 md:grid-cols-2">
           {generations.map((generation) => {
             const styles = parseStyles(generation.styleChosen);
+            const isRecommendation =
+              generation.workflowType === "RECOMMENDATION";
 
             return (
               <article
@@ -132,47 +140,66 @@ export function MyGenerations({ generations }: MyGenerationsProps) {
                 </div>
 
                 <div className="border-t border-[var(--border-subtle)] p-5">
-                  <div className="mb-4">
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      تاریخ تولید
-                    </p>
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        تاریخ تولید
+                      </p>
 
-                    <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
-                      {formatDate(generation.createdAt)}
-                    </p>
+                      <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
+                        {formatDate(generation.createdAt)}
+                      </p>
+                    </div>
+
+                    <span className="rounded-full bg-[var(--bg-card-warm)] px-3 py-1 text-xs font-medium text-[var(--text-primary)]">
+                      {isRecommendation ? "پیشنهاد هوش مصنوعی" : "انتخاب شخصی"}
+                    </span>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-xl bg-[var(--bg-card-warm)] p-3">
-                      <p className="text-xs text-[var(--text-secondary)]">
-                        رنگ مو
+                  {isRecommendation ? (
+                    <div className="rounded-xl bg-[var(--bg-card-warm)] p-4">
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">
+                        دو پیشنهاد شخصی‌سازی‌شده
                       </p>
 
-                      <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
-                        {formatStyleValue(styles.hairColor)}
+                      <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                        هوش مصنوعی بر اساس ویژگی‌های چهره شما دو ظاهر متفاوت
+                        پیشنهاد داده است.
                       </p>
                     </div>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-xl bg-[var(--bg-card-warm)] p-3">
+                        <p className="text-xs text-[var(--text-secondary)]">
+                          رنگ مو
+                        </p>
 
-                    <div className="rounded-xl bg-[var(--bg-card-warm)] p-3">
-                      <p className="text-xs text-[var(--text-secondary)]">
-                        مدل مو
-                      </p>
+                        <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
+                          {formatStyleValue(styles.hairColor)}
+                        </p>
+                      </div>
 
-                      <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
-                        {formatStyleValue(styles.hairstyle)}
-                      </p>
+                      <div className="rounded-xl bg-[var(--bg-card-warm)] p-3">
+                        <p className="text-xs text-[var(--text-secondary)]">
+                          مدل مو
+                        </p>
+
+                        <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
+                          {formatStyleValue(styles.hairstyle)}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-[var(--bg-card-warm)] p-3">
+                        <p className="text-xs text-[var(--text-secondary)]">
+                          آرایش
+                        </p>
+
+                        <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
+                          {formatStyleValue(styles.makeup)}
+                        </p>
+                      </div>
                     </div>
-
-                    <div className="rounded-xl bg-[var(--bg-card-warm)] p-3">
-                      <p className="text-xs text-[var(--text-secondary)]">
-                        آرایش
-                      </p>
-
-                      <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
-                        {formatStyleValue(styles.makeup)}
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </article>
             );

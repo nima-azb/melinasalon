@@ -154,6 +154,7 @@ export type BookingScalarFieldEnum = (typeof BookingScalarFieldEnum)[keyof typeo
 export const GenerationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  workflowType: 'workflowType',
   originalPhotoUrl: 'originalPhotoUrl',
   resultPhotoUrl: 'resultPhotoUrl',
   styleChosen: 'styleChosen',

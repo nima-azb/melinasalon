@@ -32,3 +32,11 @@ export const OtpPurpose = {
 } as const
 
 export type OtpPurpose = (typeof OtpPurpose)[keyof typeof OtpPurpose]
+
+
+export const AiWorkflowType = {
+  CUSTOM: 'CUSTOM',
+  RECOMMENDATION: 'RECOMMENDATION'
+} as const
+
+export type AiWorkflowType = (typeof AiWorkflowType)[keyof typeof AiWorkflowType]

@@ -1132,6 +1132,7 @@ export type BookingScalarFieldEnum = (typeof BookingScalarFieldEnum)[keyof typeo
 export const GenerationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  workflowType: 'workflowType',
   originalPhotoUrl: 'originalPhotoUrl',
   resultPhotoUrl: 'resultPhotoUrl',
   styleChosen: 'styleChosen',
@@ -1268,6 +1269,20 @@ export type EnumBookingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'BookingStatus[]'
  */
 export type ListEnumBookingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BookingStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'AiWorkflowType'
+ */
+export type EnumAiWorkflowTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AiWorkflowType'>
+    
+
+
+/**
+ * Reference to a field of type 'AiWorkflowType[]'
+ */
+export type ListEnumAiWorkflowTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AiWorkflowType[]'>
     
 
 
