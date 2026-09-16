@@ -1,22 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@/generated/prisma/client";
 
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { prisma } from "@/lib/prisma";
 import { smsProvider } from "@/lib/sms";
 
-const OPENING_HOUR = 10;
-const CLOSING_HOUR = 22;
+const SALON_START_HOUR = 10;
+const SALON_END_HOUR = 22;
 const SLOT_INTERVAL_MINUTES = 30;
 
-function intervalsOverlap(startA: Date, endA: Date, startB: Date, endB: Date) {
-  return startA < endB && endA > startB;
+function isValidDate(value: string) {
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime());
 }
 
-function isThirtyMinuteInterval(date: Date) {
+function isValidSlotInterval(date: Date) {
   return (
+    date.getMinutes() % SLOT_INTERVAL_MINUTES === 0 &&
     date.getSeconds() === 0 &&
-    date.getMilliseconds() === 0 &&
-    date.getMinutes() % SLOT_INTERVAL_MINUTES === 0
+    date.getMilliseconds() === 0
+  );
+}
+
+function isWithinSalonHours(start: Date, end: Date) {
+  const startMinutes = start.getHours() * 60 + start.getMinutes();
+  const endMinutes = end.getHours() * 60 + end.getMinutes();
+
+  return (
+    startMinutes >= SALON_START_HOUR * 60 &&
+    endMinutes <= SALON_END_HOUR * 60 &&
+    end > start
   );
 }
 
@@ -47,7 +60,6 @@ export async function GET() {
             id: true,
             name: true,
             duration: true,
-            price: true,
           },
         },
       },
@@ -84,9 +96,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    const body: unknown = await request.json();
 
-    const { serviceId, startsAt } = body;
+    if (
+      typeof body !== "object" ||
+      body === null ||
+      !("serviceId" in body) ||
+      !("startsAt" in body)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Service ID and appointment start time are required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const serviceId = body.serviceId;
+    const startsAtValue = body.startsAt;
 
     if (typeof serviceId !== "string" || !serviceId) {
       return NextResponse.json(
@@ -98,35 +126,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (typeof startsAt !== "string" || !startsAt) {
+    if (typeof startsAtValue !== "string" || !startsAtValue) {
       return NextResponse.json(
         {
           success: false,
-          message: "Booking start time is required.",
+          message: "Appointment start time is required.",
         },
         { status: 400 },
       );
     }
 
-    const parsedStartsAt = new Date(startsAt);
-
-    if (Number.isNaN(parsedStartsAt.getTime())) {
+    if (!isValidDate(startsAtValue)) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid booking start time.",
+          message: "Invalid appointment start time.",
         },
         { status: 400 },
       );
     }
 
-    if (!isThirtyMinuteInterval(parsedStartsAt)) {
+    const startsAt = new Date(startsAtValue);
+
+    if (!isValidSlotInterval(startsAt)) {
       return NextResponse.json(
         {
           success: false,
-          message: "Booking times must use 30-minute intervals.",
+          message: "Appointments must start on a 30-minute interval.",
         },
         { status: 400 },
+      );
+    }
+
+    if (startsAt <= new Date()) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "This appointment time is no longer available.",
+        },
+        { status: 409 },
       );
     }
 
@@ -138,7 +176,6 @@ export async function POST(request: NextRequest) {
         id: true,
         name: true,
         duration: true,
-        price: true,
         isActive: true,
       },
     });
@@ -163,175 +200,92 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!Number.isInteger(service.duration) || service.duration <= 0) {
+    const endsAt = new Date(startsAt.getTime() + service.duration * 60 * 1000);
+
+    if (!isWithinSalonHours(startsAt, endsAt)) {
       return NextResponse.json(
         {
           success: false,
-          message: "This service has an invalid duration.",
-        },
-        { status: 500 },
-      );
-    }
-
-    const endsAt = new Date(
-      parsedStartsAt.getTime() + service.duration * 60 * 1000,
-    );
-
-    /*
-     * Salon working hours:
-     * 10:00 -> 22:00
-     *
-     * The complete service must fit inside this period.
-     */
-    const openingTime = new Date(parsedStartsAt);
-    openingTime.setHours(OPENING_HOUR, 0, 0, 0);
-
-    const closingTime = new Date(parsedStartsAt);
-    closingTime.setHours(CLOSING_HOUR, 0, 0, 0);
-
-    if (parsedStartsAt < openingTime || endsAt > closingTime) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "This booking time is outside salon working hours.",
+          message:
+            "The selected appointment does not fit within salon working hours.",
         },
         { status: 409 },
       );
     }
 
-    if (parsedStartsAt <= new Date()) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "This booking time is no longer available.",
-        },
-        { status: 409 },
-      );
-    }
-
-    /*
-     * These boundaries are used only for checking whether
-     * this user already booked the SAME SERVICE on this date.
-     */
-    const requestedDateStart = new Date(parsedStartsAt);
-    requestedDateStart.setHours(0, 0, 0, 0);
-
-    const requestedDateEnd = new Date(requestedDateStart);
-    requestedDateEnd.setDate(requestedDateEnd.getDate() + 1);
-
-    /*
-     * Check availability and create the booking inside one
-     * serializable transaction.
-     *
-     * This protects the booking flow when two requests arrive
-     * at nearly the same time.
-     */
     const booking = await prisma.$transaction(
       async (tx) => {
-        const [existingBookings, blockedTimes, existingUserBooking] =
-          await Promise.all([
-            /*
-             * Any confirmed booking that overlaps the requested
-             * service period makes this time unavailable.
-             */
-            tx.booking.findMany({
-              where: {
-                status: "CONFIRMED",
-                startsAt: {
-                  lt: endsAt,
-                },
-                endsAt: {
-                  gt: parsedStartsAt,
-                },
-              },
-              select: {
-                id: true,
-                startsAt: true,
-                endsAt: true,
-              },
-            }),
+        const overlappingBooking = await tx.booking.findFirst({
+          where: {
+            status: "CONFIRMED",
+            startsAt: {
+              lt: endsAt,
+            },
+            endsAt: {
+              gt: startsAt,
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
 
-            /*
-             * Any admin-blocked period that overlaps the requested
-             * service period makes this time unavailable.
-             */
-            tx.blockedTime.findMany({
-              where: {
-                startsAt: {
-                  lt: endsAt,
-                },
-                endsAt: {
-                  gt: parsedStartsAt,
-                },
-              },
-              select: {
-                id: true,
-                startsAt: true,
-                endsAt: true,
-              },
-            }),
-
-            /*
-             * A user cannot book the SAME SERVICE twice on the
-             * same calendar date.
-             *
-             * Different services on the same date are allowed.
-             */
-            tx.booking.findFirst({
-              where: {
-                userId: user.id,
-                serviceId: service.id,
-                status: "CONFIRMED",
-                startsAt: {
-                  lt: requestedDateEnd,
-                },
-                endsAt: {
-                  gt: requestedDateStart,
-                },
-              },
-              select: {
-                id: true,
-                startsAt: true,
-                endsAt: true,
-              },
-            }),
-          ]);
-
-        if (existingUserBooking) {
-          throw new Error("USER_ALREADY_BOOKED_SERVICE_ON_DATE");
+        if (overlappingBooking) {
+          throw new Error("APPOINTMENT_UNAVAILABLE");
         }
 
-        const overlapsBooking = existingBookings.some((existingBooking) =>
-          intervalsOverlap(
-            parsedStartsAt,
-            endsAt,
-            existingBooking.startsAt,
-            existingBooking.endsAt,
-          ),
-        );
+        const overlappingBlockedTime = await tx.blockedTime.findFirst({
+          where: {
+            startsAt: {
+              lt: endsAt,
+            },
+            endsAt: {
+              gt: startsAt,
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
 
-        if (overlapsBooking) {
-          throw new Error("BOOKING_TIME_UNAVAILABLE");
+        if (overlappingBlockedTime) {
+          throw new Error("APPOINTMENT_BLOCKED");
         }
 
-        const overlapsBlockedTime = blockedTimes.some((blockedTime) =>
-          intervalsOverlap(
-            parsedStartsAt,
-            endsAt,
-            blockedTime.startsAt,
-            blockedTime.endsAt,
-          ),
-        );
+        const existingSameServiceDay = await tx.booking.findFirst({
+          where: {
+            userId: user.id,
+            serviceId,
+            status: {
+              in: ["CONFIRMED", "COMPLETED"],
+            },
+            startsAt: {
+              gte: new Date(
+                startsAt.getFullYear(),
+                startsAt.getMonth(),
+                startsAt.getDate(),
+              ),
+              lt: new Date(
+                startsAt.getFullYear(),
+                startsAt.getMonth(),
+                startsAt.getDate() + 1,
+              ),
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
 
-        if (overlapsBlockedTime) {
-          throw new Error("BOOKING_TIME_BLOCKED");
+        if (existingSameServiceDay) {
+          throw new Error("DUPLICATE_SERVICE_DAY");
         }
 
         return tx.booking.create({
           data: {
             userId: user.id,
-            serviceId: service.id,
-            startsAt: parsedStartsAt,
+            serviceId,
+            startsAt,
             endsAt,
             status: "CONFIRMED",
           },
@@ -341,21 +295,16 @@ export async function POST(request: NextRequest) {
                 id: true,
                 name: true,
                 duration: true,
-                price: true,
               },
             },
           },
         });
       },
       {
-        isolationLevel: "Serializable",
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       },
     );
 
-    /*
-     * The booking is already confirmed at this point.
-     * SMS failure must not undo the successful booking.
-     */
     try {
       await smsProvider.sendBookingConfirmation({
         phoneNumber: user.phoneNumber,
@@ -376,37 +325,48 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "APPOINTMENT_UNAVAILABLE") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "This appointment time is already booked.",
+          },
+          { status: 409 },
+        );
+      }
+
+      if (error.message === "APPOINTMENT_BLOCKED") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "This appointment time is unavailable.",
+          },
+          { status: 409 },
+        );
+      }
+
+      if (error.message === "DUPLICATE_SERVICE_DAY") {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "You already have a booking for this service on this date.",
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     if (
-      error instanceof Error &&
-      error.message === "USER_ALREADY_BOOKED_SERVICE_ON_DATE"
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2034"
     ) {
       return NextResponse.json(
         {
           success: false,
-          message: "You already booked this service on this date.",
-        },
-        { status: 409 },
-      );
-    }
-
-    if (
-      error instanceof Error &&
-      error.message === "BOOKING_TIME_UNAVAILABLE"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "This time is no longer available.",
-        },
-        { status: 409 },
-      );
-    }
-
-    if (error instanceof Error && error.message === "BOOKING_TIME_BLOCKED") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "This time is blocked and cannot be booked.",
+          message:
+            "The appointment was booked by someone else. Please choose another time.",
         },
         { status: 409 },
       );

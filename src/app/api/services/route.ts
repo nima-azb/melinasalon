@@ -8,15 +8,62 @@ const createServiceSchema = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().trim().max(1000).optional(),
   duration: z.number().int().positive().max(480),
-  price: z.number().int().nonnegative().optional(),
 });
 
-export async function GET() {
+async function requireAdminUser() {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return {
+      response: NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized.",
+        },
+        { status: 401 },
+      ),
+      user: null,
+    };
+  }
+
+  if (user.role !== "ADMIN") {
+    return {
+      response: NextResponse.json(
+        {
+          success: false,
+          message: "Forbidden.",
+        },
+        { status: 403 },
+      ),
+      user: null,
+    };
+  }
+
+  return {
+    response: null,
+    user,
+  };
+}
+
+export async function GET(request: NextRequest) {
   try {
+    const includeInactive =
+      request.nextUrl.searchParams.get("includeInactive") === "true";
+
+    if (includeInactive) {
+      const admin = await requireAdminUser();
+
+      if (admin.response) {
+        return admin.response;
+      }
+    }
+
     const services = await prisma.service.findMany({
-      where: {
-        isActive: true,
-      },
+      where: includeInactive
+        ? undefined
+        : {
+            isActive: true,
+          },
       orderBy: {
         createdAt: "asc",
       },
@@ -27,7 +74,7 @@ export async function GET() {
       services,
     });
   } catch (error) {
-    console.error("Failed to fetch services:", error);
+    console.error("GET /api/services error:", error);
 
     return NextResponse.json(
       {
@@ -41,26 +88,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
+    const admin = await requireAdminUser();
 
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized.",
-        },
-        { status: 401 },
-      );
-    }
-
-    if (user.role !== "ADMIN") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Forbidden.",
-        },
-        { status: 403 },
-      );
+    if (admin.response) {
+      return admin.response;
     }
 
     const body: unknown = await request.json();
@@ -82,7 +113,6 @@ export async function POST(request: NextRequest) {
         name: result.data.name,
         description: result.data.description || null,
         duration: result.data.duration,
-        price: result.data.price ?? null,
       },
     });
 
@@ -94,7 +124,7 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("Failed to create service:", error);
+    console.error("POST /api/services error:", error);
 
     return NextResponse.json(
       {

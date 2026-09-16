@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 
-type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+type BookingStatus = "CONFIRMED" | "CANCELLED" | "COMPLETED";
 
 type Booking = {
   id: string;
+  startsAt: string;
+  endsAt: string;
   status: BookingStatus;
   createdAt: string;
   updatedAt: string;
@@ -13,30 +16,19 @@ type Booking = {
     id: string;
     name: string;
     duration: number;
-    price: number | null;
-  };
-  timeSlot: {
-    id: string;
-    startsAt: string;
-    endsAt: string;
-    capacity: number;
   };
 };
 
-type BookingsResponse = {
-  success: boolean;
-  bookings?: Booking[];
-  message?: string;
+type MyBookingsProps = {
+  bookings: Booking[];
 };
 
 type CancelBookingResponse = {
   success: boolean;
-  booking?: Booking;
   message?: string;
 };
 
 const statusLabels: Record<BookingStatus, string> = {
-  PENDING: "در انتظار تأیید",
   CONFIRMED: "تأیید شده",
   CANCELLED: "لغو شده",
   COMPLETED: "تکمیل شده",
@@ -58,100 +50,51 @@ function formatTime(dateString: string) {
   }).format(new Date(dateString));
 }
 
-function formatPrice(price: number | null) {
-  if (price === null) {
-    return "قیمت تعیین نشده";
-  }
-
-  return `${new Intl.NumberFormat("fa-IR").format(price)} تومان`;
-}
-
 function getStatusClasses(status: BookingStatus) {
   switch (status) {
     case "CONFIRMED":
-      return "bg-green-100 text-green-700";
-
-    case "PENDING":
-      return "bg-yellow-100 text-yellow-700";
+      return "bg-emerald-50 text-emerald-700";
 
     case "CANCELLED":
-      return "bg-red-100 text-red-700";
+      return "bg-red-50 text-red-700";
 
     case "COMPLETED":
       return "bg-gray-100 text-gray-700";
   }
 }
 
-export function MyBookings() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+function isFutureBooking(booking: Booking) {
+  return new Date(booking.startsAt).getTime() >= Date.now();
+}
+
+export function MyBookings({ bookings: initialBookings }: MyBookingsProps) {
+  const [bookings, setBookings] = useState(initialBookings);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchBookings() {
-      try {
-        const response = await fetch("/api/bookings", {
-          method: "GET",
-          cache: "no-store",
-        });
-
-        const data: BookingsResponse = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to load bookings.");
-        }
-
-        if (cancelled) {
-          return;
-        }
-
-        setBookings(data.bookings ?? []);
-      } catch (error) {
-        if (cancelled) {
-          return;
-        }
-
-        console.error("Failed to load bookings:", error);
-
-        setError(
-          error instanceof Error ? error.message : "Failed to load bookings.",
-        );
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void fetchBookings();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const { upcomingBookings, pastBookings } = useMemo(() => {
-    const now = new Date();
-
     const upcoming: Booking[] = [];
     const past: Booking[] = [];
 
     for (const booking of bookings) {
-      const startsAt = new Date(booking.timeSlot.startsAt);
-
-      if (startsAt >= now) {
+      if (isFutureBooking(booking)) {
         upcoming.push(booking);
       } else {
         past.push(booking);
       }
     }
 
+    upcoming.sort(
+      (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+    );
+
+    past.sort(
+      (a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime(),
+    );
+
     return {
       upcomingBookings: upcoming,
-      pastBookings: past.reverse(),
+      pastBookings: past,
     };
   }, [bookings]);
 
@@ -174,22 +117,26 @@ export function MyBookings() {
 
       const data: CancelBookingResponse = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to cancel booking.");
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "لغو نوبت انجام نشد.");
       }
 
-      if (data.booking) {
-        setBookings((currentBookings) =>
-          currentBookings.map((booking) =>
-            booking.id === data.booking?.id ? data.booking : booking,
-          ),
-        );
-      }
+      setBookings((currentBookings) =>
+        currentBookings.map((booking) =>
+          booking.id === bookingId
+            ? {
+                ...booking,
+                status: "CANCELLED",
+                updatedAt: new Date().toISOString(),
+              }
+            : booking,
+        ),
+      );
     } catch (error) {
       console.error("Failed to cancel booking:", error);
 
       setError(
-        error instanceof Error ? error.message : "Failed to cancel booking.",
+        error instanceof Error ? error.message : "لغو نوبت با خطا مواجه شد.",
       );
     } finally {
       setCancellingId(null);
@@ -198,94 +145,98 @@ export function MyBookings() {
 
   function renderBooking(booking: Booking) {
     const canCancel =
-      booking.status === "PENDING" || booking.status === "CONFIRMED";
+      booking.status === "CONFIRMED" && isFutureBooking(booking);
 
     return (
-      <div
+      <article
         key={booking.id}
-        className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5"
+        className="overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]"
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-              {booking.service.name}
-            </h3>
+        <div className="p-5 sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 fill-none stroke-current stroke-[1.8]"
+                    aria-hidden="true"
+                  >
+                    <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+                    <path d="M7.5 3.5v3M16.5 3.5v3M3.5 9h17" />
+                  </svg>
+                </span>
 
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              {formatDate(booking.timeSlot.startsAt)}
-            </p>
+                <div>
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">
+                    {booking.service.name}
+                  </h3>
 
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              ساعت {formatTime(booking.timeSlot.startsAt)} تا{" "}
-              {formatTime(booking.timeSlot.endsAt)}
-            </p>
-          </div>
+                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                    {formatDate(booking.startsAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-          <span
-            className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${getStatusClasses(
-              booking.status,
-            )}`}
-          >
-            {statusLabels[booking.status]}
-          </span>
-        </div>
-
-        <div className="mt-5 grid gap-3 border-t border-[var(--border-subtle)] pt-4 sm:grid-cols-2">
-          <div>
-            <p className="text-xs text-[var(--text-secondary)]">مدت خدمات</p>
-
-            <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
-              {new Intl.NumberFormat("fa-IR").format(booking.service.duration)}{" "}
-              دقیقه
-            </p>
-          </div>
-
-          <div>
-            <p className="text-xs text-[var(--text-secondary)]">مبلغ</p>
-
-            <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
-              {formatPrice(booking.service.price)}
-            </p>
-          </div>
-        </div>
-
-        {canCancel && (
-          <div className="mt-5 border-t border-[var(--border-subtle)] pt-4">
-            <button
-              type="button"
-              onClick={() => void handleCancel(booking.id)}
-              disabled={cancellingId === booking.id}
-              className="rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            <span
+              className={`inline-flex w-fit rounded-full px-3 py-1.5 text-xs font-semibold ${getStatusClasses(
+                booking.status,
+              )}`}
             >
-              {cancellingId === booking.id ? "در حال لغو..." : "لغو نوبت"}
-            </button>
+              {statusLabels[booking.status]}
+            </span>
           </div>
-        )}
-      </div>
-    );
-  }
 
-  if (loading) {
-    return (
-      <section className="mt-8">
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6">
-          <p className="text-sm text-[var(--text-secondary)]">
-            در حال دریافت نوبت‌ها...
-          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl bg-[var(--bg-card-warm)] p-4">
+              <p className="text-xs text-[var(--text-secondary)]">ساعت نوبت</p>
+
+              <p className="mt-1 text-sm font-semibold">
+                {formatTime(booking.startsAt)} تا {formatTime(booking.endsAt)}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-[var(--bg-card-warm)] p-4">
+              <p className="text-xs text-[var(--text-secondary)]">مدت خدمات</p>
+
+              <p className="mt-1 text-sm font-semibold">
+                {new Intl.NumberFormat("fa-IR").format(
+                  booking.service.duration,
+                )}{" "}
+                دقیقه
+              </p>
+            </div>
+          </div>
+
+          {canCancel && (
+            <div className="mt-5 flex justify-end border-t border-[var(--border-subtle)] pt-5">
+              <button
+                type="button"
+                onClick={() => void handleCancel(booking.id)}
+                disabled={cancellingId === booking.id}
+                className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {cancellingId === booking.id ? "در حال لغو..." : "لغو نوبت"}
+              </button>
+            </div>
+          )}
         </div>
-      </section>
+      </article>
     );
   }
 
   return (
-    <section className="mt-8">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-[var(--text-primary)]">
-          نوبت‌های من
-        </h2>
+    <section>
+      <div className="mb-7">
+        <p className="text-sm font-medium text-[var(--brand-crimson)]">
+          برنامه شما
+        </p>
 
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">
-          نوبت‌های آینده و سوابق نوبت‌های شما
+        <h2 className="mt-1 text-2xl font-bold">نوبت‌های من</h2>
+
+        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+          نوبت‌های آینده و سوابق خدمات شما در این بخش نمایش داده می‌شود.
         </p>
       </div>
 
@@ -295,29 +246,55 @@ export function MyBookings() {
         </div>
       )}
 
-      {upcomingBookings.length > 0 && (
+      {upcomingBookings.length > 0 ? (
         <div>
-          <h3 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">
-            نوبت‌های آینده
-          </h3>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="text-lg font-bold">نوبت‌های آینده</h3>
+
+            <span className="rounded-full bg-[var(--brand-crimson-light)] px-3 py-1 text-xs font-semibold text-[var(--brand-crimson-dark)]">
+              {new Intl.NumberFormat("fa-IR").format(upcomingBookings.length)}{" "}
+              نوبت
+            </span>
+          </div>
 
           <div className="space-y-4">{upcomingBookings.map(renderBooking)}</div>
         </div>
-      )}
+      ) : (
+        <div className="rounded-2xl border border-dashed border-[var(--border-beige)] bg-[var(--bg-card-warm)] p-7 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-6 w-6 fill-none stroke-current stroke-[1.8]"
+              aria-hidden="true"
+            >
+              <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+              <path d="M7.5 3.5v3M16.5 3.5v3M3.5 9h17" />
+            </svg>
+          </div>
 
-      {upcomingBookings.length === 0 && (
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] p-6">
-          <p className="text-sm text-[var(--text-secondary)]">
-            در حال حاضر نوبت آینده‌ای ندارید.
+          <p className="mt-4 font-semibold">هنوز نوبت آینده‌ای ندارید</p>
+
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--text-secondary)]">
+            برای رزرو خدمات موردنظرتان می‌توانید از صفحه رزرو نوبت استفاده کنید.
           </p>
+
+          <Link
+            href="/#booking"
+            className="mt-5 inline-flex rounded-xl bg-[var(--brand-crimson)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-crimson-hover)]"
+          >
+            رزرو نوبت
+          </Link>
         </div>
       )}
 
       {pastBookings.length > 0 && (
         <div className="mt-10">
-          <h3 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">
-            سوابق نوبت‌ها
-          </h3>
+          <div className="mb-4">
+            <h3 className="text-lg font-bold">سوابق نوبت‌ها</h3>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              خدمات قبلی و نوبت‌های لغوشده شما
+            </p>
+          </div>
 
           <div className="space-y-4">{pastBookings.map(renderBooking)}</div>
         </div>

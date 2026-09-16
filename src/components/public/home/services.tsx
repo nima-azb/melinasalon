@@ -71,16 +71,7 @@ export function Services() {
                   {service.description}
                 </p>
 
-                <div className="mt-5 flex items-center justify-between gap-3 border-t border-[var(--border-subtle)] pt-4">
-                  <div>
-                    <p className="text-[10px] text-[var(--text-secondary)]">
-                      قیمت
-                    </p>
-                    <p className="mt-1 text-sm font-bold text-[var(--brand-crimson)]">
-                      {service.price}
-                    </p>
-                  </div>
-
+                <div className="mt-5 flex justify-end border-t border-[var(--border-subtle)] pt-4">
                   <Link
                     href={`/booking?service=${service.id}`}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand-crimson-light)] px-3.5 py-2 text-xs font-semibold text-[var(--brand-crimson)] transition-colors hover:bg-[var(--brand-crimson)] hover:text-white"

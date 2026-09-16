@@ -1058,10 +1058,10 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const UserScalarFieldEnum = {
   id: 'id',
   phoneNumber: 'phoneNumber',
-  fullName: 'fullName',
-  birthDate: 'birthDate',
   role: 'role',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  birthDate: 'birthDate',
+  fullName: 'fullName'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -1074,9 +1074,9 @@ export const OtpCodeScalarFieldEnum = {
   expiresAt: 'expiresAt',
   attempts: 'attempts',
   createdAt: 'createdAt',
-  purpose: 'purpose',
+  birthDate: 'birthDate',
   fullName: 'fullName',
-  birthDate: 'birthDate'
+  purpose: 'purpose'
 } as const
 
 export type OtpCodeScalarFieldEnum = (typeof OtpCodeScalarFieldEnum)[keyof typeof OtpCodeScalarFieldEnum]
@@ -1096,7 +1096,6 @@ export const ServiceScalarFieldEnum = {
   name: 'name',
   description: 'description',
   duration: 'duration',
-  price: 'price',
   isActive: 'isActive',
   createdAt: 'createdAt'
 } as const
@@ -1119,11 +1118,11 @@ export const BookingScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   serviceId: 'serviceId',
-  startsAt: 'startsAt',
-  endsAt: 'endsAt',
   status: 'status',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  endsAt: 'endsAt',
+  startsAt: 'startsAt'
 } as const
 
 export type BookingScalarFieldEnum = (typeof BookingScalarFieldEnum)[keyof typeof BookingScalarFieldEnum]
@@ -1132,11 +1131,11 @@ export type BookingScalarFieldEnum = (typeof BookingScalarFieldEnum)[keyof typeo
 export const GenerationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  workflowType: 'workflowType',
   originalPhotoUrl: 'originalPhotoUrl',
   resultPhotoUrl: 'resultPhotoUrl',
   styleChosen: 'styleChosen',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  workflowType: 'workflowType'
 } as const
 
 export type GenerationScalarFieldEnum = (typeof GenerationScalarFieldEnum)[keyof typeof GenerationScalarFieldEnum]
@@ -1196,20 +1195,6 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
- * Reference to a field of type 'DateTime'
- */
-export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-/**
- * Reference to a field of type 'DateTime[]'
- */
-export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-/**
  * Reference to a field of type 'UserRole'
  */
 export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole'>
@@ -1220,6 +1205,20 @@ export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
  * Reference to a field of type 'UserRole[]'
  */
 export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DateTime'
+ */
+export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+/**
+ * Reference to a field of type 'DateTime[]'
+ */
+export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
     
 
 

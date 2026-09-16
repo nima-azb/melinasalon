@@ -41,9 +41,9 @@ export type OtpCodeMinAggregateOutputType = {
   expiresAt: Date | null
   attempts: number | null
   createdAt: Date | null
-  purpose: $Enums.OtpPurpose | null
-  fullName: string | null
   birthDate: Date | null
+  fullName: string | null
+  purpose: $Enums.OtpPurpose | null
 }
 
 export type OtpCodeMaxAggregateOutputType = {
@@ -53,9 +53,9 @@ export type OtpCodeMaxAggregateOutputType = {
   expiresAt: Date | null
   attempts: number | null
   createdAt: Date | null
-  purpose: $Enums.OtpPurpose | null
-  fullName: string | null
   birthDate: Date | null
+  fullName: string | null
+  purpose: $Enums.OtpPurpose | null
 }
 
 export type OtpCodeCountAggregateOutputType = {
@@ -65,9 +65,9 @@ export type OtpCodeCountAggregateOutputType = {
   expiresAt: number
   attempts: number
   createdAt: number
-  purpose: number
-  fullName: number
   birthDate: number
+  fullName: number
+  purpose: number
   _all: number
 }
 
@@ -87,9 +87,9 @@ export type OtpCodeMinAggregateInputType = {
   expiresAt?: true
   attempts?: true
   createdAt?: true
-  purpose?: true
-  fullName?: true
   birthDate?: true
+  fullName?: true
+  purpose?: true
 }
 
 export type OtpCodeMaxAggregateInputType = {
@@ -99,9 +99,9 @@ export type OtpCodeMaxAggregateInputType = {
   expiresAt?: true
   attempts?: true
   createdAt?: true
-  purpose?: true
-  fullName?: true
   birthDate?: true
+  fullName?: true
+  purpose?: true
 }
 
 export type OtpCodeCountAggregateInputType = {
@@ -111,9 +111,9 @@ export type OtpCodeCountAggregateInputType = {
   expiresAt?: true
   attempts?: true
   createdAt?: true
-  purpose?: true
-  fullName?: true
   birthDate?: true
+  fullName?: true
+  purpose?: true
   _all?: true
 }
 
@@ -210,9 +210,9 @@ export type OtpCodeGroupByOutputType = {
   expiresAt: Date
   attempts: number
   createdAt: Date
-  purpose: $Enums.OtpPurpose
-  fullName: string | null
   birthDate: Date | null
+  fullName: string | null
+  purpose: $Enums.OtpPurpose
   _count: OtpCodeCountAggregateOutputType | null
   _avg: OtpCodeAvgAggregateOutputType | null
   _sum: OtpCodeSumAggregateOutputType | null
@@ -245,9 +245,9 @@ export type OtpCodeWhereInput = {
   expiresAt?: Prisma.DateTimeFilter<"OtpCode"> | Date | string
   attempts?: Prisma.IntFilter<"OtpCode"> | number
   createdAt?: Prisma.DateTimeFilter<"OtpCode"> | Date | string
-  purpose?: Prisma.EnumOtpPurposeFilter<"OtpCode"> | $Enums.OtpPurpose
-  fullName?: Prisma.StringNullableFilter<"OtpCode"> | string | null
   birthDate?: Prisma.DateTimeNullableFilter<"OtpCode"> | Date | string | null
+  fullName?: Prisma.StringNullableFilter<"OtpCode"> | string | null
+  purpose?: Prisma.EnumOtpPurposeFilter<"OtpCode"> | $Enums.OtpPurpose
 }
 
 export type OtpCodeOrderByWithRelationInput = {
@@ -257,9 +257,9 @@ export type OtpCodeOrderByWithRelationInput = {
   expiresAt?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  purpose?: Prisma.SortOrder
-  fullName?: Prisma.SortOrderInput | Prisma.SortOrder
   birthDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  fullName?: Prisma.SortOrderInput | Prisma.SortOrder
+  purpose?: Prisma.SortOrder
 }
 
 export type OtpCodeWhereUniqueInput = Prisma.AtLeast<{
@@ -272,9 +272,9 @@ export type OtpCodeWhereUniqueInput = Prisma.AtLeast<{
   expiresAt?: Prisma.DateTimeFilter<"OtpCode"> | Date | string
   attempts?: Prisma.IntFilter<"OtpCode"> | number
   createdAt?: Prisma.DateTimeFilter<"OtpCode"> | Date | string
-  purpose?: Prisma.EnumOtpPurposeFilter<"OtpCode"> | $Enums.OtpPurpose
-  fullName?: Prisma.StringNullableFilter<"OtpCode"> | string | null
   birthDate?: Prisma.DateTimeNullableFilter<"OtpCode"> | Date | string | null
+  fullName?: Prisma.StringNullableFilter<"OtpCode"> | string | null
+  purpose?: Prisma.EnumOtpPurposeFilter<"OtpCode"> | $Enums.OtpPurpose
 }, "id">
 
 export type OtpCodeOrderByWithAggregationInput = {
@@ -284,9 +284,9 @@ export type OtpCodeOrderByWithAggregationInput = {
   expiresAt?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  purpose?: Prisma.SortOrder
-  fullName?: Prisma.SortOrderInput | Prisma.SortOrder
   birthDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  fullName?: Prisma.SortOrderInput | Prisma.SortOrder
+  purpose?: Prisma.SortOrder
   _count?: Prisma.OtpCodeCountOrderByAggregateInput
   _avg?: Prisma.OtpCodeAvgOrderByAggregateInput
   _max?: Prisma.OtpCodeMaxOrderByAggregateInput
@@ -304,9 +304,9 @@ export type OtpCodeScalarWhereWithAggregatesInput = {
   expiresAt?: Prisma.DateTimeWithAggregatesFilter<"OtpCode"> | Date | string
   attempts?: Prisma.IntWithAggregatesFilter<"OtpCode"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"OtpCode"> | Date | string
-  purpose?: Prisma.EnumOtpPurposeWithAggregatesFilter<"OtpCode"> | $Enums.OtpPurpose
-  fullName?: Prisma.StringNullableWithAggregatesFilter<"OtpCode"> | string | null
   birthDate?: Prisma.DateTimeNullableWithAggregatesFilter<"OtpCode"> | Date | string | null
+  fullName?: Prisma.StringNullableWithAggregatesFilter<"OtpCode"> | string | null
+  purpose?: Prisma.EnumOtpPurposeWithAggregatesFilter<"OtpCode"> | $Enums.OtpPurpose
 }
 
 export type OtpCodeCreateInput = {
@@ -316,9 +316,9 @@ export type OtpCodeCreateInput = {
   expiresAt: Date | string
   attempts?: number
   createdAt?: Date | string
-  purpose?: $Enums.OtpPurpose
-  fullName?: string | null
   birthDate?: Date | string | null
+  fullName?: string | null
+  purpose?: $Enums.OtpPurpose
 }
 
 export type OtpCodeUncheckedCreateInput = {
@@ -328,9 +328,9 @@ export type OtpCodeUncheckedCreateInput = {
   expiresAt: Date | string
   attempts?: number
   createdAt?: Date | string
-  purpose?: $Enums.OtpPurpose
-  fullName?: string | null
   birthDate?: Date | string | null
+  fullName?: string | null
+  purpose?: $Enums.OtpPurpose
 }
 
 export type OtpCodeUpdateInput = {
@@ -340,9 +340,9 @@ export type OtpCodeUpdateInput = {
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  purpose?: Prisma.EnumOtpPurposeFieldUpdateOperationsInput | $Enums.OtpPurpose
-  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  purpose?: Prisma.EnumOtpPurposeFieldUpdateOperationsInput | $Enums.OtpPurpose
 }
 
 export type OtpCodeUncheckedUpdateInput = {
@@ -352,9 +352,9 @@ export type OtpCodeUncheckedUpdateInput = {
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  purpose?: Prisma.EnumOtpPurposeFieldUpdateOperationsInput | $Enums.OtpPurpose
-  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  purpose?: Prisma.EnumOtpPurposeFieldUpdateOperationsInput | $Enums.OtpPurpose
 }
 
 export type OtpCodeCreateManyInput = {
@@ -364,9 +364,9 @@ export type OtpCodeCreateManyInput = {
   expiresAt: Date | string
   attempts?: number
   createdAt?: Date | string
-  purpose?: $Enums.OtpPurpose
-  fullName?: string | null
   birthDate?: Date | string | null
+  fullName?: string | null
+  purpose?: $Enums.OtpPurpose
 }
 
 export type OtpCodeUpdateManyMutationInput = {
@@ -376,9 +376,9 @@ export type OtpCodeUpdateManyMutationInput = {
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  purpose?: Prisma.EnumOtpPurposeFieldUpdateOperationsInput | $Enums.OtpPurpose
-  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  purpose?: Prisma.EnumOtpPurposeFieldUpdateOperationsInput | $Enums.OtpPurpose
 }
 
 export type OtpCodeUncheckedUpdateManyInput = {
@@ -388,9 +388,9 @@ export type OtpCodeUncheckedUpdateManyInput = {
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  purpose?: Prisma.EnumOtpPurposeFieldUpdateOperationsInput | $Enums.OtpPurpose
-  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  purpose?: Prisma.EnumOtpPurposeFieldUpdateOperationsInput | $Enums.OtpPurpose
 }
 
 export type OtpCodeCountOrderByAggregateInput = {
@@ -400,9 +400,9 @@ export type OtpCodeCountOrderByAggregateInput = {
   expiresAt?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  purpose?: Prisma.SortOrder
-  fullName?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
+  fullName?: Prisma.SortOrder
+  purpose?: Prisma.SortOrder
 }
 
 export type OtpCodeAvgOrderByAggregateInput = {
@@ -416,9 +416,9 @@ export type OtpCodeMaxOrderByAggregateInput = {
   expiresAt?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  purpose?: Prisma.SortOrder
-  fullName?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
+  fullName?: Prisma.SortOrder
+  purpose?: Prisma.SortOrder
 }
 
 export type OtpCodeMinOrderByAggregateInput = {
@@ -428,9 +428,9 @@ export type OtpCodeMinOrderByAggregateInput = {
   expiresAt?: Prisma.SortOrder
   attempts?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  purpose?: Prisma.SortOrder
-  fullName?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
+  fullName?: Prisma.SortOrder
+  purpose?: Prisma.SortOrder
 }
 
 export type OtpCodeSumOrderByAggregateInput = {
@@ -458,9 +458,9 @@ export type OtpCodeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   expiresAt?: boolean
   attempts?: boolean
   createdAt?: boolean
-  purpose?: boolean
-  fullName?: boolean
   birthDate?: boolean
+  fullName?: boolean
+  purpose?: boolean
 }, ExtArgs["result"]["otpCode"]>
 
 export type OtpCodeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -470,9 +470,9 @@ export type OtpCodeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   expiresAt?: boolean
   attempts?: boolean
   createdAt?: boolean
-  purpose?: boolean
-  fullName?: boolean
   birthDate?: boolean
+  fullName?: boolean
+  purpose?: boolean
 }, ExtArgs["result"]["otpCode"]>
 
 export type OtpCodeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -482,9 +482,9 @@ export type OtpCodeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   expiresAt?: boolean
   attempts?: boolean
   createdAt?: boolean
-  purpose?: boolean
-  fullName?: boolean
   birthDate?: boolean
+  fullName?: boolean
+  purpose?: boolean
 }, ExtArgs["result"]["otpCode"]>
 
 export type OtpCodeSelectScalar = {
@@ -494,12 +494,12 @@ export type OtpCodeSelectScalar = {
   expiresAt?: boolean
   attempts?: boolean
   createdAt?: boolean
-  purpose?: boolean
-  fullName?: boolean
   birthDate?: boolean
+  fullName?: boolean
+  purpose?: boolean
 }
 
-export type OtpCodeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "phoneNumber" | "codeHash" | "expiresAt" | "attempts" | "createdAt" | "purpose" | "fullName" | "birthDate", ExtArgs["result"]["otpCode"]>
+export type OtpCodeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "phoneNumber" | "codeHash" | "expiresAt" | "attempts" | "createdAt" | "birthDate" | "fullName" | "purpose", ExtArgs["result"]["otpCode"]>
 
 export type $OtpCodePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "OtpCode"
@@ -511,9 +511,9 @@ export type $OtpCodePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     expiresAt: Date
     attempts: number
     createdAt: Date
-    purpose: $Enums.OtpPurpose
-    fullName: string | null
     birthDate: Date | null
+    fullName: string | null
+    purpose: $Enums.OtpPurpose
   }, ExtArgs["result"]["otpCode"]>
   composites: {}
 }
@@ -943,9 +943,9 @@ export interface OtpCodeFieldRefs {
   readonly expiresAt: Prisma.FieldRef<"OtpCode", 'DateTime'>
   readonly attempts: Prisma.FieldRef<"OtpCode", 'Int'>
   readonly createdAt: Prisma.FieldRef<"OtpCode", 'DateTime'>
-  readonly purpose: Prisma.FieldRef<"OtpCode", 'OtpPurpose'>
-  readonly fullName: Prisma.FieldRef<"OtpCode", 'String'>
   readonly birthDate: Prisma.FieldRef<"OtpCode", 'DateTime'>
+  readonly fullName: Prisma.FieldRef<"OtpCode", 'String'>
+  readonly purpose: Prisma.FieldRef<"OtpCode", 'OtpPurpose'>
 }
     
 

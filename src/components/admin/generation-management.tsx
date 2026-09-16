@@ -1,16 +1,21 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
+
+type WorkflowType = "CUSTOM" | "RECOMMENDATION";
 
 type Generation = {
   id: string;
   userId: string;
+  workflowType: WorkflowType;
   originalPhotoUrl: string;
   resultPhotoUrl: string;
   styleChosen: string | null;
   createdAt: string;
   user: {
     id: string;
+    fullName?: string | null;
     phoneNumber: string;
   };
 };
@@ -20,8 +25,27 @@ type GenerationWithImages = Generation & {
   resultUrl: string;
 };
 
+type CustomStyle = {
+  hairColor?: string;
+  hairstyle?: string;
+  makeup?: string;
+};
+
+type RecommendationStyle = {
+  type?: string;
+  lookCount?: number;
+  look1?: string;
+  look2?: string;
+};
+
 function formatDate(date: string) {
-  return new Date(date).toLocaleString("fa-IR");
+  return new Intl.DateTimeFormat("fa-IR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(date));
 }
 
 function parseStyle(styleChosen: string | null) {
@@ -30,14 +54,34 @@ function parseStyle(styleChosen: string | null) {
   }
 
   try {
-    return JSON.parse(styleChosen) as {
-      hairColor?: string;
-      hairstyle?: string;
-      makeup?: string;
-    };
+    return JSON.parse(styleChosen) as CustomStyle | RecommendationStyle | null;
   } catch {
     return null;
   }
+}
+
+function isRecommendationStyle(
+  style: CustomStyle | RecommendationStyle | null,
+): style is RecommendationStyle {
+  return Boolean(
+    style &&
+    ("type" in style ||
+      "lookCount" in style ||
+      "look1" in style ||
+      "look2" in style),
+  );
+}
+
+function getWorkflowLabel(workflowType: WorkflowType) {
+  return workflowType === "RECOMMENDATION"
+    ? "پیشنهاد هوش مصنوعی"
+    : "استایل اختصاصی";
+}
+
+function getWorkflowClass(workflowType: WorkflowType) {
+  return workflowType === "RECOMMENDATION"
+    ? "bg-purple-100 text-purple-700"
+    : "bg-blue-100 text-blue-700";
 }
 
 export function GenerationManagement() {
@@ -50,6 +94,8 @@ export function GenerationManagement() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadGenerations() {
       try {
         setLoading(true);
@@ -65,8 +111,14 @@ export function GenerationManagement() {
           throw new Error(data.message || "Failed to load generations.");
         }
 
-        setGenerations(data.generations);
+        if (!cancelled) {
+          setGenerations(data.generations ?? []);
+        }
       } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
         console.error("Failed to load generations:", error);
 
         setError(
@@ -75,11 +127,17 @@ export function GenerationManagement() {
             : "Failed to load generations.",
         );
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
-    loadGenerations();
+    void loadGenerations();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function loadImages(generation: Generation) {
@@ -132,34 +190,39 @@ export function GenerationManagement() {
 
   if (loading) {
     return (
-      <section className="mt-8 rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm">
+      <section
+        dir="rtl"
+        className="mt-8 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6 shadow-sm"
+      >
         <h2 className="text-xl font-bold text-[var(--text-primary)]">
-          AI Hairdresser Generations
+          تصاویر هوش مصنوعی
         </h2>
 
         <p className="mt-4 text-sm text-[var(--text-secondary)]">
-          Loading generations...
+          در حال دریافت تصاویر...
         </p>
       </section>
     );
   }
 
   return (
-    <section className="mt-8 rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <section
+      dir="rtl"
+      className="mt-8 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6 shadow-sm"
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-bold text-[var(--text-primary)]">
-            AI Hairdresser Generations
+            تصاویر هوش مصنوعی
           </h2>
 
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Review AI hairstyle generations created by users.
+            مشاهده تصاویر تولیدشده توسط کاربران و جزئیات هر درخواست
           </p>
         </div>
 
-        <div className="rounded-full bg-[var(--bg-cream)] px-4 py-2 text-sm font-medium text-[var(--text-primary)]">
-          {generations.length} generation
-          {generations.length === 1 ? "" : "s"}
+        <div className="rounded-full bg-[var(--bg-card-warm)] px-4 py-2 text-sm font-medium text-[var(--text-primary)]">
+          {new Intl.NumberFormat("fa-IR").format(generations.length)} تصویر
         </div>
       </div>
 
@@ -170,9 +233,9 @@ export function GenerationManagement() {
       )}
 
       {generations.length === 0 ? (
-        <div className="mt-6 rounded-xl border border-dashed border-[var(--border)] p-8 text-center">
+        <div className="mt-6 rounded-xl border border-dashed border-[var(--border-subtle)] p-8 text-center">
           <p className="text-sm text-[var(--text-secondary)]">
-            No AI generations have been created yet.
+            هنوز تصویری توسط کاربران تولید نشده است.
           </p>
         </div>
       ) : (
@@ -181,53 +244,69 @@ export function GenerationManagement() {
             const generationImages = images[generation.id];
             const style = parseStyle(generation.styleChosen);
             const isImageLoading = imageLoading[generation.id];
+            const isRecommendation =
+              generation.workflowType === "RECOMMENDATION";
 
             return (
               <article
                 key={generation.id}
-                className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-cream)]"
+                className="overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)]"
               >
-                <div className="grid gap-6 p-5 lg:grid-cols-[1fr_320px]">
+                <div className="grid gap-6 p-5 lg:grid-cols-[1fr_360px]">
                   <div>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <h3 className="font-semibold text-[var(--text-primary)]">
-                          Generation {generation.id}
-                        </h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold text-[var(--text-primary)]">
+                            تولید تصویر
+                          </h3>
 
-                        <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                          {formatDate(generation.createdAt)}
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-medium ${getWorkflowClass(
+                              generation.workflowType,
+                            )}`}
+                          >
+                            {getWorkflowLabel(generation.workflowType)}
+                          </span>
+                        </div>
+
+                        <p className="mt-2 text-xs text-[var(--text-secondary)]">
+                          شناسه: {generation.id}
                         </p>
                       </div>
 
                       <button
                         type="button"
-                        onClick={() => loadImages(generation)}
+                        onClick={() => void loadImages(generation)}
                         disabled={isImageLoading}
                         className="rounded-xl bg-[var(--text-primary)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isImageLoading
-                          ? "Loading images..."
+                          ? "در حال دریافت..."
                           : generationImages
-                            ? "Images loaded"
-                            : "Load images"}
+                            ? "تصاویر دریافت شد"
+                            : "نمایش تصاویر"}
                       </button>
                     </div>
 
                     <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                      <div className="rounded-xl bg-white p-4">
+                      <div className="rounded-xl bg-[var(--bg-card)] p-4">
                         <p className="text-xs text-[var(--text-secondary)]">
-                          User
+                          مشتری
                         </p>
 
-                        <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
+                        <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                          {generation.user.fullName || "بدون نام"}
+                        </p>
+
+                        <p className="mt-1 text-sm text-[var(--text-secondary)]">
                           {generation.user.phoneNumber}
                         </p>
                       </div>
 
-                      <div className="rounded-xl bg-white p-4">
+                      <div className="rounded-xl bg-[var(--bg-card)] p-4">
                         <p className="text-xs text-[var(--text-secondary)]">
-                          Created
+                          تاریخ تولید
                         </p>
 
                         <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
@@ -236,49 +315,97 @@ export function GenerationManagement() {
                       </div>
                     </div>
 
-                    {style && (
-                      <div className="mt-4 rounded-xl bg-white p-4">
+                    {isRecommendation ? (
+                      <div className="mt-4 rounded-xl bg-[var(--bg-card)] p-4">
                         <p className="text-sm font-semibold text-[var(--text-primary)]">
-                          Selected style
+                          پیشنهادهای شخصی‌سازی‌شده
                         </p>
 
-                        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                          <div>
-                            <p className="text-xs text-[var(--text-secondary)]">
-                              Hair color
-                            </p>
-                            <p className="mt-1 text-sm text-[var(--text-primary)]">
-                              {style.hairColor || "—"}
-                            </p>
-                          </div>
+                        <p className="mt-1 text-xs leading-6 text-[var(--text-secondary)]">
+                          این تصویر شامل دو استایل متفاوت پیشنهادی بر اساس
+                          ویژگی‌های قابل مشاهده چهره کاربر است.
+                        </p>
 
-                          <div>
-                            <p className="text-xs text-[var(--text-secondary)]">
-                              Hairstyle
-                            </p>
-                            <p className="mt-1 text-sm text-[var(--text-primary)]">
-                              {style.hairstyle || "—"}
-                            </p>
-                          </div>
+                        {isRecommendationStyle(style) && (
+                          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] p-4">
+                              <p className="text-xs font-medium text-[var(--text-secondary)]">
+                                Look 1
+                              </p>
 
-                          <div>
-                            <p className="text-xs text-[var(--text-secondary)]">
-                              Makeup
-                            </p>
-                            <p className="mt-1 text-sm text-[var(--text-primary)]">
-                              {style.makeup || "—"}
-                            </p>
+                              <p className="mt-2 text-sm leading-6 text-[var(--text-primary)]">
+                                {style.look1 ||
+                                  "استایل پیشنهادی اول در تصویر نتیجه نمایش داده می‌شود."}
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] p-4">
+                              <p className="text-xs font-medium text-[var(--text-secondary)]">
+                                Look 2
+                              </p>
+
+                              <p className="mt-2 text-sm leading-6 text-[var(--text-primary)]">
+                                {style.look2 ||
+                                  "استایل پیشنهادی دوم در تصویر نتیجه نمایش داده می‌شود."}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      style && (
+                        <div className="mt-4 rounded-xl bg-[var(--bg-card)] p-4">
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">
+                            جزئیات استایل انتخاب‌شده
+                          </p>
+
+                          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                            <div>
+                              <p className="text-xs text-[var(--text-secondary)]">
+                                رنگ مو
+                              </p>
+
+                              <p className="mt-1 text-sm text-[var(--text-primary)]">
+                                {"hairColor" in style && style.hairColor
+                                  ? style.hairColor
+                                  : "—"}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-[var(--text-secondary)]">
+                                مدل مو
+                              </p>
+
+                              <p className="mt-1 text-sm text-[var(--text-primary)]">
+                                {"hairstyle" in style && style.hairstyle
+                                  ? style.hairstyle
+                                  : "—"}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-[var(--text-secondary)]">
+                                میکاپ
+                              </p>
+
+                              <p className="mt-1 text-sm text-[var(--text-primary)]">
+                                {"makeup" in style && style.makeup
+                                  ? style.makeup
+                                  : "—"}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )
                     )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="overflow-hidden rounded-xl bg-white">
+                    <div className="overflow-hidden rounded-xl bg-[var(--bg-card)]">
                       <div className="px-3 py-2">
                         <p className="text-xs font-medium text-[var(--text-secondary)]">
-                          Original
+                          تصویر اصلی
                         </p>
                       </div>
 
@@ -287,24 +414,29 @@ export function GenerationManagement() {
                           href={generationImages.originalUrl}
                           target="_blank"
                           rel="noreferrer"
+                          className="block"
                         >
-                          <img
-                            src={generationImages.originalUrl}
-                            alt="Original user photo"
-                            className="aspect-[3/4] w-full object-cover"
-                          />
+                          <div className="relative aspect-[3/4]">
+                            <Image
+                              src={generationImages.originalUrl}
+                              alt={`تصویر اصلی ${generation.user.fullName || "کاربر"}`}
+                              fill
+                              sizes="(max-width: 1024px) 50vw, 180px"
+                              className="object-cover transition-transform duration-300 hover:scale-105"
+                            />
+                          </div>
                         </a>
                       ) : (
-                        <div className="flex aspect-[3/4] items-center justify-center bg-[var(--bg-cream)] p-3 text-center text-xs text-[var(--text-secondary)]">
-                          Load images to view
+                        <div className="flex aspect-[3/4] items-center justify-center bg-[var(--bg-card-warm)] p-3 text-center text-xs text-[var(--text-secondary)]">
+                          برای مشاهده تصویر، روی «نمایش تصاویر» کلیک کنید.
                         </div>
                       )}
                     </div>
 
-                    <div className="overflow-hidden rounded-xl bg-white">
+                    <div className="overflow-hidden rounded-xl bg-[var(--bg-card)]">
                       <div className="px-3 py-2">
                         <p className="text-xs font-medium text-[var(--text-secondary)]">
-                          AI Result
+                          نتیجه هوش مصنوعی
                         </p>
                       </div>
 
@@ -313,16 +445,21 @@ export function GenerationManagement() {
                           href={generationImages.resultUrl}
                           target="_blank"
                           rel="noreferrer"
+                          className="block"
                         >
-                          <img
-                            src={generationImages.resultUrl}
-                            alt="AI generated result"
-                            className="aspect-[3/4] w-full object-cover"
-                          />
+                          <div className="relative aspect-[3/4]">
+                            <Image
+                              src={generationImages.resultUrl}
+                              alt={`نتیجه هوش مصنوعی ${generation.user.fullName || "کاربر"}`}
+                              fill
+                              sizes="(max-width: 1024px) 50vw, 180px"
+                              className="object-cover transition-transform duration-300 hover:scale-105"
+                            />
+                          </div>
                         </a>
                       ) : (
-                        <div className="flex aspect-[3/4] items-center justify-center bg-[var(--bg-cream)] p-3 text-center text-xs text-[var(--text-secondary)]">
-                          Load images to view
+                        <div className="flex aspect-[3/4] items-center justify-center bg-[var(--bg-card-warm)] p-3 text-center text-xs text-[var(--text-secondary)]">
+                          برای مشاهده تصویر، روی «نمایش تصاویر» کلیک کنید.
                         </div>
                       )}
                     </div>

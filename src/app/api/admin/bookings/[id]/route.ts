@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
+
 import { BookingStatus } from "@/generated/prisma/client";
 
 const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
@@ -15,6 +16,32 @@ type RouteContext = {
     id: string;
   }>;
 };
+
+const BOOKING_SELECT = {
+  id: true,
+  status: true,
+  startsAt: true,
+  endsAt: true,
+  createdAt: true,
+  updatedAt: true,
+  user: {
+    select: {
+      id: true,
+      phoneNumber: true,
+      fullName: true,
+      birthDate: true,
+    },
+  },
+  service: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      duration: true,
+      isActive: true,
+    },
+  },
+} as const;
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
@@ -72,10 +99,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       select: {
         id: true,
         status: true,
-        startsAt: true,
-        endsAt: true,
-        userId: true,
-        serviceId: true,
       },
     });
 
@@ -91,7 +114,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const allowedStatuses = ALLOWED_TRANSITIONS[booking.status];
 
-    if (!allowedStatuses.includes(requestedStatus)) {
+    if (!allowedStatuses.includes(requestedStatus as BookingStatus)) {
       return NextResponse.json(
         {
           success: false,
@@ -106,28 +129,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         id: booking.id,
       },
       data: {
-        status: requestedStatus,
+        status: requestedStatus as BookingStatus,
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            phoneNumber: true,
-            fullName: true,
-            birthDate: true,
-          },
-        },
-        service: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            duration: true,
-            price: true,
-            isActive: true,
-          },
-        },
-      },
+      select: BOOKING_SELECT,
     });
 
     return NextResponse.json({
@@ -171,26 +175,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       where: {
         id,
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            phoneNumber: true,
-            fullName: true,
-            birthDate: true,
-          },
-        },
-        service: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            duration: true,
-            price: true,
-            isActive: true,
-          },
-        },
-      },
+      select: BOOKING_SELECT,
     });
 
     if (!booking) {

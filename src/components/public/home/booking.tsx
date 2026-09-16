@@ -9,7 +9,6 @@ type Service = {
   name: string;
   description: string | null;
   duration: number;
-  price: number;
   isActive: boolean;
 };
 
@@ -43,7 +42,6 @@ type BookingResponse = {
       id: string;
       name: string;
       duration: number;
-      price: number;
     };
   };
 };
@@ -62,10 +60,6 @@ function formatTime(dateString: string) {
     minute: "2-digit",
     hour12: false,
   }).format(new Date(dateString));
-}
-
-function formatPrice(price: number) {
-  return new Intl.NumberFormat("fa-IR").format(price);
 }
 
 function getDateKey(date: Date) {
@@ -175,7 +169,7 @@ export function Booking() {
       }
     }
 
-    loadServices();
+    void loadServices();
 
     return () => {
       cancelled = true;
@@ -188,7 +182,6 @@ export function Booking() {
    * The service duration determines which start times are available,
    * therefore both date and service are required.
    */
-
   useEffect(() => {
     const serviceId = selectedService;
 
@@ -238,7 +231,7 @@ export function Booking() {
       }
     }
 
-    loadAvailability(serviceId);
+    void loadAvailability(serviceId);
 
     return () => {
       cancelled = true;
@@ -284,7 +277,7 @@ export function Booking() {
       return;
     }
 
-    const serviceId: string = selectedService;
+    const serviceId = selectedService;
 
     try {
       const params = new URLSearchParams();
@@ -456,8 +449,6 @@ export function Booking() {
 
                           <p className="mt-3 text-xs text-[var(--text-secondary)]">
                             {service.duration} دقیقه
-                            {" · "}
-                            {formatPrice(service.price)} تومان
                           </p>
                         </button>
                       );
@@ -491,6 +482,8 @@ export function Booking() {
                   {dates.slice(0, 4).map((date) => {
                     const active = selectedDate === date.value;
 
+                    const dateParts = date.label.split("،");
+
                     return (
                       <button
                         key={date.id}
@@ -504,11 +497,11 @@ export function Booking() {
                         }`}
                       >
                         <p className="text-xs font-semibold text-[var(--text-primary)]">
-                          {date.label.split("،")[0]}
+                          {dateParts[0]}
                         </p>
 
                         <p className="mt-1 text-[10px] text-[var(--text-secondary)]">
-                          {date.label.split("،").slice(1).join("،")}
+                          {dateParts.slice(1).join("،")}
                         </p>
                       </button>
                     );
@@ -574,8 +567,8 @@ export function Booking() {
 
               {bookingSuccess && (
                 <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm leading-6 text-green-700">
-                  نوبت شما با موفقیت ثبت شد و تأیید گردید. اطلاعات نوبت از طریق
-                  پیامک برای شماره موبایل شما ارسال خواهد شد.
+                  نوبت شما با موفقیت ثبت و تأیید شد. اطلاعات نوبت در پنل کاربری
+                  شما قابل مشاهده است.
                 </div>
               )}
             </div>
@@ -617,23 +610,13 @@ export function Booking() {
                   </div>
 
                   {selectedServiceData && (
-                    <>
-                      <div>
-                        <p className="text-[10px] text-white/50">مدت زمان</p>
+                    <div>
+                      <p className="text-[10px] text-white/50">مدت زمان</p>
 
-                        <p className="mt-1 text-sm font-semibold">
-                          {selectedServiceData.duration} دقیقه
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-[10px] text-white/50">مبلغ</p>
-
-                        <p className="mt-1 text-sm font-semibold">
-                          {formatPrice(selectedServiceData.price)} تومان
-                        </p>
-                      </div>
-                    </>
+                      <p className="mt-1 text-sm font-semibold">
+                        {selectedServiceData.duration} دقیقه
+                      </p>
+                    </div>
                   )}
                 </div>
 
@@ -664,8 +647,8 @@ export function Booking() {
                   </button>
 
                   <p className="mt-3 text-center text-[10px] leading-5 text-white/50">
-                    پس از ثبت نوبت، اطلاعات رزرو برای شماره موبایل شما پیامک
-                    خواهد شد.
+                    پس از ثبت نوبت، اطلاعات آن در پنل کاربری شما نمایش داده
+                    می‌شود.
                   </p>
                 </div>
               </div>

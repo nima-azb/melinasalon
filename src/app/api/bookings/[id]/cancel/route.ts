@@ -25,26 +25,14 @@ export async function POST(_request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
 
-    if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Booking ID is required.",
-        },
-        { status: 400 },
-      );
-    }
-
     const booking = await prisma.booking.findFirst({
       where: {
         id,
         userId: user.id,
+        status: "CONFIRMED",
       },
       select: {
         id: true,
-        status: true,
-        startsAt: true,
-        endsAt: true,
       },
     });
 
@@ -52,33 +40,13 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Booking not found.",
+          message: "Booking not found or cannot be cancelled.",
         },
         { status: 404 },
       );
     }
 
-    if (booking.status !== "CONFIRMED") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Only confirmed bookings can be cancelled.",
-        },
-        { status: 409 },
-      );
-    }
-
-    if (booking.startsAt <= new Date()) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "A booking that has already started cannot be cancelled.",
-        },
-        { status: 409 },
-      );
-    }
-
-    const cancelledBooking = await prisma.booking.update({
+    const updatedBooking = await prisma.booking.update({
       where: {
         id: booking.id,
       },
@@ -91,7 +59,6 @@ export async function POST(_request: NextRequest, context: RouteContext) {
             id: true,
             name: true,
             duration: true,
-            price: true,
           },
         },
       },
@@ -99,7 +66,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       success: true,
-      booking: cancelledBooking,
+      booking: updatedBooking,
     });
   } catch (error) {
     console.error("POST /api/bookings/[id]/cancel error:", error);

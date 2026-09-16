@@ -10,13 +10,13 @@ datasource db {
 model User {
   id                   String                @id @default(cuid())
   phoneNumber          String                @unique
-  fullName             String?
-  birthDate            DateTime?
   role                 UserRole              @default(USER)
   createdAt            DateTime              @default(now())
+  birthDate            DateTime?
+  fullName             String?
+  aiGenerationRequests AiGenerationRequest[]
   bookings             Booking[]
   generations          Generation[]
-  aiGenerationRequests AiGenerationRequest[]
 
   @@map("users")
 }
@@ -28,9 +28,9 @@ model OtpCode {
   expiresAt   DateTime
   attempts    Int        @default(0)
   createdAt   DateTime   @default(now())
-  purpose     OtpPurpose @default(LOGIN)
-  fullName    String?
   birthDate   DateTime?
+  fullName    String?
+  purpose     OtpPurpose @default(LOGIN)
 
   @@index([phoneNumber])
   @@index([phoneNumber, expiresAt])
@@ -52,7 +52,6 @@ model Service {
   name        String
   description String?
   duration    Int
-  price       Int?
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   bookings    Booking[]
@@ -76,14 +75,13 @@ model Booking {
   id        String        @id @default(cuid())
   userId    String
   serviceId String
-  startsAt  DateTime
-  endsAt    DateTime
   status    BookingStatus @default(CONFIRMED)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  service Service @relation(fields: [serviceId], references: [id])
+  endsAt    DateTime
+  startsAt  DateTime
+  service   Service       @relation(fields: [serviceId], references: [id])
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([serviceId])
@@ -96,13 +94,12 @@ model Booking {
 model Generation {
   id               String         @id @default(cuid())
   userId           String
-  workflowType     AiWorkflowType @default(CUSTOM)
   originalPhotoUrl String
   resultPhotoUrl   String
   styleChosen      String?
   createdAt        DateTime       @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workflowType     AiWorkflowType @default(CUSTOM)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([userId, workflowType])
@@ -113,8 +110,7 @@ model AiGenerationRequest {
   id          String   @id @default(cuid())
   userId      String
   requestedAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, requestedAt])
   @@map("ai_generation_requests")

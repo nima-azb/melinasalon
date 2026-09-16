@@ -27,31 +27,31 @@ export type AggregateGeneration = {
 export type GenerationMinAggregateOutputType = {
   id: string | null
   userId: string | null
-  workflowType: $Enums.AiWorkflowType | null
   originalPhotoUrl: string | null
   resultPhotoUrl: string | null
   styleChosen: string | null
   createdAt: Date | null
+  workflowType: $Enums.AiWorkflowType | null
 }
 
 export type GenerationMaxAggregateOutputType = {
   id: string | null
   userId: string | null
-  workflowType: $Enums.AiWorkflowType | null
   originalPhotoUrl: string | null
   resultPhotoUrl: string | null
   styleChosen: string | null
   createdAt: Date | null
+  workflowType: $Enums.AiWorkflowType | null
 }
 
 export type GenerationCountAggregateOutputType = {
   id: number
   userId: number
-  workflowType: number
   originalPhotoUrl: number
   resultPhotoUrl: number
   styleChosen: number
   createdAt: number
+  workflowType: number
   _all: number
 }
 
@@ -59,31 +59,31 @@ export type GenerationCountAggregateOutputType = {
 export type GenerationMinAggregateInputType = {
   id?: true
   userId?: true
-  workflowType?: true
   originalPhotoUrl?: true
   resultPhotoUrl?: true
   styleChosen?: true
   createdAt?: true
+  workflowType?: true
 }
 
 export type GenerationMaxAggregateInputType = {
   id?: true
   userId?: true
-  workflowType?: true
   originalPhotoUrl?: true
   resultPhotoUrl?: true
   styleChosen?: true
   createdAt?: true
+  workflowType?: true
 }
 
 export type GenerationCountAggregateInputType = {
   id?: true
   userId?: true
-  workflowType?: true
   originalPhotoUrl?: true
   resultPhotoUrl?: true
   styleChosen?: true
   createdAt?: true
+  workflowType?: true
   _all?: true
 }
 
@@ -162,11 +162,11 @@ export type GenerationGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
 export type GenerationGroupByOutputType = {
   id: string
   userId: string
-  workflowType: $Enums.AiWorkflowType
   originalPhotoUrl: string
   resultPhotoUrl: string
   styleChosen: string | null
   createdAt: Date
+  workflowType: $Enums.AiWorkflowType
   _count: GenerationCountAggregateOutputType | null
   _min: GenerationMinAggregateOutputType | null
   _max: GenerationMaxAggregateOutputType | null
@@ -193,22 +193,22 @@ export type GenerationWhereInput = {
   NOT?: Prisma.GenerationWhereInput | Prisma.GenerationWhereInput[]
   id?: Prisma.StringFilter<"Generation"> | string
   userId?: Prisma.StringFilter<"Generation"> | string
-  workflowType?: Prisma.EnumAiWorkflowTypeFilter<"Generation"> | $Enums.AiWorkflowType
   originalPhotoUrl?: Prisma.StringFilter<"Generation"> | string
   resultPhotoUrl?: Prisma.StringFilter<"Generation"> | string
   styleChosen?: Prisma.StringNullableFilter<"Generation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Generation"> | Date | string
+  workflowType?: Prisma.EnumAiWorkflowTypeFilter<"Generation"> | $Enums.AiWorkflowType
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type GenerationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  workflowType?: Prisma.SortOrder
   originalPhotoUrl?: Prisma.SortOrder
   resultPhotoUrl?: Prisma.SortOrder
   styleChosen?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  workflowType?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -218,22 +218,22 @@ export type GenerationWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.GenerationWhereInput[]
   NOT?: Prisma.GenerationWhereInput | Prisma.GenerationWhereInput[]
   userId?: Prisma.StringFilter<"Generation"> | string
-  workflowType?: Prisma.EnumAiWorkflowTypeFilter<"Generation"> | $Enums.AiWorkflowType
   originalPhotoUrl?: Prisma.StringFilter<"Generation"> | string
   resultPhotoUrl?: Prisma.StringFilter<"Generation"> | string
   styleChosen?: Prisma.StringNullableFilter<"Generation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Generation"> | Date | string
+  workflowType?: Prisma.EnumAiWorkflowTypeFilter<"Generation"> | $Enums.AiWorkflowType
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
 
 export type GenerationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  workflowType?: Prisma.SortOrder
   originalPhotoUrl?: Prisma.SortOrder
   resultPhotoUrl?: Prisma.SortOrder
   styleChosen?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  workflowType?: Prisma.SortOrder
   _count?: Prisma.GenerationCountOrderByAggregateInput
   _max?: Prisma.GenerationMaxOrderByAggregateInput
   _min?: Prisma.GenerationMinOrderByAggregateInput
@@ -245,80 +245,80 @@ export type GenerationScalarWhereWithAggregatesInput = {
   NOT?: Prisma.GenerationScalarWhereWithAggregatesInput | Prisma.GenerationScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Generation"> | string
   userId?: Prisma.StringWithAggregatesFilter<"Generation"> | string
-  workflowType?: Prisma.EnumAiWorkflowTypeWithAggregatesFilter<"Generation"> | $Enums.AiWorkflowType
   originalPhotoUrl?: Prisma.StringWithAggregatesFilter<"Generation"> | string
   resultPhotoUrl?: Prisma.StringWithAggregatesFilter<"Generation"> | string
   styleChosen?: Prisma.StringNullableWithAggregatesFilter<"Generation"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Generation"> | Date | string
+  workflowType?: Prisma.EnumAiWorkflowTypeWithAggregatesFilter<"Generation"> | $Enums.AiWorkflowType
 }
 
 export type GenerationCreateInput = {
   id?: string
-  workflowType?: $Enums.AiWorkflowType
   originalPhotoUrl: string
   resultPhotoUrl: string
   styleChosen?: string | null
   createdAt?: Date | string
+  workflowType?: $Enums.AiWorkflowType
   user: Prisma.UserCreateNestedOneWithoutGenerationsInput
 }
 
 export type GenerationUncheckedCreateInput = {
   id?: string
   userId: string
-  workflowType?: $Enums.AiWorkflowType
   originalPhotoUrl: string
   resultPhotoUrl: string
   styleChosen?: string | null
   createdAt?: Date | string
+  workflowType?: $Enums.AiWorkflowType
 }
 
 export type GenerationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
   originalPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   resultPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   styleChosen?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
   user?: Prisma.UserUpdateOneRequiredWithoutGenerationsNestedInput
 }
 
 export type GenerationUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
   originalPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   resultPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   styleChosen?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
 }
 
 export type GenerationCreateManyInput = {
   id?: string
   userId: string
-  workflowType?: $Enums.AiWorkflowType
   originalPhotoUrl: string
   resultPhotoUrl: string
   styleChosen?: string | null
   createdAt?: Date | string
+  workflowType?: $Enums.AiWorkflowType
 }
 
 export type GenerationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
   originalPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   resultPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   styleChosen?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
 }
 
 export type GenerationUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
   originalPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   resultPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   styleChosen?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
 }
 
 export type GenerationListRelationFilter = {
@@ -334,31 +334,31 @@ export type GenerationOrderByRelationAggregateInput = {
 export type GenerationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  workflowType?: Prisma.SortOrder
   originalPhotoUrl?: Prisma.SortOrder
   resultPhotoUrl?: Prisma.SortOrder
   styleChosen?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  workflowType?: Prisma.SortOrder
 }
 
 export type GenerationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  workflowType?: Prisma.SortOrder
   originalPhotoUrl?: Prisma.SortOrder
   resultPhotoUrl?: Prisma.SortOrder
   styleChosen?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  workflowType?: Prisma.SortOrder
 }
 
 export type GenerationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  workflowType?: Prisma.SortOrder
   originalPhotoUrl?: Prisma.SortOrder
   resultPhotoUrl?: Prisma.SortOrder
   styleChosen?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  workflowType?: Prisma.SortOrder
 }
 
 export type GenerationCreateNestedManyWithoutUserInput = {
@@ -409,20 +409,20 @@ export type EnumAiWorkflowTypeFieldUpdateOperationsInput = {
 
 export type GenerationCreateWithoutUserInput = {
   id?: string
-  workflowType?: $Enums.AiWorkflowType
   originalPhotoUrl: string
   resultPhotoUrl: string
   styleChosen?: string | null
   createdAt?: Date | string
+  workflowType?: $Enums.AiWorkflowType
 }
 
 export type GenerationUncheckedCreateWithoutUserInput = {
   id?: string
-  workflowType?: $Enums.AiWorkflowType
   originalPhotoUrl: string
   resultPhotoUrl: string
   styleChosen?: string | null
   createdAt?: Date | string
+  workflowType?: $Enums.AiWorkflowType
 }
 
 export type GenerationCreateOrConnectWithoutUserInput = {
@@ -457,47 +457,47 @@ export type GenerationScalarWhereInput = {
   NOT?: Prisma.GenerationScalarWhereInput | Prisma.GenerationScalarWhereInput[]
   id?: Prisma.StringFilter<"Generation"> | string
   userId?: Prisma.StringFilter<"Generation"> | string
-  workflowType?: Prisma.EnumAiWorkflowTypeFilter<"Generation"> | $Enums.AiWorkflowType
   originalPhotoUrl?: Prisma.StringFilter<"Generation"> | string
   resultPhotoUrl?: Prisma.StringFilter<"Generation"> | string
   styleChosen?: Prisma.StringNullableFilter<"Generation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Generation"> | Date | string
+  workflowType?: Prisma.EnumAiWorkflowTypeFilter<"Generation"> | $Enums.AiWorkflowType
 }
 
 export type GenerationCreateManyUserInput = {
   id?: string
-  workflowType?: $Enums.AiWorkflowType
   originalPhotoUrl: string
   resultPhotoUrl: string
   styleChosen?: string | null
   createdAt?: Date | string
+  workflowType?: $Enums.AiWorkflowType
 }
 
 export type GenerationUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
   originalPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   resultPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   styleChosen?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
 }
 
 export type GenerationUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
   originalPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   resultPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   styleChosen?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
 }
 
 export type GenerationUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
   originalPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   resultPhotoUrl?: Prisma.StringFieldUpdateOperationsInput | string
   styleChosen?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workflowType?: Prisma.EnumAiWorkflowTypeFieldUpdateOperationsInput | $Enums.AiWorkflowType
 }
 
 
@@ -505,47 +505,47 @@ export type GenerationUncheckedUpdateManyWithoutUserInput = {
 export type GenerationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
-  workflowType?: boolean
   originalPhotoUrl?: boolean
   resultPhotoUrl?: boolean
   styleChosen?: boolean
   createdAt?: boolean
+  workflowType?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["generation"]>
 
 export type GenerationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
-  workflowType?: boolean
   originalPhotoUrl?: boolean
   resultPhotoUrl?: boolean
   styleChosen?: boolean
   createdAt?: boolean
+  workflowType?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["generation"]>
 
 export type GenerationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
-  workflowType?: boolean
   originalPhotoUrl?: boolean
   resultPhotoUrl?: boolean
   styleChosen?: boolean
   createdAt?: boolean
+  workflowType?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["generation"]>
 
 export type GenerationSelectScalar = {
   id?: boolean
   userId?: boolean
-  workflowType?: boolean
   originalPhotoUrl?: boolean
   resultPhotoUrl?: boolean
   styleChosen?: boolean
   createdAt?: boolean
+  workflowType?: boolean
 }
 
-export type GenerationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "workflowType" | "originalPhotoUrl" | "resultPhotoUrl" | "styleChosen" | "createdAt", ExtArgs["result"]["generation"]>
+export type GenerationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "originalPhotoUrl" | "resultPhotoUrl" | "styleChosen" | "createdAt" | "workflowType", ExtArgs["result"]["generation"]>
 export type GenerationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -564,11 +564,11 @@ export type $GenerationPayload<ExtArgs extends runtime.Types.Extensions.Internal
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     userId: string
-    workflowType: $Enums.AiWorkflowType
     originalPhotoUrl: string
     resultPhotoUrl: string
     styleChosen: string | null
     createdAt: Date
+    workflowType: $Enums.AiWorkflowType
   }, ExtArgs["result"]["generation"]>
   composites: {}
 }
@@ -995,11 +995,11 @@ export interface Prisma__GenerationClient<T, Null = never, ExtArgs extends runti
 export interface GenerationFieldRefs {
   readonly id: Prisma.FieldRef<"Generation", 'String'>
   readonly userId: Prisma.FieldRef<"Generation", 'String'>
-  readonly workflowType: Prisma.FieldRef<"Generation", 'AiWorkflowType'>
   readonly originalPhotoUrl: Prisma.FieldRef<"Generation", 'String'>
   readonly resultPhotoUrl: Prisma.FieldRef<"Generation", 'String'>
   readonly styleChosen: Prisma.FieldRef<"Generation", 'String'>
   readonly createdAt: Prisma.FieldRef<"Generation", 'DateTime'>
+  readonly workflowType: Prisma.FieldRef<"Generation", 'AiWorkflowType'>
 }
     
 

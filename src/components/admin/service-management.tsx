@@ -7,7 +7,6 @@ type Service = {
   name: string;
   description: string | null;
   duration: number;
-  price: number | null;
   isActive: boolean;
   createdAt: string;
 };
@@ -16,14 +15,12 @@ type ServiceForm = {
   name: string;
   description: string;
   duration: string;
-  price: string;
 };
 
 const emptyForm: ServiceForm = {
   name: "",
   description: "",
   duration: "60",
-  price: "",
 };
 
 export function ServiceManagement() {
@@ -37,7 +34,6 @@ export function ServiceManagement() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState("60");
-  const [price, setPrice] = useState("");
 
   const [editForm, setEditForm] = useState<ServiceForm>(emptyForm);
 
@@ -46,7 +42,7 @@ export function ServiceManagement() {
 
     async function fetchServices() {
       try {
-        const response = await fetch("/api/services");
+        const response = await fetch("/api/services?includeInactive=true");
         const data = await response.json();
 
         if (!response.ok || !data.success) {
@@ -92,7 +88,6 @@ export function ServiceManagement() {
           name: name.trim(),
           description: description.trim() || undefined,
           duration: Number(duration),
-          price: price ? Number(price) : undefined,
         }),
       });
 
@@ -107,11 +102,10 @@ export function ServiceManagement() {
       setName("");
       setDescription("");
       setDuration("60");
-      setPrice("");
     } catch (error) {
       console.error("Failed to create service:", error);
 
-      setError("خطا در ایجاد خدمت.");
+      setError(error instanceof Error ? error.message : "خطا در ایجاد خدمت.");
     } finally {
       setCreating(false);
     }
@@ -125,7 +119,6 @@ export function ServiceManagement() {
       name: service.name,
       description: service.description ?? "",
       duration: String(service.duration),
-      price: service.price !== null ? String(service.price) : "",
     });
   }
 
@@ -162,7 +155,6 @@ export function ServiceManagement() {
           name: editForm.name.trim(),
           description: editForm.description.trim() || null,
           duration: Number(editForm.duration),
-          price: editForm.price ? Number(editForm.price) : null,
         }),
       });
 
@@ -182,7 +174,7 @@ export function ServiceManagement() {
     } catch (error) {
       console.error("Failed to update service:", error);
 
-      setError("خطا در ویرایش خدمت.");
+      setError(error instanceof Error ? error.message : "خطا در ویرایش خدمت.");
     } finally {
       setSaving(false);
     }
@@ -216,7 +208,9 @@ export function ServiceManagement() {
     } catch (error) {
       console.error("Failed to toggle service:", error);
 
-      setError("خطا در تغییر وضعیت خدمت.");
+      setError(
+        error instanceof Error ? error.message : "خطا در تغییر وضعیت خدمت.",
+      );
     }
   }
 
@@ -317,27 +311,6 @@ export function ServiceManagement() {
                       />
                     </div>
 
-                    {/* Edit price */}
-                    <div>
-                      <label
-                        htmlFor={`edit-price-${service.id}`}
-                        className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
-                      >
-                        قیمت (تومان)
-                      </label>
-
-                      <input
-                        id={`edit-price-${service.id}`}
-                        type="number"
-                        min="0"
-                        value={editForm.price}
-                        onChange={(event) =>
-                          updateEditField("price", event.target.value)
-                        }
-                        className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)] focus:ring-3 focus:ring-[var(--brand-crimson)]/10"
-                      />
-                    </div>
-
                     {/* Edit actions */}
                     <div className="flex gap-3">
                       <button
@@ -375,7 +348,7 @@ export function ServiceManagement() {
 
                       <button
                         type="button"
-                        onClick={() => handleToggleService(service)}
+                        onClick={() => void handleToggleService(service)}
                         className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                           service.isActive
                             ? "bg-[var(--brand-crimson)]/10 text-[var(--brand-crimson)] hover:bg-[var(--brand-crimson)]/20"
@@ -387,14 +360,8 @@ export function ServiceManagement() {
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex gap-5 text-sm text-[var(--text-secondary)]">
+                      <div className="text-sm text-[var(--text-secondary)]">
                         <span>{service.duration} دقیقه</span>
-
-                        {service.price !== null && (
-                          <span>
-                            {service.price.toLocaleString("fa-IR")} تومان
-                          </span>
-                        )}
                       </div>
 
                       <button
@@ -479,26 +446,6 @@ export function ServiceManagement() {
               value={duration}
               onChange={(event) => setDuration(event.target.value)}
               required
-              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)] focus:ring-3 focus:ring-[var(--brand-crimson)]/10"
-            />
-          </div>
-
-          {/* Price */}
-          <div>
-            <label
-              htmlFor="service-price"
-              className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
-            >
-              قیمت (تومان)
-            </label>
-
-            <input
-              id="service-price"
-              name="price"
-              type="number"
-              min="0"
-              value={price}
-              onChange={(event) => setPrice(event.target.value)}
               className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)] focus:ring-3 focus:ring-[var(--brand-crimson)]/10"
             />
           </div>
