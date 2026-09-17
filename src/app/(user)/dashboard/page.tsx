@@ -70,9 +70,6 @@ export default async function DashboardPage() {
         where: {
           userId: user.id,
           status: "CONFIRMED",
-          endsAt: {
-            gte: now,
-          },
         },
         select: {
           id: true,

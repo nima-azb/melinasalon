@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { BookingStatus } from "@/generated/prisma/client";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
+import {
+  isValidCalendarDateString,
+  parseCalendarDateString,
+  zonedWallTimeToUtc,
+} from "@/lib/time/salon-time";
 
 const VALID_STATUSES = ["CONFIRMED", "CANCELLED", "COMPLETED"] as const;
 
@@ -31,49 +36,26 @@ function isSortDirection(value: string): value is SortDirection {
   return VALID_SORT_DIRECTIONS.includes(value as SortDirection);
 }
 
-function parseDate(date: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return null;
-  }
-
-  const [year, month, day] = date.split("-").map(Number);
-
-  const parsed = new Date(year, month - 1, day);
-
-  if (
-    parsed.getFullYear() !== year ||
-    parsed.getMonth() !== month - 1 ||
-    parsed.getDate() !== day
-  ) {
-    return null;
-  }
-
-  return parsed;
-}
-
 function parseDateRange(fromDate: string | null, toDate: string | null) {
   let start: Date | undefined;
   let end: Date | undefined;
 
   if (fromDate) {
-    const parsedFromDate = parseDate(fromDate);
-
-    if (!parsedFromDate) {
+    if (!isValidCalendarDateString(fromDate)) {
       return { error: "Invalid fromDate. Use YYYY-MM-DD." };
     }
 
-    start = parsedFromDate;
+    const { year, month, day } = parseCalendarDateString(fromDate);
+    start = zonedWallTimeToUtc(year, month, day, 0, 0, 0);
   }
 
   if (toDate) {
-    const parsedToDate = parseDate(toDate);
-
-    if (!parsedToDate) {
+    if (!isValidCalendarDateString(toDate)) {
       return { error: "Invalid toDate. Use YYYY-MM-DD." };
     }
 
-    end = new Date(parsedToDate);
-    end.setDate(end.getDate() + 1);
+    const { year, month, day } = parseCalendarDateString(toDate);
+    end = zonedWallTimeToUtc(year, month, day + 1, 0, 0, 0);
   }
 
   if (start && end && start >= end) {

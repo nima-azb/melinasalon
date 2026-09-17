@@ -4,33 +4,34 @@ import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { prisma } from "@/lib/prisma";
 import { smsProvider } from "@/lib/sms";
-
-const SALON_START_HOUR = 10;
-const SALON_END_HOUR = 22;
-const SLOT_INTERVAL_MINUTES = 30;
+import {
+  getSalonDayBounds,
+  getZonedWallTime,
+  isSlotAligned,
+  isWithinSalonHours,
+} from "@/lib/time/salon-time";
 
 function isValidDate(value: string) {
   const date = new Date(value);
   return !Number.isNaN(date.getTime());
 }
 
-function isValidSlotInterval(date: Date) {
-  return (
-    date.getMinutes() % SLOT_INTERVAL_MINUTES === 0 &&
-    date.getSeconds() === 0 &&
-    date.getMilliseconds() === 0
-  );
+function pad(value: number) {
+  return String(value).padStart(2, "0");
 }
 
-function isWithinSalonHours(start: Date, end: Date) {
-  const startMinutes = start.getHours() * 60 + start.getMinutes();
-  const endMinutes = end.getHours() * 60 + end.getMinutes();
+/**
+ * Returns the [start, end) UTC bounds of the salon-local calendar day that
+ * `date` falls on. Using `date.getFullYear()/getMonth()/getDate()` here (as
+ * the previous implementation did) reads the SERVER's local timezone, not
+ * the salon's, so on a server running in UTC a booking placed near midnight
+ * Tehran time could be attributed to the wrong calendar day.
+ */
+function getSalonCalendarDayBounds(date: Date) {
+  const wall = getZonedWallTime(date);
+  const dateKey = `${wall.year}-${pad(wall.month)}-${pad(wall.day)}`;
 
-  return (
-    startMinutes >= SALON_START_HOUR * 60 &&
-    endMinutes <= SALON_END_HOUR * 60 &&
-    end > start
-  );
+  return getSalonDayBounds(dateKey);
 }
 
 export async function GET() {
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     const startsAt = new Date(startsAtValue);
 
-    if (!isValidSlotInterval(startsAt)) {
+    if (!isSlotAligned(startsAt)) {
       return NextResponse.json(
         {
           success: false,
@@ -252,6 +253,8 @@ export async function POST(request: NextRequest) {
           throw new Error("APPOINTMENT_BLOCKED");
         }
 
+        const { startOfDay, endOfDay } = getSalonCalendarDayBounds(startsAt);
+
         const existingSameServiceDay = await tx.booking.findFirst({
           where: {
             userId: user.id,
@@ -260,16 +263,8 @@ export async function POST(request: NextRequest) {
               in: ["CONFIRMED", "COMPLETED"],
             },
             startsAt: {
-              gte: new Date(
-                startsAt.getFullYear(),
-                startsAt.getMonth(),
-                startsAt.getDate(),
-              ),
-              lt: new Date(
-                startsAt.getFullYear(),
-                startsAt.getMonth(),
-                startsAt.getDate() + 1,
-              ),
+              gte: startOfDay,
+              lt: endOfDay,
             },
           },
           select: {

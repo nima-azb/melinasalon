@@ -2,51 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
-
-const SALON_START_HOUR = 10;
-const SALON_END_HOUR = 22;
-const SLOT_INTERVAL_MINUTES = 30;
-
-function createLocalDateTime(date: string, time: string) {
-  return new Date(`${date}T${time}:00`);
-}
-
-function isValidDateString(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
-
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-
-  return (
-    date.getFullYear() === year &&
-    date.getMonth() === month - 1 &&
-    date.getDate() === day
-  );
-}
+import {
+  isSlotAligned,
+  isValidCalendarDateString,
+  isWithinSalonHours,
+  parseCalendarDateString,
+  zonedWallTimeToUtc,
+} from "@/lib/time/salon-time";
 
 function isValidTimeString(value: string) {
   return /^([01]\d|2[0-3]):([0-5]\d)$/.test(value);
 }
 
-function isValidSlotInterval(date: Date) {
-  return (
-    date.getMinutes() % SLOT_INTERVAL_MINUTES === 0 &&
-    date.getSeconds() === 0 &&
-    date.getMilliseconds() === 0
-  );
-}
+function buildSalonInstant(date: string, time: string): Date {
+  const { year, month, day } = parseCalendarDateString(date);
+  const [hour, minute] = time.split(":").map(Number);
 
-function isWithinSalonHours(start: Date, end: Date) {
-  const startMinutes = start.getHours() * 60 + start.getMinutes();
-  const endMinutes = end.getHours() * 60 + end.getMinutes();
-
-  return (
-    startMinutes >= SALON_START_HOUR * 60 &&
-    endMinutes <= SALON_END_HOUR * 60 &&
-    end > start
-  );
+  return zonedWallTimeToUtc(year, month, day, hour, minute, 0);
 }
 
 export async function GET(request: NextRequest) {
@@ -63,7 +35,7 @@ export async function GET(request: NextRequest) {
     const fromDate = searchParams.get("fromDate");
     const toDate = searchParams.get("toDate");
 
-    if (date && !isValidDateString(date)) {
+    if (date && !isValidCalendarDateString(date)) {
       return NextResponse.json(
         {
           success: false,
@@ -73,7 +45,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (fromDate && !isValidDateString(fromDate)) {
+    if (fromDate && !isValidCalendarDateString(fromDate)) {
       return NextResponse.json(
         {
           success: false,
@@ -83,7 +55,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (toDate && !isValidDateString(toDate)) {
+    if (toDate && !isValidCalendarDateString(toDate)) {
       return NextResponse.json(
         {
           success: false,
@@ -97,19 +69,19 @@ export async function GET(request: NextRequest) {
     let endsAt: Date | undefined;
 
     if (date) {
-      const [year, month, day] = date.split("-").map(Number);
+      const { year, month, day } = parseCalendarDateString(date);
 
-      startsAt = new Date(year, month - 1, day);
-      endsAt = new Date(year, month - 1, day + 1);
+      startsAt = zonedWallTimeToUtc(year, month, day, 0, 0, 0);
+      endsAt = zonedWallTimeToUtc(year, month, day + 1, 0, 0, 0);
     } else if (fromDate || toDate) {
       if (fromDate) {
-        const [year, month, day] = fromDate.split("-").map(Number);
-        startsAt = new Date(year, month - 1, day);
+        const { year, month, day } = parseCalendarDateString(fromDate);
+        startsAt = zonedWallTimeToUtc(year, month, day, 0, 0, 0);
       }
 
       if (toDate) {
-        const [year, month, day] = toDate.split("-").map(Number);
-        endsAt = new Date(year, month - 1, day + 1);
+        const { year, month, day } = parseCalendarDateString(toDate);
+        endsAt = zonedWallTimeToUtc(year, month, day + 1, 0, 0, 0);
       }
     }
 
@@ -212,7 +184,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!isValidDateString(date)) {
+    if (!isValidCalendarDateString(date)) {
       return NextResponse.json(
         {
           success: false,
@@ -232,8 +204,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const startsAt = createLocalDateTime(date, startTime);
-    const endsAt = createLocalDateTime(date, endTime);
+    const startsAt = buildSalonInstant(date, startTime);
+    const endsAt = buildSalonInstant(date, endTime);
 
     if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) {
       return NextResponse.json(
@@ -245,7 +217,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!isValidSlotInterval(startsAt) || !isValidSlotInterval(endsAt)) {
+    if (!isSlotAligned(startsAt) || !isSlotAligned(endsAt)) {
       return NextResponse.json(
         {
           success: false,

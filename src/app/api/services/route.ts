@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
 
 const createServiceSchema = z.object({
@@ -10,51 +10,16 @@ const createServiceSchema = z.object({
   duration: z.number().int().positive().max(480),
 });
 
-async function requireAdminUser() {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return {
-      response: NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized.",
-        },
-        { status: 401 },
-      ),
-      user: null,
-    };
-  }
-
-  if (user.role !== "ADMIN") {
-    return {
-      response: NextResponse.json(
-        {
-          success: false,
-          message: "Forbidden.",
-        },
-        { status: 403 },
-      ),
-      user: null,
-    };
-  }
-
-  return {
-    response: null,
-    user,
-  };
-}
-
 export async function GET(request: NextRequest) {
   try {
     const includeInactive =
       request.nextUrl.searchParams.get("includeInactive") === "true";
 
     if (includeInactive) {
-      const admin = await requireAdminUser();
+      const admin = await requireAdmin();
 
-      if (admin.response) {
-        return admin.response;
+      if (admin instanceof NextResponse) {
+        return admin;
       }
     }
 
@@ -88,10 +53,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const admin = await requireAdminUser();
+    const admin = await requireAdmin();
 
-    if (admin.response) {
-      return admin.response;
+    if (admin instanceof NextResponse) {
+      return admin;
     }
 
     const body: unknown = await request.json();
