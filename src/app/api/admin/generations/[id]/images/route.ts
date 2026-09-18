@@ -35,7 +35,7 @@ export async function GET(_request: Request, { params }: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Generation not found.",
+          message: "تصویر ساخته‌شده یافت نشد.",
         },
         { status: 404 },
       );
@@ -58,7 +58,7 @@ export async function GET(_request: Request, { params }: RouteContext) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to load generation images.",
+        message: "دریافت تصاویر هوش مصنوعی با خطا مواجه شد.",
       },
       { status: 500 },
     );

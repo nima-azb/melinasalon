@@ -36,7 +36,7 @@ export async function GET() {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to load admin generations.",
+        message: "دریافت تصاویر هوش مصنوعی با خطا مواجه شد.",
       },
       { status: 500 },
     );

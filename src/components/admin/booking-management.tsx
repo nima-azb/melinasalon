@@ -141,7 +141,7 @@ export function BookingManagement() {
       const data: BookingsResponse = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to load bookings.");
+        throw new Error(data.message || "خطا در دریافت نوبت‌ها.");
       }
 
       setBookings(data.bookings ?? []);
@@ -150,7 +150,7 @@ export function BookingManagement() {
       console.error("Failed to load bookings:", error);
 
       setError(
-        error instanceof Error ? error.message : "Failed to load bookings.",
+        error instanceof Error ? error.message : "خطا در دریافت نوبت‌ها.",
       );
     } finally {
       setLoading(false);
@@ -171,7 +171,7 @@ export function BookingManagement() {
         const data: ServicesResponse = await response.json();
 
         if (!response.ok || !data.success) {
-          throw new Error(data.message || "Failed to load services.");
+          throw new Error(data.message || "خطا در دریافت خدمات.");
         }
 
         if (!cancelled) {
@@ -185,7 +185,7 @@ export function BookingManagement() {
         console.error("Failed to load services:", error);
 
         setError(
-          error instanceof Error ? error.message : "Failed to load services.",
+          error instanceof Error ? error.message : "خطا در دریافت خدمات.",
         );
       } finally {
         if (!cancelled) {
@@ -234,7 +234,7 @@ export function BookingManagement() {
       } = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to update booking.");
+        throw new Error(data.message || "خطا در به‌روزرسانی نوبت.");
       }
 
       await loadBookings();
@@ -242,9 +242,7 @@ export function BookingManagement() {
       console.error("Failed to update booking status:", error);
 
       setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to update booking status.",
+        error instanceof Error ? error.message : "خطا در تغییر وضعیت نوبت.",
       );
     } finally {
       setUpdatingBookingId(null);

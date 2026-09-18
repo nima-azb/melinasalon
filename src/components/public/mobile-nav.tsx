@@ -6,12 +6,12 @@ import { useState } from "react";
 
 const navigationItems = [
   { href: "/", label: "صفحه اصلی" },
-  { href: "/services", label: "خدمات" },
+  { href: "/#services", label: "خدمات" },
   { href: "/ai-hairdresser", label: "آرایشگر هوش مصنوعی", isNew: true },
-  { href: "/about", label: "درباره ما" },
+  { href: "/#why-melina", label: "درباره ما" },
 ];
 
-export function MobileNav() {
+export function MobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -48,11 +48,11 @@ export function MobileNav() {
               ))}
 
               <Link
-                href="/dashboard"
+                href={isLoggedIn ? "/dashboard" : "/login"}
                 onClick={() => setOpen(false)}
                 className="mt-4 rounded-xl border border-[var(--border-beige)] bg-[var(--bg-card-warm)] px-4 py-3 text-center text-sm font-medium text-[var(--text-primary)]"
               >
-                حساب کاربری
+                {isLoggedIn ? "حساب کاربری" : "ورود / ثبت‌نام"}
               </Link>
             </div>
           </nav>

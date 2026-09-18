@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
 
-import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 
-export default async function AdminPage() {
+export default async function AdminLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -14,5 +17,5 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  return <AdminDashboard adminName={user.fullName} />;
+  return children;
 }

@@ -23,7 +23,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Blocked time ID is required.",
+          message: "شناسه زمان مسدودشده الزامی است.",
         },
         { status: 400 },
       );
@@ -45,7 +45,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Blocked time not found.",
+          message: "زمان مسدودشده یافت نشد.",
         },
         { status: 404 },
       );
@@ -67,7 +67,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to delete blocked time.",
+        message: "حذف زمان مسدودشده با خطا مواجه شد.",
       },
       { status: 500 },
     );

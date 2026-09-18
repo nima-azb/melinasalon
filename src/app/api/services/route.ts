@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetch services.",
+        message: "دریافت خدمات با خطا مواجه شد.",
       },
       { status: 500 },
     );
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid service data.",
+          message: "اطلاعات خدمت معتبر نیست.",
           errors: result.error.flatten(),
         },
         { status: 400 },
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to create service.",
+        message: "ثبت خدمت با خطا مواجه شد.",
       },
       { status: 500 },
     );

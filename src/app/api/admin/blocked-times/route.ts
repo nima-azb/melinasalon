@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid date.",
+          message: "تاریخ وارد شده معتبر نیست.",
         },
         { status: 400 },
       );
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid fromDate.",
+          message: "تاریخ شروع معتبر نیست.",
         },
         { status: 400 },
       );
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid toDate.",
+          message: "تاریخ پایان معتبر نیست.",
         },
         { status: 400 },
       );
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to load blocked times.",
+        message: "دریافت زمان‌های مسدودشده با خطا مواجه شد.",
       },
       { status: 500 },
     );
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid request body.",
+          message: "اطلاعات ارسالی معتبر نیست.",
         },
         { status: 400 },
       );
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Date, start time, and end time are required.",
+          message: "تاریخ، ساعت شروع و ساعت پایان الزامی است.",
         },
         { status: 400 },
       );
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid date or time.",
+          message: "تاریخ یا ساعت معتبر نیست.",
         },
         { status: 400 },
       );
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid date.",
+          message: "تاریخ وارد شده معتبر نیست.",
         },
         { status: 400 },
       );
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid start or end time.",
+          message: "ساعت شروع یا پایان معتبر نیست.",
         },
         { status: 400 },
       );
@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid date or time.",
+          message: "تاریخ یا ساعت معتبر نیست.",
         },
         { status: 400 },
       );
@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Blocked times must use 30-minute intervals.",
+          message: "زمان‌های مسدودشده باید در بازه‌های ۳۰ دقیقه‌ای باشند.",
         },
         { status: 400 },
       );
@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           message:
-            "Blocked time must be completely within salon working hours (10:00–22:00).",
+            "زمان مسدودشده باید کاملاً در ساعات کاری سالن (۱۰:۰۰ تا ۲۲:۰۰) باشد.",
         },
         { status: 400 },
       );
@@ -242,7 +242,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "A blocked period must be in the future.",
+          message: "بازه مسدودشده باید در آینده باشد.",
         },
         { status: 400 },
       );
@@ -252,7 +252,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Reason cannot exceed 500 characters.",
+          message: "توضیح نمی‌تواند بیشتر از ۵۰۰ کاراکتر باشد.",
         },
         { status: 400 },
       );
@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           message:
-            "This period overlaps an existing confirmed booking and cannot be blocked.",
+            "این بازه با یک نوبت تایید‌شده تداخل دارد و قابل مسدود شدن نیست.",
         },
         { status: 409 },
       );
@@ -302,7 +302,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "This period overlaps an existing blocked period.",
+          message: "این بازه با یک زمان مسدودشده دیگر تداخل دارد.",
         },
         { status: 409 },
       );
@@ -336,7 +336,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to create blocked time.",
+        message: "ثبت زمان مسدودشده با خطا مواجه شد.",
       },
       { status: 500 },
     );

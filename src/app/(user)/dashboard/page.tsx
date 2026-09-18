@@ -1,10 +1,11 @@
 import { DashboardShell } from "@/components/user/dashboard-shell";
+import {
+  MAX_GENERATIONS as AI_GENERATION_LIMIT,
+  RATE_LIMIT_WINDOW_HOURS as AI_WINDOW_HOURS,
+} from "@/lib/ai/check-generation-rate-limit";
 import { requireUser } from "@/lib/auth/require-user";
 import { prisma } from "@/lib/prisma";
 import { getArvanSignedReadUrl } from "@/lib/storage/arvan-upload";
-
-const AI_GENERATION_LIMIT = 3;
-const AI_WINDOW_HOURS = 24;
 
 export default async function DashboardPage() {
   const user = await requireUser();

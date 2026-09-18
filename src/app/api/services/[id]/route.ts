@@ -37,7 +37,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Service not found.",
+          message: "خدمت مورد نظر یافت نشد.",
         },
         { status: 404 },
       );
@@ -53,7 +53,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to load service.",
+        message: "دریافت اطلاعات خدمت با خطا مواجه شد.",
       },
       { status: 500 },
     );
@@ -77,7 +77,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid service data.",
+          message: "اطلاعات خدمت معتبر نیست.",
           errors: result.error.flatten(),
         },
         { status: 400 },
@@ -97,7 +97,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Service not found.",
+          message: "خدمت مورد نظر یافت نشد.",
         },
         { status: 404 },
       );
@@ -141,7 +141,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to update service.",
+        message: "ویرایش خدمت با خطا مواجه شد.",
       },
       { status: 500 },
     );
@@ -171,7 +171,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Service not found.",
+          message: "خدمت مورد نظر یافت نشد.",
         },
         { status: 404 },
       );
@@ -188,7 +188,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
         {
           success: false,
           message:
-            "This service has booking history and cannot be deleted. Deactivate it instead.",
+            "این خدمت دارای سابقه نوبت است و قابل حذف نیست. به‌جای حذف، آن را غیرفعال کنید.",
         },
         { status: 409 },
       );
@@ -202,7 +202,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       success: true,
-      message: "Service deleted successfully.",
+      message: "خدمت با موفقیت حذف شد.",
     });
   } catch (error) {
     console.error("DELETE /api/services/[id] error:", error);
@@ -210,7 +210,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to delete service.",
+        message: "حذف خدمت با خطا مواجه شد.",
       },
       { status: 500 },
     );

@@ -1,42 +1,50 @@
 export const hairColors = [
   {
     id: "natural-black",
-    label: "Natural Black",
+    label: "مشکی طبیعی",
+    swatch: "#1b1512",
     prompt: "natural black hair color",
   },
   {
     id: "dark-brown",
-    label: "Dark Brown",
+    label: "قهوه‌ای تیره",
+    swatch: "#3b2314",
     prompt: "dark brown hair color",
   },
   {
     id: "warm-brown",
-    label: "Warm Brown",
+    label: "قهوه‌ای گرم",
+    swatch: "#5c3a21",
     prompt: "warm brown hair color",
   },
   {
     id: "light-brown",
-    label: "Light Brown",
+    label: "قهوه‌ای روشن",
+    swatch: "#8a5a34",
     prompt: "light brown hair color",
   },
   {
     id: "honey-blonde",
-    label: "Honey Blonde",
+    label: "بلوند عسلی",
+    swatch: "#c99552",
     prompt: "honey blonde hair color",
   },
   {
     id: "ash-blonde",
-    label: "Ash Blonde",
+    label: "بلوند دودی",
+    swatch: "#b9a179",
     prompt: "ash blonde hair color",
   },
   {
     id: "copper",
-    label: "Copper",
+    label: "مسی",
+    swatch: "#b5551f",
     prompt: "natural copper hair color",
   },
   {
     id: "burgundy",
-    label: "Burgundy",
+    label: "زرشکی",
+    swatch: "#5c1a2e",
     prompt: "deep burgundy hair color",
   },
 ] as const;
@@ -44,37 +52,37 @@ export const hairColors = [
 export const hairstyles = [
   {
     id: "long-layered",
-    label: "Long Layered",
+    label: "لایه‌بلند",
     prompt: "long layered hairstyle",
   },
   {
     id: "shoulder-layered",
-    label: "Shoulder-Length Layered",
+    label: "لایه تا شانه",
     prompt: "shoulder-length layered hairstyle",
   },
   {
     id: "bob",
-    label: "Bob",
+    label: "باب",
     prompt: "modern bob hairstyle",
   },
   {
     id: "short",
-    label: "Short",
+    label: "کوتاه",
     prompt: "short modern hairstyle",
   },
   {
     id: "wavy",
-    label: "Soft Waves",
+    label: "موج ملایم",
     prompt: "soft natural waves hairstyle",
   },
   {
     id: "straight",
-    label: "Straight",
+    label: "صاف",
     prompt: "smooth straight hairstyle",
   },
   {
     id: "curly",
-    label: "Curly",
+    label: "فر طبیعی",
     prompt: "defined natural curly hairstyle",
   },
 ] as const;
@@ -82,22 +90,22 @@ export const hairstyles = [
 export const makeupStyles = [
   {
     id: "natural",
-    label: "Natural",
+    label: "طبیعی",
     prompt: "natural makeup with subtle enhancement",
   },
   {
     id: "soft-glam",
-    label: "Soft Glam",
+    label: "گلم ملایم",
     prompt: "soft glam makeup with elegant and natural-looking enhancement",
   },
   {
     id: "evening",
-    label: "Evening",
+    label: "شب",
     prompt: "elegant evening makeup",
   },
   {
     id: "minimal",
-    label: "Minimal",
+    label: "مینیمال",
     prompt: "minimal makeup with a clean natural appearance",
   },
 ] as const;

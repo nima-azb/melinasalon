@@ -11,6 +11,19 @@ const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   COMPLETED: [],
 };
 
+function translateStatus(status: BookingStatus): string {
+  switch (status) {
+    case "CONFIRMED":
+      return "تایید‌شده";
+    case "CANCELLED":
+      return "لغوشده";
+    case "COMPLETED":
+      return "انجام‌شده";
+    default:
+      return status;
+  }
+}
+
 type RouteContext = {
   params: Promise<{
     id: string;
@@ -57,7 +70,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Booking ID is required.",
+          message: "شناسه نوبت الزامی است.",
         },
         { status: 400 },
       );
@@ -74,7 +87,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "A booking status is required.",
+          message: "وضعیت نوبت الزامی است.",
         },
         { status: 400 },
       );
@@ -86,7 +99,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Admin can only cancel or complete a confirmed booking.",
+          message: "مدیر فقط می‌تواند نوبت تایید‌شده را لغو یا تکمیل کند.",
         },
         { status: 400 },
       );
@@ -106,7 +119,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Booking not found.",
+          message: "نوبت یافت نشد.",
         },
         { status: 404 },
       );
@@ -118,7 +131,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: `Cannot change booking from ${booking.status} to ${requestedStatus}.`,
+          message: `تغییر وضعیت نوبت از ${translateStatus(booking.status)} به ${translateStatus(requestedStatus as BookingStatus)} امکان‌پذیر نیست.`,
         },
         { status: 409 },
       );
@@ -144,7 +157,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to update booking.",
+        message: "به‌روزرسانی نوبت با خطا مواجه شد.",
       },
       { status: 500 },
     );
@@ -165,7 +178,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Booking ID is required.",
+          message: "شناسه نوبت الزامی است.",
         },
         { status: 400 },
       );
@@ -182,7 +195,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Booking not found.",
+          message: "نوبت یافت نشد.",
         },
         { status: 404 },
       );
@@ -198,7 +211,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to load booking.",
+        message: "دریافت اطلاعات نوبت با خطا مواجه شد.",
       },
       { status: 500 },
     );

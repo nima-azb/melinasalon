@@ -9,7 +9,7 @@ export async function requireAdmin() {
     return NextResponse.json(
       {
         success: false,
-        message: "Authentication required.",
+        message: "برای ادامه باید وارد حساب کاربری خود شوید.",
       },
       { status: 401 },
     );
@@ -19,7 +19,7 @@ export async function requireAdmin() {
     return NextResponse.json(
       {
         success: false,
-        message: "Admin access required.",
+        message: "این بخش فقط برای مدیران سالن قابل دسترسی است.",
       },
       { status: 403 },
     );

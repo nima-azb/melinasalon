@@ -42,7 +42,9 @@ function parseDateRange(fromDate: string | null, toDate: string | null) {
 
   if (fromDate) {
     if (!isValidCalendarDateString(fromDate)) {
-      return { error: "Invalid fromDate. Use YYYY-MM-DD." };
+      return {
+        error: "تاریخ شروع معتبر نیست. از فرمت YYYY-MM-DD استفاده کنید.",
+      };
     }
 
     const { year, month, day } = parseCalendarDateString(fromDate);
@@ -51,7 +53,9 @@ function parseDateRange(fromDate: string | null, toDate: string | null) {
 
   if (toDate) {
     if (!isValidCalendarDateString(toDate)) {
-      return { error: "Invalid toDate. Use YYYY-MM-DD." };
+      return {
+        error: "تاریخ پایان معتبر نیست. از فرمت YYYY-MM-DD استفاده کنید.",
+      };
     }
 
     const { year, month, day } = parseCalendarDateString(toDate);
@@ -60,7 +64,7 @@ function parseDateRange(fromDate: string | null, toDate: string | null) {
 
   if (start && end && start >= end) {
     return {
-      error: "fromDate must be earlier than or equal to toDate.",
+      error: "تاریخ شروع باید قبل یا برابر با تاریخ پایان باشد.",
     };
   }
 
@@ -92,7 +96,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid booking status.",
+          message: "وضعیت نوبت معتبر نیست.",
         },
         { status: 400 },
       );
@@ -102,7 +106,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid sort field.",
+          message: "فیلد مرتب‌سازی معتبر نیست.",
         },
         { status: 400 },
       );
@@ -112,7 +116,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid sort direction.",
+          message: "جهت مرتب‌سازی معتبر نیست.",
         },
         { status: 400 },
       );
@@ -265,7 +269,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to load admin bookings.",
+        message: "دریافت لیست نوبت‌ها با خطا مواجه شد.",
       },
       { status: 500 },
     );

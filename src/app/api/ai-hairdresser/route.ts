@@ -22,12 +22,20 @@ import { generateHairdresserImage } from "@/lib/ai/generate-hairdresser-image";
 
 import { prisma } from "@/lib/prisma";
 
-import { uploadToArvan } from "@/lib/storage/arvan-upload";
+import {
+  getArvanSignedReadUrl,
+  uploadToArvan,
+} from "@/lib/storage/arvan-upload";
 
 import {
   createAIOriginalKey,
   createAIResultKey,
 } from "@/lib/storage/arvan-key";
+
+// Long enough for the customer to view/save the result on this page without
+// the signed URL expiring; the images remain in their dashboard afterwards
+// too, re-signed fresh on every dashboard load.
+const RESULT_URL_EXPIRY_SECONDS = 60 * 60;
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
@@ -77,7 +85,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Authentication required.",
+          message: "برای استفاده از این بخش باید وارد حساب کاربری خود شوید.",
         },
         { status: 401 },
       );
@@ -89,7 +97,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "A confirmed booking is required to use AI Hairdresser.",
+          message:
+            "برای استفاده از آرایشگر هوش مصنوعی باید یک نوبت تایید‌شده داشته باشید.",
         },
         { status: 403 },
       );
@@ -104,7 +113,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid AI Hairdresser workflow.",
+          message: "حالت انتخابی نامعتبر است.",
         },
         { status: 400 },
       );
@@ -114,7 +123,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "An image is required.",
+          message: "انتخاب یک تصویر الزامی است.",
         },
         { status: 400 },
       );
@@ -124,7 +133,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Unsupported image type. Use JPEG, PNG, or WebP.",
+          message:
+            "فرمت تصویر پشتیبانی نمی‌شود. از JPEG، PNG یا WebP استفاده کنید.",
         },
         { status: 400 },
       );
@@ -134,7 +144,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Image size must be between 1 byte and 10 MB.",
+          message: "حجم تصویر باید حداکثر ۱۰ مگابایت باشد.",
         },
         { status: 400 },
       );
@@ -153,7 +163,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             success: false,
-            message: "Invalid hair color option.",
+            message: "رنگ موی انتخابی نامعتبر است.",
           },
           { status: 400 },
         );
@@ -163,7 +173,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             success: false,
-            message: "Invalid hairstyle option.",
+            message: "مدل موی انتخابی نامعتبر است.",
           },
           { status: 400 },
         );
@@ -173,7 +183,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             success: false,
-            message: "Invalid makeup style option.",
+            message: "سبک میکاپ انتخابی نامعتبر است.",
           },
           { status: 400 },
         );
@@ -183,7 +193,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             success: false,
-            message: "Invalid additional instructions.",
+            message: "توضیحات تکمیلی نامعتبر است.",
           },
           { status: 400 },
         );
@@ -221,7 +231,7 @@ export async function POST(request: Request) {
         {
           success: false,
           message:
-            "You have reached the maximum number of AI generations allowed in 24 hours.",
+            "شما به حداکثر تعداد مجاز درخواست هوش مصنوعی در ۲۴ ساعت گذشته رسیده‌اید.",
           retryAfterSeconds: rateLimit.retryAfterSeconds,
         },
         { status: 429 },
@@ -275,18 +285,28 @@ export async function POST(request: Request) {
 
     generationSaved = true;
 
+    // The frontend needs an actual URL to display the result image, not
+    // just the internal storage key — without this, the customer could
+    // never see the picture they just generated.
+    const [originalUrl, resultUrl] = await Promise.all([
+      getArvanSignedReadUrl(originalKey, RESULT_URL_EXPIRY_SECONDS),
+      getArvanSignedReadUrl(resultKey, RESULT_URL_EXPIRY_SECONDS),
+    ]);
+
     return NextResponse.json({
       success: true,
       message:
         mode === "recommendation"
-          ? "Two personalized AI looks generated successfully."
-          : "AI Hairdresser image generated successfully.",
+          ? "دو پیشنهاد شخصی‌سازی‌شده با موفقیت ساخته شد."
+          : "تصویر آرایشگر هوش مصنوعی با موفقیت ساخته شد.",
       generationId: generation.id,
       workflowType: mode,
       remainingGenerations: rateLimit.remaining,
       images: {
         originalKey,
         resultKey,
+        originalUrl,
+        resultUrl,
       },
     });
   } catch (error) {
@@ -303,7 +323,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to process AI Hairdresser request.",
+        message: "پردازش درخواست آرایشگر هوش مصنوعی با خطا مواجه شد.",
       },
       { status: 500 },
     );

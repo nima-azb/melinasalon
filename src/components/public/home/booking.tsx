@@ -332,7 +332,14 @@ export function Booking() {
       const data: BookingResponse = await response.json();
 
       if (response.status === 401) {
-        router.push("/login");
+        setError(
+          "برای ثبت نوبت باید وارد حساب کاربری خود شوید. در حال انتقال به صفحه ورود...",
+        );
+
+        setTimeout(() => {
+          router.push("/login");
+        }, 1500);
+
         return;
       }
 
@@ -479,7 +486,7 @@ export function Booking() {
 
                 {/* Dates */}
                 <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {dates.slice(0, 4).map((date) => {
+                  {dates.map((date) => {
                     const active = selectedDate === date.value;
 
                     const dateParts = date.label.split("،");

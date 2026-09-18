@@ -46,7 +46,7 @@ export function ServiceManagement() {
         const data = await response.json();
 
         if (!response.ok || !data.success) {
-          throw new Error(data.message || "Failed to load services.");
+          throw new Error(data.message || "خطا در دریافت خدمات.");
         }
 
         if (!cancelled) {
@@ -94,7 +94,7 @@ export function ServiceManagement() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to create service.");
+        throw new Error(data.message || "خطا در ایجاد خدمت.");
       }
 
       setServices((currentServices) => [...currentServices, data.service]);
@@ -161,7 +161,7 @@ export function ServiceManagement() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to update service.");
+        throw new Error(data.message || "خطا در ویرایش خدمت.");
       }
 
       setServices((currentServices) =>
@@ -197,7 +197,7 @@ export function ServiceManagement() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to update service.");
+        throw new Error(data.message || "خطا در تغییر وضعیت خدمت.");
       }
 
       setServices((currentServices) =>

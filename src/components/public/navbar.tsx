@@ -1,8 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+
+import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { MobileNav } from "./mobile-nav";
 
-export function Navbar() {
+export async function Navbar() {
+  const user = await getCurrentUser();
+
   return (
     <header className="relative w-full">
       {/* Top information bar */}
@@ -12,7 +16,7 @@ export function Navbar() {
           <div className="flex items-center gap-6">
             <span className="hidden sm:inline-flex items-center gap-2">
               <span className="text-[var(--accent-gold)]">◷</span>
-              ساعات کاری: همه روزه ۹:۰۰ تا ۲۰:۰۰
+              ساعات کاری: همه روزه ۱۰:۰۰ تا ۲۲:۰۰
             </span>
 
             <span className="hidden md:inline-flex items-center gap-2">
@@ -28,9 +32,18 @@ export function Navbar() {
               شماره تماس: ۰۲۱-۱۲۳۴۵۶۷۸
             </span>
 
-            <span className="rounded-full border border-[var(--accent-gold)]/40 bg-white/10 px-3 py-1">
-              وضعیت فعلی: وارد شده
-            </span>
+            {user ? (
+              <span className="rounded-full border border-[var(--accent-gold)]/40 bg-white/10 px-3 py-1">
+                خوش آمدید، {user.fullName?.trim().split(/\s+/)[0] || "کاربر"}
+              </span>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-full border border-[var(--accent-gold)]/40 bg-white/10 px-3 py-1 transition-colors hover:bg-white/20"
+              >
+                ورود / ثبت‌نام
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -71,7 +84,7 @@ export function Navbar() {
             </Link>
 
             <Link
-              href="#services"
+              href="/#services"
               className="text-sm font-medium text-[var(--text-primary)] transition-colors hover:text-[var(--brand-crimson)]"
             >
               خدمات
@@ -88,7 +101,7 @@ export function Navbar() {
             </Link>
 
             <Link
-              href="/about"
+              href="/#why-melina"
               className="text-sm font-medium text-[var(--text-primary)] transition-colors hover:text-[var(--brand-crimson)]"
             >
               درباره ما
@@ -99,23 +112,23 @@ export function Navbar() {
           <div className="flex shrink-0 items-center gap-3">
             {/* User */}
             <Link
-              href="/dashboard"
+              href={user ? "/dashboard" : "/login"}
               className="hidden items-center gap-2 rounded-xl border border-[var(--border-beige)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] shadow-sm transition-colors hover:border-[var(--brand-crimson)] hover:text-[var(--brand-crimson)] md:flex"
             >
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-crimson-light)] text-xs text-[var(--brand-crimson)]">
                 م
               </span>
-              حساب کاربری
+              {user ? "حساب کاربری" : "ورود"}
             </Link>
 
             {/* Booking CTA */}
             <Link
-              href="#booking"
+              href="/#booking"
               className="rounded-xl bg-[var(--brand-crimson)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--brand-crimson-hover)]"
             >
               رزرو نوبت
             </Link>
-            <MobileNav />
+            <MobileNav isLoggedIn={Boolean(user)} />
           </div>
         </div>
       </div>

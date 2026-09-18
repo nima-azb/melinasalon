@@ -34,7 +34,10 @@ const reasons = [
 
 export function WhyMelina() {
   return (
-    <section className="bg-[var(--bg-cream)] py-20 sm:py-24 lg:py-28">
+    <section
+      id="why-melina"
+      className="bg-[var(--bg-cream)] py-20 sm:py-24 lg:py-28"
+    >
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Heading */}
         <div className="mx-auto max-w-2xl text-center">

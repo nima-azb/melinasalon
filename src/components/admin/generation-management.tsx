@@ -108,7 +108,7 @@ export function GenerationManagement() {
         const data = await response.json();
 
         if (!response.ok || !data.success) {
-          throw new Error(data.message || "Failed to load generations.");
+          throw new Error(data.message || "خطا در دریافت تصاویر هوش مصنوعی.");
         }
 
         if (!cancelled) {
@@ -124,7 +124,7 @@ export function GenerationManagement() {
         setError(
           error instanceof Error
             ? error.message
-            : "Failed to load generations.",
+            : "خطا در دریافت تصاویر هوش مصنوعی.",
         );
       } finally {
         if (!cancelled) {
@@ -161,7 +161,7 @@ export function GenerationManagement() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to load generation images.");
+        throw new Error(data.message || "خطا در دریافت تصاویر.");
       }
 
       setImages((current) => ({
@@ -176,9 +176,7 @@ export function GenerationManagement() {
       console.error("Failed to load generation images:", error);
 
       setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to load generation images.",
+        error instanceof Error ? error.message : "خطا در دریافت تصاویر.",
       );
     } finally {
       setImageLoading((current) => ({
@@ -330,7 +328,7 @@ export function GenerationManagement() {
                           <div className="mt-4 grid gap-3 sm:grid-cols-2">
                             <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] p-4">
                               <p className="text-xs font-medium text-[var(--text-secondary)]">
-                                Look 1
+                                پیشنهاد ۱
                               </p>
 
                               <p className="mt-2 text-sm leading-6 text-[var(--text-primary)]">
@@ -341,7 +339,7 @@ export function GenerationManagement() {
 
                             <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] p-4">
                               <p className="text-xs font-medium text-[var(--text-secondary)]">
-                                Look 2
+                                پیشنهاد ۲
                               </p>
 
                               <p className="mt-2 text-sm leading-6 text-[var(--text-primary)]">

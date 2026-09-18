@@ -1,8 +1,8 @@
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
-const MAX_GENERATIONS = 3;
-const RATE_LIMIT_WINDOW_HOURS = 24;
+export const MAX_GENERATIONS = 3;
+export const RATE_LIMIT_WINDOW_HOURS = 24;
 const MAX_SERIALIZATION_RETRIES = 3;
 
 export type GenerationRateLimitResult =

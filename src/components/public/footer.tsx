@@ -4,10 +4,10 @@ import { MapPin, Phone, Clock3, ArrowUp } from "lucide-react";
 
 const navigation = [
   { title: "خانه", href: "/" },
-  { title: "خدمات", href: "#services" },
+  { title: "خدمات", href: "/#services" },
   { title: "آرایشگر هوش مصنوعی", href: "/ai-hairdresser" },
-  { title: "نمونه کارها", href: "#gallery" },
-  { title: "رزرو نوبت", href: "#booking" },
+  { title: "نمونه کارها", href: "/#gallery" },
+  { title: "رزرو نوبت", href: "/#booking" },
 ];
 
 const services = ["مو و استایل", "رنگ و لایت", "میکاپ", "مراقبت و احیای مو"];
@@ -45,7 +45,7 @@ export function Footer() {
             </p>
 
             <Link
-              href="#booking"
+              href="/#booking"
               className="mt-5 inline-flex items-center rounded-xl bg-[var(--brand-crimson)] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--brand-crimson-hover)]"
             >
               رزرو نوبت
@@ -129,7 +129,7 @@ export function Footer() {
                 />
 
                 <p className="text-sm text-[var(--text-secondary)]">
-                  هر روز ۱۰:۰۰ تا ۲۰:۰۰
+                  هر روز ۱۰:۰۰ تا ۲۲:۰۰
                 </p>
               </div>
             </div>
@@ -160,7 +160,7 @@ export function Footer() {
           </p>
 
           <Link
-            href="#top"
+            href="/#top"
             className="group inline-flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--brand-crimson)]"
           >
             بازگشت به بالا
