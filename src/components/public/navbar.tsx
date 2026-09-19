@@ -1,11 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
+import { UserRound } from "lucide-react";
 
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+
 import { MobileNav } from "./mobile-nav";
 
 export async function Navbar() {
   const user = await getCurrentUser();
+
+  const fullName = user?.fullName?.trim() || "کاربر";
+  const userInitial = fullName.charAt(0);
 
   return (
     <header className="relative w-full">
@@ -14,12 +19,12 @@ export async function Navbar() {
         <div className="mx-auto flex h-10 max-w-7xl items-center justify-between px-6 text-xs">
           {/* Right side */}
           <div className="flex items-center gap-6">
-            <span className="hidden sm:inline-flex items-center gap-2">
+            <span className="hidden items-center gap-2 sm:inline-flex">
               <span className="text-[var(--accent-gold)]">◷</span>
               ساعات کاری: همه روزه ۱۰:۰۰ تا ۲۲:۰۰
             </span>
 
-            <span className="hidden md:inline-flex items-center gap-2">
+            <span className="hidden items-center gap-2 md:inline-flex">
               <span className="text-[var(--accent-gold)]">⌖</span>
               شاهرود
             </span>
@@ -27,15 +32,18 @@ export async function Navbar() {
 
           {/* Left side */}
           <div className="flex items-center gap-5">
-            <span className="hidden sm:inline-flex items-center gap-2">
+            <span className="hidden items-center gap-2 sm:inline-flex">
               <span className="text-[var(--accent-gold)]">☎</span>
               شماره تماس: ۰۲۱-۱۲۳۴۵۶۷۸
             </span>
 
             {user ? (
-              <span className="rounded-full border border-[var(--accent-gold)]/40 bg-white/10 px-3 py-1">
-                خوش آمدید، {user.fullName?.trim().split(/\s+/)[0] || "کاربر"}
-              </span>
+              <Link
+                href="/dashboard"
+                className="rounded-full border border-[var(--accent-gold)]/40 bg-white/10 px-3 py-1 transition-colors hover:bg-white/20"
+              >
+                خوش آمدید، {fullName.split(/\s+/)[0]}
+              </Link>
             ) : (
               <Link
                 href="/login"
@@ -52,7 +60,11 @@ export async function Navbar() {
       <div className="border-b border-[var(--border-subtle)] bg-[var(--bg-cream)]">
         <div className="mx-auto flex h-24 max-w-7xl items-center justify-between gap-6 px-6">
           {/* Brand */}
-          <Link href="/" className="flex shrink-0 items-center gap-0">
+          <Link
+            href="/"
+            aria-label="صفحه اصلی سالن زیبایی ملینا"
+            className="flex shrink-0 items-center gap-0"
+          >
             <div className="relative h-23 w-23 overflow-hidden rounded-xl">
               <Image
                 src="/images/logo1.png"
@@ -75,7 +87,10 @@ export async function Navbar() {
           </Link>
 
           {/* Navigation */}
-          <nav className="hidden items-center gap-7 lg:flex">
+          <nav
+            className="hidden items-center gap-7 lg:flex"
+            aria-label="منوی اصلی"
+          >
             <Link
               href="/"
               className="text-sm font-medium text-[var(--text-primary)] transition-colors hover:text-[var(--brand-crimson)]"
@@ -113,21 +128,39 @@ export async function Navbar() {
             {/* User */}
             <Link
               href={user ? "/dashboard" : "/login"}
-              className="hidden items-center gap-2 rounded-xl border border-[var(--border-beige)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] shadow-sm transition-colors hover:border-[var(--brand-crimson)] hover:text-[var(--brand-crimson)] md:flex"
+              aria-label={
+                user ? `حساب کاربری ${fullName}` : "ورود به حساب کاربری"
+              }
+              className="group hidden h-12 max-w-52 items-center gap-2 rounded-xl border border-[var(--border-beige)] bg-white px-4 text-sm font-medium text-[var(--text-primary)] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-crimson)] hover:text-[var(--brand-crimson)] hover:shadow-md md:flex"
             >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-crimson-light)] text-xs text-[var(--brand-crimson)]">
-                م
+              {/* Avatar */}
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all duration-200 ${
+                  user
+                    ? "bg-[var(--brand-crimson)] text-white shadow-sm"
+                    : "bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)] group-hover:bg-[var(--brand-crimson)] group-hover:text-white"
+                }`}
+              >
+                {user ? userInitial : <UserRound size={16} strokeWidth={1.8} />}
               </span>
-              {user ? "حساب کاربری" : "ورود"}
+
+              {/* Full name */}
+              <span
+                className="truncate whitespace-nowrap"
+                title={user ? fullName : "ورود"}
+              >
+                {user ? fullName : "ورود"}
+              </span>
             </Link>
 
             {/* Booking CTA */}
             <Link
               href="/#booking"
-              className="rounded-xl bg-[var(--brand-crimson)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--brand-crimson-hover)]"
+              className="flex h-12 items-center justify-center rounded-xl bg-[var(--brand-crimson)] px-5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[var(--brand-crimson-hover)] hover:shadow-md"
             >
               رزرو نوبت
             </Link>
+
             <MobileNav isLoggedIn={Boolean(user)} />
           </div>
         </div>

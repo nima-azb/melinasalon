@@ -1,6 +1,22 @@
 "use client";
 
+import {
+  Download,
+  SplitSquareHorizontal,
+  Sparkles,
+  Wand2,
+  X,
+} from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+
+import {
+  hairColors,
+  hairstyles,
+  makeupStyles,
+} from "@/lib/ai/ai-hairdresser-options";
+import { BeforeAfterSlider } from "@/components/ai-hairdresser/before-after-slider";
 
 type WorkflowType = "CUSTOM" | "RECOMMENDATION";
 
@@ -24,6 +40,12 @@ type SelectedStyles = {
   instructions?: string | null;
 };
 
+type FilterId = "all" | "CUSTOM" | "RECOMMENDATION";
+
+const hairColorLabels = new Map(hairColors.map((o) => [o.id, o.label]));
+const hairstyleLabels = new Map(hairstyles.map((o) => [o.id, o.label]));
+const makeupLabels = new Map(makeupStyles.map((o) => [o.id, o.label]));
+
 function formatDate(dateString: string) {
   return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
     year: "numeric",
@@ -34,14 +56,18 @@ function formatDate(dateString: string) {
   }).format(new Date(dateString));
 }
 
-function formatStyleValue(value: string | undefined) {
+// Maps the raw internal option id (e.g. "honey-blonde") stored on the
+// generation back to its Persian display label, instead of just
+// capitalizing the English id (which is what this used to do).
+function formatStyleValue(
+  value: string | undefined,
+  labels: Map<string, string>,
+) {
   if (!value) {
     return "انتخاب نشده";
   }
 
-  return value
-    .replace(/[-_]/g, " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
+  return labels.get(value) ?? value;
 }
 
 function parseStyles(styleChosen: string | null): SelectedStyles {
@@ -77,235 +103,233 @@ function WorkflowBadge({ workflowType }: { workflowType: WorkflowType }) {
   if (workflowType === "RECOMMENDATION") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-crimson-light)] px-3 py-1.5 text-xs font-semibold text-[var(--brand-crimson-dark)]">
-        <svg
-          viewBox="0 0 24 24"
-          className="h-3.5 w-3.5 fill-none stroke-current stroke-[1.8]"
-          aria-hidden="true"
-        >
-          <path d="M12 3l1.2 4.3L17.5 9l-4.3 1.7L12 15l-1.2-4.3L6.5 9l4.3-1.7L12 3Z" />
-        </svg>
+        <Sparkles size={13} />
         پیشنهاد هوش مصنوعی
       </span>
     );
   }
 
   return (
-    <span className="inline-flex rounded-full bg-[var(--bg-card-warm)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)]">
+    <span className="inline-flex rounded-full bg-[var(--bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)]">
       انتخاب شخصی
     </span>
   );
 }
 
 export function MyGenerations({ generations }: MyGenerationsProps) {
+  const [filter, setFilter] = useState<FilterId>("all");
+  const [compareId, setCompareId] = useState<string | null>(null);
+
+  const filteredGenerations = useMemo(() => {
+    if (filter === "all") {
+      return generations;
+    }
+
+    return generations.filter((g) => g.workflowType === filter);
+  }, [generations, filter]);
+
+  const compareGeneration = generations.find((g) => g.id === compareId);
+
+  const filters: Array<{ id: FilterId; label: string }> = [
+    { id: "all", label: "همه استایل‌ها" },
+    { id: "RECOMMENDATION", label: "پیشنهاد هوش مصنوعی" },
+    { id: "CUSTOM", label: "انتخاب شخصی" },
+  ];
+
   return (
     <section>
-      <div className="mb-7">
-        <p className="text-sm font-medium text-[var(--brand-crimson)]">
-          گالری شخصی شما
-        </p>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <Sparkles size={22} className="text-[var(--brand-crimson)]" />
+            <h2 className="text-xl font-bold text-[var(--text-primary)]">
+              گالری استایل‌های من
+            </h2>
+            <span className="rounded-full bg-[var(--bg-card-warm)] px-2.5 py-0.5 text-xs font-semibold text-[var(--text-secondary)]">
+              {generations.length} استایل
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            طراحی‌های ساخته‌شده با آرایشگر هوش مصنوعی ملینا
+          </p>
+        </div>
 
-        <h2 className="mt-1 text-2xl font-bold">تصاویر هوش مصنوعی</h2>
-
-        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-          نتیجه تجربه‌های شما با آرایشگر هوش مصنوعی در اینجا ذخیره می‌شود.
-        </p>
+        <Link
+          href="/ai-hairdresser"
+          className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full bg-[var(--brand-crimson-light)] px-4 py-2 text-sm font-semibold text-[var(--brand-crimson)] transition-colors hover:bg-[var(--brand-crimson)] hover:text-white sm:self-auto"
+        >
+          <Wand2 size={16} />
+          تولید استایل جدید
+        </Link>
       </div>
 
       {generations.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[var(--border-beige)] bg-[var(--bg-card-warm)] p-8 text-center">
+        <div className="rounded-xl border border-dashed border-[var(--border-beige)] bg-[var(--bg-card-warm)] p-8 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
-            <svg
-              viewBox="0 0 24 24"
-              className="h-7 w-7 fill-none stroke-current stroke-[1.7]"
-              aria-hidden="true"
-            >
-              <path d="M12 3l1.2 4.3L17.5 9l-4.3 1.7L12 15l-1.2-4.3L6.5 9l4.3-1.7L12 3Z" />
-              <path d="M19 14l.7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7L19 14Z" />
-            </svg>
+            <Sparkles size={26} />
           </div>
 
-          <p className="mt-4 font-semibold">هنوز تصویری تولید نکرده‌اید</p>
+          <p className="mt-4 font-semibold text-[var(--text-primary)]">
+            هنوز تصویری تولید نکرده‌اید
+          </p>
 
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--text-secondary)]">
             بعد از داشتن نوبت تأییدشده، می‌توانید از آرایشگر هوش مصنوعی استفاده
             کنید و نتایج خود را اینجا ببینید.
           </p>
 
-          <a
+          <Link
             href="/ai-hairdresser"
-            className="mt-5 inline-flex rounded-xl bg-[var(--brand-crimson)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-crimson-hover)]"
+            className="mt-5 inline-flex rounded-full bg-[var(--brand-crimson)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-crimson-hover)]"
           >
             آرایشگر هوش مصنوعی
-          </a>
+          </Link>
         </div>
       ) : (
-        <div className="grid gap-6 xl:grid-cols-2">
-          {generations.map((generation) => {
-            const styles = parseStyles(generation.styleChosen);
-            const isRecommendation =
-              generation.workflowType === "RECOMMENDATION";
-
-            return (
-              <article
-                key={generation.id}
-                className="overflow-hidden rounded-[1.5rem] border border-[var(--border-subtle)] bg-[var(--bg-card)]"
+        <>
+          {/* Filter chips */}
+          <div className="mb-5 flex items-center gap-2 overflow-x-auto pb-1">
+            {filters.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setFilter(f.id)}
+                className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                  filter === f.id
+                    ? "bg-[var(--brand-crimson)] text-white"
+                    : "bg-[var(--bg-card-warm)] text-[var(--text-secondary)] hover:bg-[var(--brand-crimson-light)]"
+                }`}
               >
-                {/* Images */}
-                <div
-                  className={`grid gap-px bg-[var(--border-subtle)] ${
-                    isRecommendation ? "grid-cols-1" : "grid-cols-2"
-                  }`}
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            {filteredGenerations.map((generation) => {
+              const styles = parseStyles(generation.styleChosen);
+              const isRecommendation =
+                generation.workflowType === "RECOMMENDATION";
+
+              return (
+                <article
+                  key={generation.id}
+                  className="overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)]"
                 >
-                  <div className="bg-[var(--bg-card)] p-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <p className="text-xs font-semibold text-[var(--text-secondary)]">
-                        تصویر اصلی
-                      </p>
-                    </div>
+                  <div className="relative aspect-[4/3] overflow-hidden bg-[var(--bg-card)]">
+                    <Image
+                      src={generation.resultUrl}
+                      alt={
+                        isRecommendation
+                          ? "دو پیشنهاد شخصی‌سازی‌شده آرایشگر هوش مصنوعی"
+                          : "نتیجه آرایشگر هوش مصنوعی"
+                      }
+                      fill
+                      unoptimized
+                      sizes="(max-width: 1280px) 50vw, 500px"
+                      className="object-cover"
+                    />
 
-                    <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[var(--bg-card-warm)]">
-                      <Image
-                        src={generation.originalUrl}
-                        alt="تصویر اصلی"
-                        fill
-                        sizes="(max-width: 1280px) 50vw, 400px"
-                        className="object-cover"
-                      />
+                    <div className="absolute top-3 right-3">
+                      <WorkflowBadge workflowType={generation.workflowType} />
                     </div>
                   </div>
 
-                  {isRecommendation ? (
-                    <div className="bg-[var(--bg-card)] p-3">
-                      <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-semibold text-[var(--brand-crimson)]">
-                          دو پیشنهاد شخصی‌سازی‌شده
-                        </p>
-                      </div>
+                  <div className="p-4">
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      {formatDate(generation.createdAt)}
+                    </p>
 
-                      <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-[var(--bg-card-warm)]">
-                        <Image
-                          src={generation.resultUrl}
-                          alt="دو پیشنهاد شخصی‌سازی‌شده آرایشگر هوش مصنوعی"
-                          fill
-                          sizes="(max-width: 1280px) 100vw, 700px"
-                          className="object-cover"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-[var(--bg-card)] p-3">
-                      <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-semibold text-[var(--brand-crimson)]">
-                          نتیجه هوش مصنوعی
-                        </p>
-                      </div>
-
-                      <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[var(--bg-card-warm)]">
-                        <Image
-                          src={generation.resultUrl}
-                          alt="نتیجه آرایشگر هوش مصنوعی"
-                          fill
-                          sizes="(max-width: 1280px) 50vw, 400px"
-                          className="object-cover"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Metadata */}
-                <div className="border-t border-[var(--border-subtle)] p-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="text-xs text-[var(--text-secondary)]">
-                        تاریخ تولید
+                    {isRecommendation ? (
+                      <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                        دو ظاهر شخصی‌سازی‌شده بر اساس فرم صورت شما.
                       </p>
-
-                      <p className="mt-1 text-sm font-semibold">
-                        {formatDate(generation.createdAt)}
-                      </p>
-                    </div>
-
-                    <WorkflowBadge workflowType={generation.workflowType} />
-                  </div>
-
-                  {isRecommendation ? (
-                    <div className="mt-5 rounded-2xl bg-[var(--bg-card-warm)] p-4">
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="h-4 w-4 fill-none stroke-current stroke-[1.8]"
-                            aria-hidden="true"
-                          >
-                            <path d="M12 3l1.2 4.3L17.5 9l-4.3 1.7L12 15l-1.2-4.3L6.5 9l4.3-1.7L12 3Z" />
-                          </svg>
-                        </span>
-
-                        <div>
-                          <p className="text-sm font-bold">
-                            پیشنهادهای متناسب با چهره شما
-                          </p>
-
-                          <p className="mt-1 text-xs leading-6 text-[var(--text-secondary)]">
-                            هوش مصنوعی ویژگی‌های قابل مشاهده چهره شما را بررسی
-                            کرده و دو ظاهر متفاوت را در یک تصویر پیشنهاد داده
-                            است.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-xl bg-[var(--bg-card-warm)] p-3.5">
-                          <p className="text-xs text-[var(--text-secondary)]">
+                    ) : (
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        <div className="rounded-lg bg-[var(--bg-card)] p-2 text-center">
+                          <p className="text-[10px] text-[var(--text-secondary)]">
                             رنگ مو
                           </p>
-
-                          <p className="mt-1 text-sm font-semibold">
-                            {formatStyleValue(styles.hairColor)}
+                          <p className="mt-0.5 text-xs font-semibold text-[var(--text-primary)]">
+                            {formatStyleValue(
+                              styles.hairColor,
+                              hairColorLabels,
+                            )}
                           </p>
                         </div>
-
-                        <div className="rounded-xl bg-[var(--bg-card-warm)] p-3.5">
-                          <p className="text-xs text-[var(--text-secondary)]">
+                        <div className="rounded-lg bg-[var(--bg-card)] p-2 text-center">
+                          <p className="text-[10px] text-[var(--text-secondary)]">
                             مدل مو
                           </p>
-
-                          <p className="mt-1 text-sm font-semibold">
-                            {formatStyleValue(styles.hairstyle)}
+                          <p className="mt-0.5 text-xs font-semibold text-[var(--text-primary)]">
+                            {formatStyleValue(
+                              styles.hairstyle,
+                              hairstyleLabels,
+                            )}
                           </p>
                         </div>
-
-                        <div className="rounded-xl bg-[var(--bg-card-warm)] p-3.5">
-                          <p className="text-xs text-[var(--text-secondary)]">
-                            آرایش
+                        <div className="rounded-lg bg-[var(--bg-card)] p-2 text-center">
+                          <p className="text-[10px] text-[var(--text-secondary)]">
+                            میکاپ
                           </p>
-
-                          <p className="mt-1 text-sm font-semibold">
-                            {formatStyleValue(styles.makeup)}
+                          <p className="mt-0.5 text-xs font-semibold text-[var(--text-primary)]">
+                            {formatStyleValue(styles.makeup, makeupLabels)}
                           </p>
                         </div>
                       </div>
+                    )}
 
-                      {styles.instructions && (
-                        <div className="mt-3 rounded-xl bg-[var(--bg-card-warm)] p-4">
-                          <p className="text-xs text-[var(--text-secondary)]">
-                            توضیحات شما
-                          </p>
+                    <div className="mt-4 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCompareId(generation.id)}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[var(--brand-crimson)] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--brand-crimson-hover)]"
+                      >
+                        <SplitSquareHorizontal size={14} />
+                        مقایسه قبل و بعد
+                      </button>
 
-                          <p className="mt-1 text-sm leading-6">
-                            {styles.instructions}
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </article>
-            );
-          })}
+                      <a
+                        href={generation.resultUrl}
+                        download
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="دانلود تصویر"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--bg-card)] text-[var(--brand-crimson)] transition-colors hover:bg-[var(--brand-crimson-light)]"
+                      >
+                        <Download size={15} />
+                      </a>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* Compare modal */}
+      {compareGeneration && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl bg-[var(--bg-card)] p-5 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-bold text-[var(--text-primary)]">
+                مقایسه قبل و بعد
+              </h3>
+              <button
+                type="button"
+                onClick={() => setCompareId(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-card-warm)]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <BeforeAfterSlider
+              beforeUrl={compareGeneration.originalUrl}
+              afterUrl={compareGeneration.resultUrl}
+            />
+          </div>
         </div>
       )}
     </section>

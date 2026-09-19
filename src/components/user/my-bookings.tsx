@@ -1,5 +1,6 @@
 "use client";
 
+import { Ban, CalendarDays, Clock3 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -28,11 +29,7 @@ type CancelBookingResponse = {
   message?: string;
 };
 
-const statusLabels: Record<BookingStatus, string> = {
-  CONFIRMED: "تأیید شده",
-  CANCELLED: "لغو شده",
-  COMPLETED: "تکمیل شده",
-};
+type TabId = "active" | "history" | "cancelled";
 
 function formatDate(dateString: string) {
   return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
@@ -50,19 +47,6 @@ function formatTime(dateString: string) {
   }).format(new Date(dateString));
 }
 
-function getStatusClasses(status: BookingStatus) {
-  switch (status) {
-    case "CONFIRMED":
-      return "bg-emerald-50 text-emerald-700";
-
-    case "CANCELLED":
-      return "bg-red-50 text-red-700";
-
-    case "COMPLETED":
-      return "bg-gray-100 text-gray-700";
-  }
-}
-
 function isFutureBooking(booking: Booking) {
   return new Date(booking.startsAt).getTime() >= Date.now();
 }
@@ -71,30 +55,39 @@ export function MyBookings({ bookings: initialBookings }: MyBookingsProps) {
   const [bookings, setBookings] = useState(initialBookings);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>("active");
 
-  const { upcomingBookings, pastBookings } = useMemo(() => {
-    const upcoming: Booking[] = [];
-    const past: Booking[] = [];
+  const { activeBookings, historyBookings, cancelledBookings } = useMemo(() => {
+    const active: Booking[] = [];
+    const history: Booking[] = [];
+    const cancelled: Booking[] = [];
 
     for (const booking of bookings) {
-      if (isFutureBooking(booking)) {
-        upcoming.push(booking);
+      if (booking.status === "CANCELLED") {
+        cancelled.push(booking);
+      } else if (booking.status === "COMPLETED" || !isFutureBooking(booking)) {
+        history.push(booking);
       } else {
-        past.push(booking);
+        active.push(booking);
       }
     }
 
-    upcoming.sort(
+    active.sort(
       (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
     );
 
-    past.sort(
+    history.sort(
+      (a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime(),
+    );
+
+    cancelled.sort(
       (a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime(),
     );
 
     return {
-      upcomingBookings: upcoming,
-      pastBookings: past,
+      activeBookings: active,
+      historyBookings: history,
+      cancelledBookings: cancelled,
     };
   }, [bookings]);
 
@@ -132,11 +125,13 @@ export function MyBookings({ bookings: initialBookings }: MyBookingsProps) {
             : booking,
         ),
       );
-    } catch (error) {
-      console.error("Failed to cancel booking:", error);
+    } catch (cancelError) {
+      console.error("Failed to cancel booking:", cancelError);
 
       setError(
-        error instanceof Error ? error.message : "لغو نوبت با خطا مواجه شد.",
+        cancelError instanceof Error
+          ? cancelError.message
+          : "لغو نوبت با خطا مواجه شد.",
       );
     } finally {
       setCancellingId(null);
@@ -148,96 +143,90 @@ export function MyBookings({ bookings: initialBookings }: MyBookingsProps) {
       booking.status === "CONFIRMED" && isFutureBooking(booking);
 
     return (
-      <article
+      <div
         key={booking.id}
-        className="overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]"
+        className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] p-4 sm:p-5"
       >
-        <div className="p-5 sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-5 w-5 fill-none stroke-current stroke-[1.8]"
-                    aria-hidden="true"
-                  >
-                    <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
-                    <path d="M7.5 3.5v3M16.5 3.5v3M3.5 9h17" />
-                  </svg>
-                </span>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
+              <CalendarDays size={19} />
+            </span>
 
-                <div>
-                  <h3 className="text-lg font-bold text-[var(--text-primary)]">
-                    {booking.service.name}
-                  </h3>
-
-                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                    {formatDate(booking.startsAt)}
-                  </p>
-                </div>
-              </div>
+            <div>
+              <h4 className="font-bold text-[var(--text-primary)]">
+                {booking.service.name}
+              </h4>
+              <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+                {formatDate(booking.startsAt)}
+              </p>
             </div>
+          </div>
 
-            <span
-              className={`inline-flex w-fit rounded-full px-3 py-1.5 text-xs font-semibold ${getStatusClasses(
-                booking.status,
-              )}`}
-            >
-              {statusLabels[booking.status]}
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 rounded-full bg-[var(--bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)]">
+              <Clock3 size={13} />
+              {formatTime(booking.startsAt)} تا {formatTime(booking.endsAt)}
             </span>
           </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl bg-[var(--bg-card-warm)] p-4">
-              <p className="text-xs text-[var(--text-secondary)]">ساعت نوبت</p>
-
-              <p className="mt-1 text-sm font-semibold">
-                {formatTime(booking.startsAt)} تا {formatTime(booking.endsAt)}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-[var(--bg-card-warm)] p-4">
-              <p className="text-xs text-[var(--text-secondary)]">مدت خدمات</p>
-
-              <p className="mt-1 text-sm font-semibold">
-                {new Intl.NumberFormat("fa-IR").format(
-                  booking.service.duration,
-                )}{" "}
-                دقیقه
-              </p>
-            </div>
-          </div>
-
-          {canCancel && (
-            <div className="mt-5 flex justify-end border-t border-[var(--border-subtle)] pt-5">
-              <button
-                type="button"
-                onClick={() => void handleCancel(booking.id)}
-                disabled={cancellingId === booking.id}
-                className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {cancellingId === booking.id ? "در حال لغو..." : "لغو نوبت"}
-              </button>
-            </div>
-          )}
         </div>
-      </article>
+
+        {canCancel && (
+          <div className="mt-4 flex justify-end border-t border-[var(--border-subtle)] pt-4">
+            <button
+              type="button"
+              onClick={() => void handleCancel(booking.id)}
+              disabled={cancellingId === booking.id}
+              className="rounded-xl border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {cancellingId === booking.id ? "در حال لغو..." : "لغو نوبت"}
+            </button>
+          </div>
+        )}
+      </div>
     );
   }
 
+  function renderEmptyState(message: string) {
+    return (
+      <div className="rounded-xl border border-dashed border-[var(--border-beige)] bg-[var(--bg-card-warm)] p-8 text-center text-sm text-[var(--text-secondary)]">
+        {message}
+      </div>
+    );
+  }
+
+  const tabs: Array<{ id: TabId; label: string; count: number }> = [
+    { id: "active", label: "پیش‌رو", count: activeBookings.length },
+    { id: "history", label: "تاریخچه نوبت‌ها", count: historyBookings.length },
+    { id: "cancelled", label: "لغوشده", count: cancelledBookings.length },
+  ];
+
   return (
     <section>
-      <div className="mb-7">
-        <p className="text-sm font-medium text-[var(--brand-crimson)]">
-          برنامه شما
-        </p>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <CalendarDays size={22} className="text-[var(--brand-crimson)]" />
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">
+            نوبت‌های من
+          </h2>
+        </div>
 
-        <h2 className="mt-1 text-2xl font-bold">نوبت‌های من</h2>
-
-        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-          نوبت‌های آینده و سوابق خدمات شما در این بخش نمایش داده می‌شود.
-        </p>
+        <div className="flex items-center gap-1 rounded-full bg-[var(--bg-card-warm)] p-1 text-sm">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
+                activeTab === tab.id
+                  ? "bg-[var(--brand-crimson)] text-white"
+                  : "text-[var(--text-secondary)] hover:text-[var(--brand-crimson)]"
+              }`}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
       </div>
 
       {error && (
@@ -246,59 +235,45 @@ export function MyBookings({ bookings: initialBookings }: MyBookingsProps) {
         </div>
       )}
 
-      {upcomingBookings.length > 0 ? (
-        <div>
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h3 className="text-lg font-bold">نوبت‌های آینده</h3>
-
-            <span className="rounded-full bg-[var(--brand-crimson-light)] px-3 py-1 text-xs font-semibold text-[var(--brand-crimson-dark)]">
-              {new Intl.NumberFormat("fa-IR").format(upcomingBookings.length)}{" "}
-              نوبت
-            </span>
-          </div>
-
-          <div className="space-y-4">{upcomingBookings.map(renderBooking)}</div>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-dashed border-[var(--border-beige)] bg-[var(--bg-card-warm)] p-7 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
-            <svg
-              viewBox="0 0 24 24"
-              className="h-6 w-6 fill-none stroke-current stroke-[1.8]"
-              aria-hidden="true"
-            >
-              <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
-              <path d="M7.5 3.5v3M16.5 3.5v3M3.5 9h17" />
-            </svg>
-          </div>
-
-          <p className="mt-4 font-semibold">هنوز نوبت آینده‌ای ندارید</p>
-
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--text-secondary)]">
-            برای رزرو خدمات موردنظرتان می‌توانید از صفحه رزرو نوبت استفاده کنید.
-          </p>
-
-          <Link
-            href="/#booking"
-            className="mt-5 inline-flex rounded-xl bg-[var(--brand-crimson)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-crimson-hover)]"
-          >
-            رزرو نوبت
-          </Link>
-        </div>
-      )}
-
-      {pastBookings.length > 0 && (
-        <div className="mt-10">
-          <div className="mb-4">
-            <h3 className="text-lg font-bold">سوابق نوبت‌ها</h3>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              خدمات قبلی و نوبت‌های لغوشده شما
+      {activeTab === "active" &&
+        (activeBookings.length > 0 ? (
+          <div className="space-y-3">{activeBookings.map(renderBooking)}</div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-[var(--border-beige)] bg-[var(--bg-card-warm)] p-8 text-center">
+            <p className="font-semibold text-[var(--text-primary)]">
+              هنوز نوبت آینده‌ای ندارید
             </p>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--text-secondary)]">
+              برای رزرو خدمات موردنظرتان می‌توانید از صفحه رزرو نوبت استفاده
+              کنید.
+            </p>
+            <Link
+              href="/#booking"
+              className="mt-5 inline-flex rounded-full bg-[var(--brand-crimson)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-crimson-hover)]"
+            >
+              رزرو نوبت
+            </Link>
           </div>
+        ))}
 
-          <div className="space-y-4">{pastBookings.map(renderBooking)}</div>
-        </div>
-      )}
+      {activeTab === "history" &&
+        (historyBookings.length > 0 ? (
+          <div className="space-y-3">{historyBookings.map(renderBooking)}</div>
+        ) : (
+          renderEmptyState("هنوز سابقه نوبتی ندارید.")
+        ))}
+
+      {activeTab === "cancelled" &&
+        (cancelledBookings.length > 0 ? (
+          <div className="space-y-3">
+            {cancelledBookings.map(renderBooking)}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-[var(--border-beige)] bg-[var(--bg-card-warm)] p-8 text-center text-sm text-[var(--text-secondary)]">
+            <Ban size={20} className="text-[var(--text-secondary)]" />
+            نوبت لغوشده‌ای ندارید.
+          </div>
+        ))}
     </section>
   );
 }

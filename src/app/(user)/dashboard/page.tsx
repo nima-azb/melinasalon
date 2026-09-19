@@ -1,4 +1,6 @@
 import { DashboardShell } from "@/components/user/dashboard-shell";
+import { Footer } from "@/components/public/footer";
+import { Navbar } from "@/components/public/navbar";
 import {
   MAX_GENERATIONS as AI_GENERATION_LIMIT,
   RATE_LIMIT_WINDOW_HOURS as AI_WINDOW_HOURS,
@@ -101,30 +103,55 @@ export default async function DashboardPage() {
     AI_GENERATION_LIMIT - recentAiRequests,
   );
 
+  const activeBookings = bookings.filter(
+    (booking) => booking.status === "CONFIRMED" && booking.startsAt >= now,
+  );
+
+  const completedBookings = bookings.filter(
+    (booking) => booking.status === "COMPLETED",
+  );
+
+  const nextBooking = activeBookings[0]
+    ? {
+        serviceName: activeBookings[0].service.name,
+        startsAt: activeBookings[0].startsAt.toISOString(),
+      }
+    : null;
+
   return (
-    <DashboardShell
-      user={{
-        fullName: user.fullName,
-        phoneNumber: user.phoneNumber,
-        birthDate: user.birthDate?.toISOString() ?? null,
-        createdAt: user.createdAt.toISOString(),
-      }}
-      bookings={bookings.map((booking) => ({
-        id: booking.id,
-        startsAt: booking.startsAt.toISOString(),
-        endsAt: booking.endsAt.toISOString(),
-        status: booking.status,
-        createdAt: booking.createdAt.toISOString(),
-        updatedAt: booking.updatedAt.toISOString(),
-        service: booking.service,
-      }))}
-      generations={generationsWithUrls}
-      stats={{
-        bookingCount: bookings.length,
-        generationCount: generations.length,
-        remainingAiGenerations,
-        hasEligibleAiBooking: confirmedBooking !== null,
-      }}
-    />
+    <>
+      <Navbar />
+
+      <main className="w-full bg-[var(--bg-cream)]">
+        <DashboardShell
+          user={{
+            fullName: user.fullName,
+            phoneNumber: user.phoneNumber,
+            birthDate: user.birthDate?.toISOString() ?? null,
+            createdAt: user.createdAt.toISOString(),
+          }}
+          bookings={bookings.map((booking) => ({
+            id: booking.id,
+            startsAt: booking.startsAt.toISOString(),
+            endsAt: booking.endsAt.toISOString(),
+            status: booking.status,
+            createdAt: booking.createdAt.toISOString(),
+            updatedAt: booking.updatedAt.toISOString(),
+            service: booking.service,
+          }))}
+          generations={generationsWithUrls}
+          stats={{
+            activeBookingsCount: activeBookings.length,
+            completedVisitsCount: completedBookings.length,
+            generationCount: generations.length,
+            remainingAiGenerations,
+            hasEligibleAiBooking: confirmedBooking !== null,
+            nextBooking,
+          }}
+        />
+      </main>
+
+      <Footer />
+    </>
   );
 }

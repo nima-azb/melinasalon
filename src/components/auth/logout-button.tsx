@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-export function LogoutButton() {
+export function LogoutButton({ className = "" }: { className?: string }) {
   const router = useRouter();
 
   async function logout() {
@@ -17,7 +17,7 @@ export function LogoutButton() {
   return (
     <button
       onClick={logout}
-      className="rounded-xl bg-[var(--brand-crimson)] px-5 py-3 text-sm font-bold text-white"
+      className={`rounded-xl bg-[var(--brand-crimson)] px-5 py-3 text-sm font-bold text-white ${className}`}
     >
       خروج از حساب
     </button>
