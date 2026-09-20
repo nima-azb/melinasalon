@@ -118,6 +118,8 @@ export const ServiceScalarFieldEnum = {
   name: 'name',
   description: 'description',
   duration: 'duration',
+  imageUrl: 'imageUrl',
+  capacity: 'capacity',
   isActive: 'isActive',
   createdAt: 'createdAt'
 } as const

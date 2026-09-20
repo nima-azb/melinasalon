@@ -3,11 +3,16 @@ import { z } from "zod";
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
+import {
+  deleteFromArvan,
+  getArvanKeyFromPublicUrl,
+} from "@/lib/storage/arvan-upload";
 
 const updateServiceSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
   description: z.string().trim().max(1000).nullable().optional(),
   duration: z.number().int().positive().max(480).optional(),
+  capacity: z.number().int().min(1).max(20).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -123,6 +128,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
               duration: result.data.duration,
             }
           : {}),
+        ...(result.data.capacity !== undefined
+          ? {
+              capacity: result.data.capacity,
+            }
+          : {}),
         ...(result.data.isActive !== undefined
           ? {
               isActive: result.data.isActive,
@@ -164,6 +174,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       },
       select: {
         id: true,
+        imageUrl: true,
       },
     });
 
@@ -199,6 +210,21 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
         id,
       },
     });
+
+    if (existingService.imageUrl) {
+      const key = getArvanKeyFromPublicUrl(existingService.imageUrl);
+
+      if (key) {
+        try {
+          await deleteFromArvan(key);
+        } catch (error) {
+          console.error(
+            "Failed to delete service image after service deletion:",
+            error,
+          );
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

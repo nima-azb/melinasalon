@@ -1,5 +1,7 @@
 "use client";
 
+import { ImageOff, ImageUp, Trash2 } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type Service = {
@@ -7,6 +9,8 @@ type Service = {
   name: string;
   description: string | null;
   duration: number;
+  imageUrl: string | null;
+  capacity: number;
   isActive: boolean;
   createdAt: string;
 };
@@ -15,27 +19,69 @@ type ServiceForm = {
   name: string;
   description: string;
   duration: string;
+  capacity: string;
 };
 
 const emptyForm: ServiceForm = {
   name: "",
   description: "",
   duration: "60",
+  capacity: "1",
 };
+
+const MAX_IMAGE_SIZE_MB = 10;
+
+async function uploadServiceImage(serviceId: string, image: File) {
+  const formData = new FormData();
+  formData.append("image", image);
+
+  const response = await fetch(`/api/services/${serviceId}/image`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || "بارگذاری تصویر خدمت با خطا مواجه شد.");
+  }
+
+  return data.service as Service;
+}
+
+async function removeServiceImage(serviceId: string) {
+  const response = await fetch(`/api/services/${serviceId}/image`, {
+    method: "DELETE",
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || "حذف تصویر خدمت با خطا مواجه شد.");
+  }
+
+  return data.service as Service;
+}
 
 export function ServiceManagement() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [removingImageId, setRemovingImageId] = useState<string | null>(null);
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState("60");
+  const [capacity, setCapacity] = useState("1");
+  const [newImage, setNewImage] = useState<File | null>(null);
+  const [newImagePreviewUrl, setNewImagePreviewUrl] = useState("");
 
   const [editForm, setEditForm] = useState<ServiceForm>(emptyForm);
+  const [editImage, setEditImage] = useState<File | null>(null);
+  const [editImagePreviewUrl, setEditImagePreviewUrl] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -72,6 +118,28 @@ export function ServiceManagement() {
     };
   }, []);
 
+  function handleNewImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+
+    if (newImagePreviewUrl) {
+      URL.revokeObjectURL(newImagePreviewUrl);
+    }
+
+    setNewImage(file);
+    setNewImagePreviewUrl(file ? URL.createObjectURL(file) : "");
+  }
+
+  function handleEditImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+
+    if (editImagePreviewUrl) {
+      URL.revokeObjectURL(editImagePreviewUrl);
+    }
+
+    setEditImage(file);
+    setEditImagePreviewUrl(file ? URL.createObjectURL(file) : "");
+  }
+
   async function handleCreateService(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -88,6 +156,7 @@ export function ServiceManagement() {
           name: name.trim(),
           description: description.trim() || undefined,
           duration: Number(duration),
+          capacity: Number(capacity),
         }),
       });
 
@@ -97,11 +166,38 @@ export function ServiceManagement() {
         throw new Error(data.message || "خطا در ایجاد خدمت.");
       }
 
-      setServices((currentServices) => [...currentServices, data.service]);
+      let createdService: Service = data.service;
+
+      if (newImage) {
+        try {
+          createdService = await uploadServiceImage(
+            createdService.id,
+            newImage,
+          );
+        } catch (imageError) {
+          console.error("Failed to upload service image:", imageError);
+
+          setError(
+            imageError instanceof Error
+              ? imageError.message
+              : "خدمت ایجاد شد اما بارگذاری تصویر با خطا مواجه شد.",
+          );
+        }
+      }
+
+      setServices((currentServices) => [...currentServices, createdService]);
 
       setName("");
       setDescription("");
       setDuration("60");
+      setCapacity("1");
+
+      if (newImagePreviewUrl) {
+        URL.revokeObjectURL(newImagePreviewUrl);
+      }
+
+      setNewImage(null);
+      setNewImagePreviewUrl("");
     } catch (error) {
       console.error("Failed to create service:", error);
 
@@ -119,13 +215,24 @@ export function ServiceManagement() {
       name: service.name,
       description: service.description ?? "",
       duration: String(service.duration),
+      capacity: String(service.capacity),
     });
+
+    setEditImage(null);
+    setEditImagePreviewUrl("");
   }
 
   function cancelEditing() {
     setEditingServiceId(null);
     setEditForm(emptyForm);
     setError("");
+
+    if (editImagePreviewUrl) {
+      URL.revokeObjectURL(editImagePreviewUrl);
+    }
+
+    setEditImage(null);
+    setEditImagePreviewUrl("");
   }
 
   function updateEditField(field: keyof ServiceForm, value: string) {
@@ -155,6 +262,7 @@ export function ServiceManagement() {
           name: editForm.name.trim(),
           description: editForm.description.trim() || null,
           duration: Number(editForm.duration),
+          capacity: Number(editForm.capacity),
         }),
       });
 
@@ -164,9 +272,28 @@ export function ServiceManagement() {
         throw new Error(data.message || "خطا در ویرایش خدمت.");
       }
 
+      let updatedService: Service = data.service;
+
+      if (editImage) {
+        try {
+          updatedService = await uploadServiceImage(
+            editingServiceId,
+            editImage,
+          );
+        } catch (imageError) {
+          console.error("Failed to upload service image:", imageError);
+
+          setError(
+            imageError instanceof Error
+              ? imageError.message
+              : "تغییرات ذخیره شد اما بارگذاری تصویر با خطا مواجه شد.",
+          );
+        }
+      }
+
       setServices((currentServices) =>
         currentServices.map((service) =>
-          service.id === editingServiceId ? data.service : service,
+          service.id === editingServiceId ? updatedService : service,
         ),
       );
 
@@ -177,6 +304,39 @@ export function ServiceManagement() {
       setError(error instanceof Error ? error.message : "خطا در ویرایش خدمت.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleRemoveImage(serviceId: string) {
+    const confirmed = window.confirm(
+      "آیا مطمئن هستید که می‌خواهید تصویر این خدمت را حذف کنید؟",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setRemovingImageId(serviceId);
+      setError("");
+
+      const updatedService = await removeServiceImage(serviceId);
+
+      setServices((currentServices) =>
+        currentServices.map((service) =>
+          service.id === serviceId ? updatedService : service,
+        ),
+      );
+    } catch (error) {
+      console.error("Failed to remove service image:", error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "حذف تصویر خدمت با خطا مواجه شد.",
+      );
+    } finally {
+      setRemovingImageId(null);
     }
   }
 
@@ -245,6 +405,41 @@ export function ServiceManagement() {
               >
                 {editingServiceId === service.id ? (
                   <form onSubmit={handleUpdateService} className="space-y-4">
+                    {/* Edit image */}
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
+                        تصویر خدمت
+                      </label>
+
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[var(--bg-card)]">
+                          {editImagePreviewUrl || service.imageUrl ? (
+                            <Image
+                              src={editImagePreviewUrl || service.imageUrl!}
+                              alt={service.name}
+                              fill
+                              unoptimized={Boolean(editImagePreviewUrl)}
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[var(--text-secondary)]">
+                              <ImageOff size={18} />
+                            </div>
+                          )}
+                        </div>
+
+                        <label className="flex-1 cursor-pointer rounded-xl border border-dashed border-[var(--border-beige)] px-3 py-2.5 text-center text-xs font-medium text-[var(--brand-crimson)] transition-colors hover:bg-[var(--bg-card)]">
+                          {editImage ? editImage.name : "انتخاب تصویر جدید"}
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleEditImageChange}
+                            className="sr-only"
+                          />
+                        </label>
+                      </div>
+                    </div>
+
                     {/* Edit name */}
                     <div>
                       <label
@@ -311,6 +506,35 @@ export function ServiceManagement() {
                       />
                     </div>
 
+                    {/* Edit capacity */}
+                    <div>
+                      <label
+                        htmlFor={`edit-capacity-${service.id}`}
+                        className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
+                      >
+                        ظرفیت همزمان (تعداد متخصص)
+                      </label>
+
+                      <input
+                        id={`edit-capacity-${service.id}`}
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={editForm.capacity}
+                        onChange={(event) =>
+                          updateEditField("capacity", event.target.value)
+                        }
+                        required
+                        className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)] focus:ring-3 focus:ring-[var(--brand-crimson)]/10"
+                      />
+
+                      <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
+                        تعداد مشتریانی که می‌توانند هم‌زمان این خدمت را رزرو
+                        کنند (مثلاً اگر ۲ متخصص این خدمت را انجام می‌دهند، ۲
+                        وارد کنید).
+                      </p>
+                    </div>
+
                     {/* Edit actions */}
                     <div className="flex gap-3">
                       <button
@@ -334,22 +558,39 @@ export function ServiceManagement() {
                 ) : (
                   <>
                     <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="font-semibold text-[var(--text-primary)]">
-                          {service.name}
-                        </h3>
+                      <div className="flex items-start gap-3">
+                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-[var(--bg-card)]">
+                          {service.imageUrl ? (
+                            <Image
+                              src={service.imageUrl}
+                              alt={service.name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[var(--text-secondary)]">
+                              <ImageOff size={16} />
+                            </div>
+                          )}
+                        </div>
 
-                        {service.description && (
-                          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                            {service.description}
-                          </p>
-                        )}
+                        <div>
+                          <h3 className="font-semibold text-[var(--text-primary)]">
+                            {service.name}
+                          </h3>
+
+                          {service.description && (
+                            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                              {service.description}
+                            </p>
+                          )}
+                        </div>
                       </div>
 
                       <button
                         type="button"
                         onClick={() => void handleToggleService(service)}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                           service.isActive
                             ? "bg-[var(--brand-crimson)]/10 text-[var(--brand-crimson)] hover:bg-[var(--brand-crimson)]/20"
                             : "bg-gray-100 text-gray-500 hover:bg-gray-200"
@@ -359,18 +600,34 @@ export function ServiceManagement() {
                       </button>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-                      <div className="text-sm text-[var(--text-secondary)]">
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
                         <span>{service.duration} دقیقه</span>
+                        <span className="text-[var(--border-beige)]">•</span>
+                        <span>ظرفیت همزمان: {service.capacity} نفر</span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => startEditing(service)}
-                        className="rounded-lg border border-[var(--border-subtle)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--brand-crimson)] hover:text-[var(--brand-crimson)]"
-                      >
-                        ویرایش
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {service.imageUrl && (
+                          <button
+                            type="button"
+                            onClick={() => void handleRemoveImage(service.id)}
+                            disabled={removingImageId === service.id}
+                            title="حذف تصویر"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-subtle)] text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => startEditing(service)}
+                          className="rounded-lg border border-[var(--border-subtle)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--brand-crimson)] hover:text-[var(--brand-crimson)]"
+                        >
+                          ویرایش
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
@@ -387,6 +644,42 @@ export function ServiceManagement() {
         </h2>
 
         <form onSubmit={handleCreateService} className="mt-6 space-y-4">
+          {/* Image */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
+              تصویر خدمت (اختیاری)
+            </label>
+
+            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-[var(--border-beige)] bg-[var(--bg-card-warm)] px-4 py-6 text-center transition-colors hover:border-[var(--brand-crimson)]/50">
+              {newImagePreviewUrl ? (
+                <div className="relative h-20 w-20 overflow-hidden rounded-xl">
+                  <Image
+                    src={newImagePreviewUrl}
+                    alt="پیش‌نمایش تصویر خدمت"
+                    fill
+                    unoptimized
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <ImageUp size={22} className="text-[var(--brand-crimson)]" />
+              )}
+
+              <span className="text-xs font-medium text-[var(--text-secondary)]">
+                {newImage
+                  ? newImage.name
+                  : `JPEG، PNG یا WebP، حداکثر ${MAX_IMAGE_SIZE_MB} مگابایت`}
+              </span>
+
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleNewImageChange}
+                className="sr-only"
+              />
+            </label>
+          </div>
+
           {/* Name */}
           <div>
             <label
@@ -448,6 +741,33 @@ export function ServiceManagement() {
               required
               className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)] focus:ring-3 focus:ring-[var(--brand-crimson)]/10"
             />
+          </div>
+
+          {/* Capacity */}
+          <div>
+            <label
+              htmlFor="service-capacity"
+              className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
+            >
+              ظرفیت همزمان (تعداد متخصص)
+            </label>
+
+            <input
+              id="service-capacity"
+              name="capacity"
+              type="number"
+              min="1"
+              max="20"
+              value={capacity}
+              onChange={(event) => setCapacity(event.target.value)}
+              required
+              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)] focus:ring-3 focus:ring-[var(--brand-crimson)]/10"
+            />
+
+            <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
+              تعداد مشتریانی که می‌توانند هم‌زمان این خدمت را رزرو کنند (مثلاً
+              اگر ۲ متخصص این خدمت را انجام می‌دهند، ۲ وارد کنید).
+            </p>
           </div>
 
           {/* Error */}

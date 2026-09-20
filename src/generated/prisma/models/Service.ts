@@ -28,10 +28,12 @@ export type AggregateService = {
 
 export type ServiceAvgAggregateOutputType = {
   duration: number | null
+  capacity: number | null
 }
 
 export type ServiceSumAggregateOutputType = {
   duration: number | null
+  capacity: number | null
 }
 
 export type ServiceMinAggregateOutputType = {
@@ -39,6 +41,8 @@ export type ServiceMinAggregateOutputType = {
   name: string | null
   description: string | null
   duration: number | null
+  imageUrl: string | null
+  capacity: number | null
   isActive: boolean | null
   createdAt: Date | null
 }
@@ -48,6 +52,8 @@ export type ServiceMaxAggregateOutputType = {
   name: string | null
   description: string | null
   duration: number | null
+  imageUrl: string | null
+  capacity: number | null
   isActive: boolean | null
   createdAt: Date | null
 }
@@ -57,6 +63,8 @@ export type ServiceCountAggregateOutputType = {
   name: number
   description: number
   duration: number
+  imageUrl: number
+  capacity: number
   isActive: number
   createdAt: number
   _all: number
@@ -65,10 +73,12 @@ export type ServiceCountAggregateOutputType = {
 
 export type ServiceAvgAggregateInputType = {
   duration?: true
+  capacity?: true
 }
 
 export type ServiceSumAggregateInputType = {
   duration?: true
+  capacity?: true
 }
 
 export type ServiceMinAggregateInputType = {
@@ -76,6 +86,8 @@ export type ServiceMinAggregateInputType = {
   name?: true
   description?: true
   duration?: true
+  imageUrl?: true
+  capacity?: true
   isActive?: true
   createdAt?: true
 }
@@ -85,6 +97,8 @@ export type ServiceMaxAggregateInputType = {
   name?: true
   description?: true
   duration?: true
+  imageUrl?: true
+  capacity?: true
   isActive?: true
   createdAt?: true
 }
@@ -94,6 +108,8 @@ export type ServiceCountAggregateInputType = {
   name?: true
   description?: true
   duration?: true
+  imageUrl?: true
+  capacity?: true
   isActive?: true
   createdAt?: true
   _all?: true
@@ -190,6 +206,8 @@ export type ServiceGroupByOutputType = {
   name: string
   description: string | null
   duration: number
+  imageUrl: string | null
+  capacity: number
   isActive: boolean
   createdAt: Date
   _count: ServiceCountAggregateOutputType | null
@@ -222,6 +240,8 @@ export type ServiceWhereInput = {
   name?: Prisma.StringFilter<"Service"> | string
   description?: Prisma.StringNullableFilter<"Service"> | string | null
   duration?: Prisma.IntFilter<"Service"> | number
+  imageUrl?: Prisma.StringNullableFilter<"Service"> | string | null
+  capacity?: Prisma.IntFilter<"Service"> | number
   isActive?: Prisma.BoolFilter<"Service"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Service"> | Date | string
   bookings?: Prisma.BookingListRelationFilter
@@ -232,6 +252,8 @@ export type ServiceOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   duration?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  capacity?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   bookings?: Prisma.BookingOrderByRelationAggregateInput
@@ -245,6 +267,8 @@ export type ServiceWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Service"> | string
   description?: Prisma.StringNullableFilter<"Service"> | string | null
   duration?: Prisma.IntFilter<"Service"> | number
+  imageUrl?: Prisma.StringNullableFilter<"Service"> | string | null
+  capacity?: Prisma.IntFilter<"Service"> | number
   isActive?: Prisma.BoolFilter<"Service"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Service"> | Date | string
   bookings?: Prisma.BookingListRelationFilter
@@ -255,6 +279,8 @@ export type ServiceOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   duration?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  capacity?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ServiceCountOrderByAggregateInput
@@ -272,6 +298,8 @@ export type ServiceScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Service"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Service"> | string | null
   duration?: Prisma.IntWithAggregatesFilter<"Service"> | number
+  imageUrl?: Prisma.StringNullableWithAggregatesFilter<"Service"> | string | null
+  capacity?: Prisma.IntWithAggregatesFilter<"Service"> | number
   isActive?: Prisma.BoolWithAggregatesFilter<"Service"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Service"> | Date | string
 }
@@ -281,6 +309,8 @@ export type ServiceCreateInput = {
   name: string
   description?: string | null
   duration: number
+  imageUrl?: string | null
+  capacity?: number
   isActive?: boolean
   createdAt?: Date | string
   bookings?: Prisma.BookingCreateNestedManyWithoutServiceInput
@@ -291,6 +321,8 @@ export type ServiceUncheckedCreateInput = {
   name: string
   description?: string | null
   duration: number
+  imageUrl?: string | null
+  capacity?: number
   isActive?: boolean
   createdAt?: Date | string
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutServiceInput
@@ -301,6 +333,8 @@ export type ServiceUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.IntFieldUpdateOperationsInput | number
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacity?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUpdateManyWithoutServiceNestedInput
@@ -311,6 +345,8 @@ export type ServiceUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.IntFieldUpdateOperationsInput | number
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacity?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutServiceNestedInput
@@ -321,6 +357,8 @@ export type ServiceCreateManyInput = {
   name: string
   description?: string | null
   duration: number
+  imageUrl?: string | null
+  capacity?: number
   isActive?: boolean
   createdAt?: Date | string
 }
@@ -330,6 +368,8 @@ export type ServiceUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.IntFieldUpdateOperationsInput | number
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacity?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -339,6 +379,8 @@ export type ServiceUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.IntFieldUpdateOperationsInput | number
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacity?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -348,12 +390,15 @@ export type ServiceCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   duration?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrder
+  capacity?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ServiceAvgOrderByAggregateInput = {
   duration?: Prisma.SortOrder
+  capacity?: Prisma.SortOrder
 }
 
 export type ServiceMaxOrderByAggregateInput = {
@@ -361,6 +406,8 @@ export type ServiceMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   duration?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrder
+  capacity?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -370,12 +417,15 @@ export type ServiceMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   duration?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrder
+  capacity?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ServiceSumOrderByAggregateInput = {
   duration?: Prisma.SortOrder
+  capacity?: Prisma.SortOrder
 }
 
 export type ServiceScalarRelationFilter = {
@@ -406,6 +456,8 @@ export type ServiceCreateWithoutBookingsInput = {
   name: string
   description?: string | null
   duration: number
+  imageUrl?: string | null
+  capacity?: number
   isActive?: boolean
   createdAt?: Date | string
 }
@@ -415,6 +467,8 @@ export type ServiceUncheckedCreateWithoutBookingsInput = {
   name: string
   description?: string | null
   duration: number
+  imageUrl?: string | null
+  capacity?: number
   isActive?: boolean
   createdAt?: Date | string
 }
@@ -440,6 +494,8 @@ export type ServiceUpdateWithoutBookingsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.IntFieldUpdateOperationsInput | number
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacity?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -449,6 +505,8 @@ export type ServiceUncheckedUpdateWithoutBookingsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   duration?: Prisma.IntFieldUpdateOperationsInput | number
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacity?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -489,6 +547,8 @@ export type ServiceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   name?: boolean
   description?: boolean
   duration?: boolean
+  imageUrl?: boolean
+  capacity?: boolean
   isActive?: boolean
   createdAt?: boolean
   bookings?: boolean | Prisma.Service$bookingsArgs<ExtArgs>
@@ -500,6 +560,8 @@ export type ServiceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   name?: boolean
   description?: boolean
   duration?: boolean
+  imageUrl?: boolean
+  capacity?: boolean
   isActive?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["service"]>
@@ -509,6 +571,8 @@ export type ServiceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   name?: boolean
   description?: boolean
   duration?: boolean
+  imageUrl?: boolean
+  capacity?: boolean
   isActive?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["service"]>
@@ -518,11 +582,13 @@ export type ServiceSelectScalar = {
   name?: boolean
   description?: boolean
   duration?: boolean
+  imageUrl?: boolean
+  capacity?: boolean
   isActive?: boolean
   createdAt?: boolean
 }
 
-export type ServiceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "duration" | "isActive" | "createdAt", ExtArgs["result"]["service"]>
+export type ServiceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "duration" | "imageUrl" | "capacity" | "isActive" | "createdAt", ExtArgs["result"]["service"]>
 export type ServiceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   bookings?: boolean | Prisma.Service$bookingsArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceCountOutputTypeDefaultArgs<ExtArgs>
@@ -540,6 +606,8 @@ export type $ServicePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     name: string
     description: string | null
     duration: number
+    imageUrl: string | null
+    capacity: number
     isActive: boolean
     createdAt: Date
   }, ExtArgs["result"]["service"]>
@@ -970,6 +1038,8 @@ export interface ServiceFieldRefs {
   readonly name: Prisma.FieldRef<"Service", 'String'>
   readonly description: Prisma.FieldRef<"Service", 'String'>
   readonly duration: Prisma.FieldRef<"Service", 'Int'>
+  readonly imageUrl: Prisma.FieldRef<"Service", 'String'>
+  readonly capacity: Prisma.FieldRef<"Service", 'Int'>
   readonly isActive: Prisma.FieldRef<"Service", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Service", 'DateTime'>
 }

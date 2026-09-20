@@ -37,3 +37,4 @@ export const arvanS3 = new S3Client({
 });
 
 export const ARVAN_S3_BUCKET = bucket;
+export const ARVAN_S3_ENDPOINT = endpoint;

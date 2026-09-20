@@ -52,12 +52,15 @@ model Service {
   name        String
   description String?
   duration    Int
+  imageUrl    String?
+  capacity    Int       @default(1)
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   bookings    Booking[]
 
   @@map("services")
 }
+
 
 model BlockedTime {
   id        String   @id @default(cuid())

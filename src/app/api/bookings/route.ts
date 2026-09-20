@@ -42,7 +42,7 @@ export async function GET() {
       return NextResponse.json(
         {
           success: false,
-          message: "Authentication required.",
+          message: "برای این عملیات باید وارد حساب کاربری خود شوید.",
         },
         { status: 401 },
       );
@@ -76,7 +76,7 @@ export async function GET() {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to load bookings.",
+        message: "دریافت نوبت‌ها با خطا مواجه شد.",
       },
       { status: 500 },
     );
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Authentication required.",
+          message: "برای ثبت نوبت باید وارد حساب کاربری خود شوید.",
         },
         { status: 401 },
       );
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Service ID and appointment start time are required.",
+          message: "انتخاب سرویس و زمان شروع نوبت الزامی است.",
         },
         { status: 400 },
       );
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Service ID is required.",
+          message: "انتخاب سرویس الزامی است.",
         },
         { status: 400 },
       );
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Appointment start time is required.",
+          message: "زمان شروع نوبت الزامی است.",
         },
         { status: 400 },
       );
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid appointment start time.",
+          message: "زمان شروع نوبت معتبر نیست.",
         },
         { status: 400 },
       );
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Appointments must start on a 30-minute interval.",
+          message: "نوبت‌ها باید در بازه‌های ۳۰ دقیقه‌ای شروع شوند.",
         },
         { status: 400 },
       );
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "This appointment time is no longer available.",
+          message: "این زمان دیگر در دسترس نیست.",
         },
         { status: 409 },
       );
@@ -178,6 +178,7 @@ export async function POST(request: NextRequest) {
         name: true,
         duration: true,
         isActive: true,
+        capacity: true,
       },
     });
 
@@ -185,7 +186,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Service not found.",
+          message: "سرویس مورد نظر یافت نشد.",
         },
         { status: 404 },
       );
@@ -195,7 +196,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "This service is not currently available.",
+          message: "این سرویس در حال حاضر فعال نیست.",
         },
         { status: 409 },
       );
@@ -207,8 +208,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "The selected appointment does not fit within salon working hours.",
+          message: "زمان انتخابی در ساعات کاری سالن نمی‌گنجد.",
         },
         { status: 409 },
       );
@@ -216,8 +216,15 @@ export async function POST(request: NextRequest) {
 
     const booking = await prisma.$transaction(
       async (tx) => {
-        const overlappingBooking = await tx.booking.findFirst({
+        // Capacity is per SERVICE, not salon-wide: a service with 2
+        // specialists can have 2 concurrent confirmed bookings for the same
+        // slot, while a different service's bookings never count against
+        // this one (different specialist/station). Only once the number of
+        // overlapping confirmed bookings for this exact service reaches its
+        // capacity does the slot become unavailable.
+        const overlappingBookingsCount = await tx.booking.count({
           where: {
+            serviceId,
             status: "CONFIRMED",
             startsAt: {
               lt: endsAt,
@@ -226,15 +233,13 @@ export async function POST(request: NextRequest) {
               gt: startsAt,
             },
           },
-          select: {
-            id: true,
-          },
         });
 
-        if (overlappingBooking) {
+        if (overlappingBookingsCount >= service.capacity) {
           throw new Error("APPOINTMENT_UNAVAILABLE");
         }
 
+        // Blocked times are salon-wide and apply regardless of service.
         const overlappingBlockedTime = await tx.blockedTime.findFirst({
           where: {
             startsAt: {
@@ -325,7 +330,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message: "This appointment time is already booked.",
+            message: "ظرفیت این زمان تکمیل شده است.",
           },
           { status: 409 },
         );
@@ -335,7 +340,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message: "This appointment time is unavailable.",
+            message: "این زمان مسدود شده است.",
           },
           { status: 409 },
         );
@@ -345,8 +350,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message:
-              "You already have a booking for this service on this date.",
+            message: "شما قبلاً برای این سرویس در این تاریخ نوبت ثبت کرده‌اید.",
           },
           { status: 409 },
         );
@@ -361,7 +365,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           message:
-            "The appointment was booked by someone else. Please choose another time.",
+            "این نوبت توسط شخص دیگری ثبت شد. لطفاً زمان دیگری انتخاب کنید.",
         },
         { status: 409 },
       );
@@ -372,7 +376,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to create booking.",
+        message: "ثبت نوبت با خطا مواجه شد.",
       },
       { status: 500 },
     );

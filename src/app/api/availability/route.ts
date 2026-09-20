@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
         name: true,
         duration: true,
         isActive: true,
+        capacity: true,
       },
     });
 
@@ -75,8 +76,13 @@ export async function GET(request: NextRequest) {
     const now = new Date();
 
     const [bookings, blockedTimes] = await Promise.all([
+      // Scoped to this specific service: capacity represents how many
+      // specialists can perform THIS service at once, so a booking for a
+      // different service (a different specialist/station) must never
+      // count against this one's availability.
       prisma.booking.findMany({
         where: {
+          serviceId,
           status: "CONFIRMED",
           startsAt: {
             lt: endOfDay,
@@ -92,6 +98,8 @@ export async function GET(request: NextRequest) {
         },
       }),
 
+      // Blocked times are salon-wide (holidays, closures, etc.) and still
+      // apply regardless of service or capacity.
       prisma.blockedTime.findMany({
         where: {
           startsAt: {
@@ -132,14 +140,16 @@ export async function GET(request: NextRequest) {
       // available and the customer only discovered it was unbookable after
       // submitting the booking and receiving a 409 from POST /api/bookings.
       if (currentStart > now) {
-        const overlapsBooking = bookings.some((booking) =>
+        const overlappingBookingsCount = bookings.filter((booking) =>
           intervalsOverlap(
             currentStart,
             currentEnd,
             booking.startsAt,
             booking.endsAt,
           ),
-        );
+        ).length;
+
+        const isFull = overlappingBookingsCount >= service.capacity;
 
         const overlapsBlockedTime = blockedTimes.some((blockedTime) =>
           intervalsOverlap(
@@ -150,7 +160,7 @@ export async function GET(request: NextRequest) {
           ),
         );
 
-        if (!overlapsBooking && !overlapsBlockedTime) {
+        if (!isFull && !overlapsBlockedTime) {
           timeSlots.push({
             startsAt: new Date(currentStart),
             endsAt: currentEnd,

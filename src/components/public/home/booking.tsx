@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Check, Clock3, Loader2, Scissors } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type Service = {
   id: string;
@@ -70,8 +70,9 @@ function getDateKey(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-export function Booking() {
+function BookingForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const dates = useMemo(() => {
     const result: Array<{
@@ -155,7 +156,15 @@ export function Booking() {
           setServices(activeServices);
 
           if (activeServices.length > 0) {
-            setSelectedService(activeServices[0].id);
+            const requestedServiceId = searchParams.get("service");
+
+            const requestedService = activeServices.find(
+              (service: Service) => service.id === requestedServiceId,
+            );
+
+            setSelectedService(
+              requestedService ? requestedService.id : activeServices[0].id,
+            );
           }
         }
       } catch (err) {
@@ -174,7 +183,7 @@ export function Booking() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [searchParams]);
 
   /*
    * Load availability whenever the selected date or service changes.
@@ -664,5 +673,13 @@ export function Booking() {
         </div>
       </div>
     </section>
+  );
+}
+
+export function Booking() {
+  return (
+    <Suspense fallback={null}>
+      <BookingForm />
+    </Suspense>
   );
 }

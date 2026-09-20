@@ -32,16 +32,17 @@ import {
   createAIResultKey,
 } from "@/lib/storage/arvan-key";
 
+import {
+  MAX_UPLOAD_IMAGE_SIZE,
+  getExtensionFromImageType,
+  isAllowedImageType,
+  type AllowedImageType,
+} from "@/lib/storage/image-validation";
+
 // Long enough for the customer to view/save the result on this page without
 // the signed URL expiring; the images remain in their dashboard afterwards
 // too, re-signed fresh on every dashboard load.
 const RESULT_URL_EXPIRY_SECONDS = 60 * 60;
-
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
-
-type AllowedImageType = (typeof ALLOWED_IMAGE_TYPES)[number];
 
 type WorkflowType = "custom" | "recommendation";
 
@@ -55,17 +56,6 @@ function isValidHairstyle(value: string): value is HairstyleId {
 
 function isValidMakeupStyle(value: string): value is MakeupStyleId {
   return makeupStyles.some((option) => option.id === value);
-}
-
-function getExtensionFromImageType(type: AllowedImageType) {
-  switch (type) {
-    case "image/jpeg":
-      return "jpg";
-    case "image/png":
-      return "png";
-    case "image/webp":
-      return "webp";
-  }
 }
 
 function isWorkflowType(
@@ -129,7 +119,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!ALLOWED_IMAGE_TYPES.includes(image.type as AllowedImageType)) {
+    if (!isAllowedImageType(image.type)) {
       return NextResponse.json(
         {
           success: false,
@@ -140,7 +130,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (image.size <= 0 || image.size > MAX_IMAGE_SIZE) {
+    if (image.size <= 0 || image.size > MAX_UPLOAD_IMAGE_SIZE) {
       return NextResponse.json(
         {
           success: false,

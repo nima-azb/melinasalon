@@ -2,17 +2,32 @@ import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Phone, Clock3, ArrowUp } from "lucide-react";
 
+import { prisma } from "@/lib/prisma";
+
 const navigation = [
   { title: "خانه", href: "/" },
   { title: "خدمات", href: "/#services" },
   { title: "آرایشگر هوش مصنوعی", href: "/ai-hairdresser" },
-  { title: "نمونه کارها", href: "/#gallery" },
   { title: "رزرو نوبت", href: "/#booking" },
 ];
 
-const services = ["مو و استایل", "رنگ و لایت", "میکاپ", "مراقبت و احیای مو"];
+const FOOTER_SERVICES_LIMIT = 5;
 
-export function Footer() {
+export async function Footer() {
+  const services = await prisma.service.findMany({
+    where: {
+      isActive: true,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+    take: FOOTER_SERVICES_LIMIT,
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+
   return (
     <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-card-warm)]">
       <div className="mx-auto max-w-7xl px-6 py-14 lg:px-8 lg:py-16">
@@ -79,13 +94,22 @@ export function Footer() {
             </h3>
 
             <ul className="mt-5 space-y-3">
-              {services.map((service) => (
-                <li key={service}>
-                  <span className="text-sm text-[var(--text-secondary)]">
-                    {service}
-                  </span>
+              {services.length === 0 ? (
+                <li className="text-sm text-[var(--text-secondary)]">
+                  به‌زودی...
                 </li>
-              ))}
+              ) : (
+                services.map((service) => (
+                  <li key={service.id}>
+                    <Link
+                      href={`/?service=${service.id}#booking`}
+                      className="text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--brand-crimson)]"
+                    >
+                      {service.name}
+                    </Link>
+                  </li>
+                ))
+              )}
             </ul>
           </div>
 

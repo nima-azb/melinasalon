@@ -8,6 +8,7 @@ const createServiceSchema = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().trim().max(1000).optional(),
   duration: z.number().int().positive().max(480),
+  capacity: z.number().int().min(1).max(20).default(1),
 });
 
 export async function GET(request: NextRequest) {
@@ -78,6 +79,7 @@ export async function POST(request: NextRequest) {
         name: result.data.name,
         description: result.data.description || null,
         duration: result.data.duration,
+        capacity: result.data.capacity,
       },
     });
 
