@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import {
   SLOT_INTERVAL_MINUTES,
   getSalonDayBounds,
   isValidCalendarDateString,
 } from "@/lib/time/salon-time";
+
+const RATE_LIMIT_MAX_REQUESTS = 30;
+const RATE_LIMIT_WINDOW_MS = 60_000;
 
 function intervalsOverlap(startA: Date, endA: Date, startB: Date, endB: Date) {
   return startA < endB && endA > startB;
@@ -13,6 +17,25 @@ function intervalsOverlap(startA: Date, endA: Date, startB: Date, endB: Date) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(
+      `availability:${getClientIp(request)}`,
+      RATE_LIMIT_MAX_REQUESTS,
+      RATE_LIMIT_WINDOW_MS,
+    );
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "تعداد درخواست‌ها بیش از حد مجاز است. کمی صبر کنید.",
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
 
     const date = searchParams.get("date");

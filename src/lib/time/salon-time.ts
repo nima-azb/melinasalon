@@ -1,7 +1,7 @@
 export const SALON_TIMEZONE = "Asia/Tehran";
 
-export const SALON_OPEN_HOUR = 10;
-export const SALON_CLOSE_HOUR = 22;
+export const SALON_OPEN_HOUR = 7;
+export const SALON_CLOSE_HOUR = 24;
 export const SLOT_INTERVAL_MINUTES = 30;
 
 export type ZonedWallTime = {

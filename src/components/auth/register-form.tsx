@@ -77,12 +77,8 @@ export function RegisterForm() {
 
       if (!response.ok) {
         setError(
-          data.message ===
-            "An account with this phone number already exists. Please log in."
-            ? "با این شماره موبایل قبلاً حساب کاربری ایجاد شده است. لطفاً وارد حساب خود شوید."
-            : data.message === "Please wait before requesting another code."
-              ? "لطفاً برای دریافت کد جدید کمی صبر کنید."
-              : "ارسال کد تأیید با مشکل مواجه شد. لطفاً دوباره تلاش کنید.",
+          data.message ||
+            "ارسال کد تأیید با مشکل مواجه شد. لطفاً دوباره تلاش کنید.",
         );
         return;
       }
@@ -128,16 +124,8 @@ export function RegisterForm() {
 
       if (!response.ok) {
         setError(
-          data.message ===
-            "An account with this phone number already exists. Please log in."
-            ? "با این شماره موبایل قبلاً حساب کاربری ایجاد شده است. لطفاً وارد حساب خود شوید."
-            : data.message === "The verification code has expired."
-              ? "کد تأیید منقضی شده است. لطفاً کد جدید دریافت کنید."
-              : data.message === "Too many verification attempts."
-                ? "تعداد تلاش‌های شما بیش از حد مجاز است. لطفاً کد جدید دریافت کنید."
-                : data.message === "Incorrect verification code."
-                  ? "کد تأیید واردشده صحیح نیست."
-                  : "تأیید شماره موبایل با مشکل مواجه شد. لطفاً دوباره تلاش کنید.",
+          data.message ||
+            "تأیید شماره موبایل با مشکل مواجه شد. لطفاً دوباره تلاش کنید.",
         );
         return;
       }

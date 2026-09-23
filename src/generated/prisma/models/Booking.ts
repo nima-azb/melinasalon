@@ -33,6 +33,7 @@ export type BookingMinAggregateOutputType = {
   updatedAt: Date | null
   endsAt: Date | null
   startsAt: Date | null
+  reminderSentAt: Date | null
 }
 
 export type BookingMaxAggregateOutputType = {
@@ -44,6 +45,7 @@ export type BookingMaxAggregateOutputType = {
   updatedAt: Date | null
   endsAt: Date | null
   startsAt: Date | null
+  reminderSentAt: Date | null
 }
 
 export type BookingCountAggregateOutputType = {
@@ -55,6 +57,7 @@ export type BookingCountAggregateOutputType = {
   updatedAt: number
   endsAt: number
   startsAt: number
+  reminderSentAt: number
   _all: number
 }
 
@@ -68,6 +71,7 @@ export type BookingMinAggregateInputType = {
   updatedAt?: true
   endsAt?: true
   startsAt?: true
+  reminderSentAt?: true
 }
 
 export type BookingMaxAggregateInputType = {
@@ -79,6 +83,7 @@ export type BookingMaxAggregateInputType = {
   updatedAt?: true
   endsAt?: true
   startsAt?: true
+  reminderSentAt?: true
 }
 
 export type BookingCountAggregateInputType = {
@@ -90,6 +95,7 @@ export type BookingCountAggregateInputType = {
   updatedAt?: true
   endsAt?: true
   startsAt?: true
+  reminderSentAt?: true
   _all?: true
 }
 
@@ -174,6 +180,7 @@ export type BookingGroupByOutputType = {
   updatedAt: Date
   endsAt: Date
   startsAt: Date
+  reminderSentAt: Date | null
   _count: BookingCountAggregateOutputType | null
   _min: BookingMinAggregateOutputType | null
   _max: BookingMaxAggregateOutputType | null
@@ -206,6 +213,7 @@ export type BookingWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Booking"> | Date | string
   endsAt?: Prisma.DateTimeFilter<"Booking"> | Date | string
   startsAt?: Prisma.DateTimeFilter<"Booking"> | Date | string
+  reminderSentAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
   service?: Prisma.XOR<Prisma.ServiceScalarRelationFilter, Prisma.ServiceWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
@@ -219,6 +227,7 @@ export type BookingOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
+  reminderSentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   service?: Prisma.ServiceOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
 }
@@ -235,6 +244,7 @@ export type BookingWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Booking"> | Date | string
   endsAt?: Prisma.DateTimeFilter<"Booking"> | Date | string
   startsAt?: Prisma.DateTimeFilter<"Booking"> | Date | string
+  reminderSentAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
   service?: Prisma.XOR<Prisma.ServiceScalarRelationFilter, Prisma.ServiceWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
@@ -248,6 +258,7 @@ export type BookingOrderByWithAggregationInput = {
   updatedAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
+  reminderSentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.BookingCountOrderByAggregateInput
   _max?: Prisma.BookingMaxOrderByAggregateInput
   _min?: Prisma.BookingMinOrderByAggregateInput
@@ -265,6 +276,7 @@ export type BookingScalarWhereWithAggregatesInput = {
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Booking"> | Date | string
   endsAt?: Prisma.DateTimeWithAggregatesFilter<"Booking"> | Date | string
   startsAt?: Prisma.DateTimeWithAggregatesFilter<"Booking"> | Date | string
+  reminderSentAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Booking"> | Date | string | null
 }
 
 export type BookingCreateInput = {
@@ -274,6 +286,7 @@ export type BookingCreateInput = {
   updatedAt?: Date | string
   endsAt: Date | string
   startsAt: Date | string
+  reminderSentAt?: Date | string | null
   service: Prisma.ServiceCreateNestedOneWithoutBookingsInput
   user: Prisma.UserCreateNestedOneWithoutBookingsInput
 }
@@ -287,6 +300,7 @@ export type BookingUncheckedCreateInput = {
   updatedAt?: Date | string
   endsAt: Date | string
   startsAt: Date | string
+  reminderSentAt?: Date | string | null
 }
 
 export type BookingUpdateInput = {
@@ -296,6 +310,7 @@ export type BookingUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reminderSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   service?: Prisma.ServiceUpdateOneRequiredWithoutBookingsNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutBookingsNestedInput
 }
@@ -309,6 +324,7 @@ export type BookingUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reminderSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type BookingCreateManyInput = {
@@ -320,6 +336,7 @@ export type BookingCreateManyInput = {
   updatedAt?: Date | string
   endsAt: Date | string
   startsAt: Date | string
+  reminderSentAt?: Date | string | null
 }
 
 export type BookingUpdateManyMutationInput = {
@@ -329,6 +346,7 @@ export type BookingUpdateManyMutationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reminderSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type BookingUncheckedUpdateManyInput = {
@@ -340,6 +358,7 @@ export type BookingUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reminderSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type BookingListRelationFilter = {
@@ -361,6 +380,7 @@ export type BookingCountOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
+  reminderSentAt?: Prisma.SortOrder
 }
 
 export type BookingMaxOrderByAggregateInput = {
@@ -372,6 +392,7 @@ export type BookingMaxOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
+  reminderSentAt?: Prisma.SortOrder
 }
 
 export type BookingMinOrderByAggregateInput = {
@@ -383,6 +404,7 @@ export type BookingMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
+  reminderSentAt?: Prisma.SortOrder
 }
 
 export type BookingCreateNestedManyWithoutUserInput = {
@@ -480,6 +502,7 @@ export type BookingCreateWithoutUserInput = {
   updatedAt?: Date | string
   endsAt: Date | string
   startsAt: Date | string
+  reminderSentAt?: Date | string | null
   service: Prisma.ServiceCreateNestedOneWithoutBookingsInput
 }
 
@@ -491,6 +514,7 @@ export type BookingUncheckedCreateWithoutUserInput = {
   updatedAt?: Date | string
   endsAt: Date | string
   startsAt: Date | string
+  reminderSentAt?: Date | string | null
 }
 
 export type BookingCreateOrConnectWithoutUserInput = {
@@ -531,6 +555,7 @@ export type BookingScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Booking"> | Date | string
   endsAt?: Prisma.DateTimeFilter<"Booking"> | Date | string
   startsAt?: Prisma.DateTimeFilter<"Booking"> | Date | string
+  reminderSentAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
 }
 
 export type BookingCreateWithoutServiceInput = {
@@ -540,6 +565,7 @@ export type BookingCreateWithoutServiceInput = {
   updatedAt?: Date | string
   endsAt: Date | string
   startsAt: Date | string
+  reminderSentAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutBookingsInput
 }
 
@@ -551,6 +577,7 @@ export type BookingUncheckedCreateWithoutServiceInput = {
   updatedAt?: Date | string
   endsAt: Date | string
   startsAt: Date | string
+  reminderSentAt?: Date | string | null
 }
 
 export type BookingCreateOrConnectWithoutServiceInput = {
@@ -587,6 +614,7 @@ export type BookingCreateManyUserInput = {
   updatedAt?: Date | string
   endsAt: Date | string
   startsAt: Date | string
+  reminderSentAt?: Date | string | null
 }
 
 export type BookingUpdateWithoutUserInput = {
@@ -596,6 +624,7 @@ export type BookingUpdateWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reminderSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   service?: Prisma.ServiceUpdateOneRequiredWithoutBookingsNestedInput
 }
 
@@ -607,6 +636,7 @@ export type BookingUncheckedUpdateWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reminderSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type BookingUncheckedUpdateManyWithoutUserInput = {
@@ -617,6 +647,7 @@ export type BookingUncheckedUpdateManyWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reminderSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type BookingCreateManyServiceInput = {
@@ -627,6 +658,7 @@ export type BookingCreateManyServiceInput = {
   updatedAt?: Date | string
   endsAt: Date | string
   startsAt: Date | string
+  reminderSentAt?: Date | string | null
 }
 
 export type BookingUpdateWithoutServiceInput = {
@@ -636,6 +668,7 @@ export type BookingUpdateWithoutServiceInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reminderSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutBookingsNestedInput
 }
 
@@ -647,6 +680,7 @@ export type BookingUncheckedUpdateWithoutServiceInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reminderSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type BookingUncheckedUpdateManyWithoutServiceInput = {
@@ -657,6 +691,7 @@ export type BookingUncheckedUpdateManyWithoutServiceInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reminderSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -670,6 +705,7 @@ export type BookingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   updatedAt?: boolean
   endsAt?: boolean
   startsAt?: boolean
+  reminderSentAt?: boolean
   service?: boolean | Prisma.ServiceDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["booking"]>
@@ -683,6 +719,7 @@ export type BookingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   updatedAt?: boolean
   endsAt?: boolean
   startsAt?: boolean
+  reminderSentAt?: boolean
   service?: boolean | Prisma.ServiceDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["booking"]>
@@ -696,6 +733,7 @@ export type BookingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   updatedAt?: boolean
   endsAt?: boolean
   startsAt?: boolean
+  reminderSentAt?: boolean
   service?: boolean | Prisma.ServiceDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["booking"]>
@@ -709,9 +747,10 @@ export type BookingSelectScalar = {
   updatedAt?: boolean
   endsAt?: boolean
   startsAt?: boolean
+  reminderSentAt?: boolean
 }
 
-export type BookingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "serviceId" | "status" | "createdAt" | "updatedAt" | "endsAt" | "startsAt", ExtArgs["result"]["booking"]>
+export type BookingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "serviceId" | "status" | "createdAt" | "updatedAt" | "endsAt" | "startsAt" | "reminderSentAt", ExtArgs["result"]["booking"]>
 export type BookingInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   service?: boolean | Prisma.ServiceDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -740,6 +779,7 @@ export type $BookingPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     updatedAt: Date
     endsAt: Date
     startsAt: Date
+    reminderSentAt: Date | null
   }, ExtArgs["result"]["booking"]>
   composites: {}
 }
@@ -1173,6 +1213,7 @@ export interface BookingFieldRefs {
   readonly updatedAt: Prisma.FieldRef<"Booking", 'DateTime'>
   readonly endsAt: Prisma.FieldRef<"Booking", 'DateTime'>
   readonly startsAt: Prisma.FieldRef<"Booking", 'DateTime'>
+  readonly reminderSentAt: Prisma.FieldRef<"Booking", 'DateTime'>
 }
     
 

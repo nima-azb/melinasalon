@@ -6,7 +6,7 @@ export async function POST() {
   try {
     const response = NextResponse.json({
       success: true,
-      message: "Logged out successfully.",
+      message: "با موفقیت خارج شدید.",
     });
 
     response.cookies.delete(SESSION_COOKIE_NAME);
@@ -18,7 +18,7 @@ export async function POST() {
     return NextResponse.json(
       {
         success: false,
-        message: "Logout failed.",
+        message: "خروج از حساب با خطا مواجه شد.",
       },
       { status: 500 },
     );

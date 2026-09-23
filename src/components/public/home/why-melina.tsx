@@ -1,5 +1,4 @@
-import { CalendarCheck, Heart, Sparkles, Award, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { CalendarCheck, Heart, Sparkles, Award } from "lucide-react";
 
 const reasons = [
   {
@@ -94,20 +93,6 @@ export function WhyMelina() {
               </article>
             );
           })}
-        </div>
-
-        {/* Small supporting CTA */}
-        <div className="mt-10 flex justify-center">
-          <Link
-            href="/about"
-            className="group inline-flex items-center gap-2 text-sm font-semibold text-[var(--brand-crimson)]"
-          >
-            بیشتر درباره سالن زیبایی ملینا
-            <ArrowLeft
-              size={16}
-              className="transition-transform group-hover:-translate-x-1"
-            />
-          </Link>
         </div>
       </div>
     </section>

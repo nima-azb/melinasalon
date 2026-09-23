@@ -21,7 +21,7 @@ export async function Navbar() {
           <div className="flex items-center gap-6">
             <span className="hidden items-center gap-2 sm:inline-flex">
               <span className="text-[var(--accent-gold)]">◷</span>
-              ساعات کاری: همه روزه ۱۰:۰۰ تا ۲۲:۰۰
+              ساعات کاری: همه روزه ۷:۰۰ تا ۲۴:۰۰
             </span>
 
             <span className="hidden items-center gap-2 md:inline-flex">

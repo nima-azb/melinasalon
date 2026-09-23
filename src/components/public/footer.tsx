@@ -153,7 +153,7 @@ export async function Footer() {
                 />
 
                 <p className="text-sm text-[var(--text-secondary)]">
-                  هر روز ۱۰:۰۰ تا ۲۲:۰۰
+                  هر روز ۷:۰۰ تا ۲۴:۰۰
                 </p>
               </div>
             </div>

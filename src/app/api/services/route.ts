@@ -3,6 +3,10 @@ import { z } from "zod";
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+
+const RATE_LIMIT_MAX_REQUESTS = 30;
+const RATE_LIMIT_WINDOW_MS = 60_000;
 
 const createServiceSchema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -21,6 +25,27 @@ export async function GET(request: NextRequest) {
 
       if (admin instanceof NextResponse) {
         return admin;
+      }
+    } else {
+      // Only the public, unauthenticated path is rate-limited — admins
+      // managing services from the dashboard shouldn't be throttled.
+      const rateLimit = checkRateLimit(
+        `services:${getClientIp(request)}`,
+        RATE_LIMIT_MAX_REQUESTS,
+        RATE_LIMIT_WINDOW_MS,
+      );
+
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "تعداد درخواست‌ها بیش از حد مجاز است. کمی صبر کنید.",
+          },
+          {
+            status: 429,
+            headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+          },
+        );
       }
     }
 

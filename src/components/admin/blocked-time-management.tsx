@@ -60,8 +60,8 @@ export function BlockedTimeManagement() {
   const [successMessage, setSuccessMessage] = useState("");
 
   const [date, setDate] = useState(getInitialDate);
-  const [startTime, setStartTime] = useState("10:00");
-  const [endTime, setEndTime] = useState("11:00");
+  const [startTime, setStartTime] = useState("07:00");
+  const [endTime, setEndTime] = useState("08:00");
   const [reason, setReason] = useState("");
 
   const loadBlockedTimes = useCallback(async () => {
