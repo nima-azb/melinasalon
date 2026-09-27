@@ -64,8 +64,8 @@ export function BlockedTimeManagement() {
   const [form, setForm] = useState<BlockedTimeForm>({
     serviceId: "",
     date: "",
-    startTime: "07:00",
-    endTime: "08:00",
+    startTime: "08:00",
+    endTime: "09:00",
     reason: "",
   });
 
@@ -236,8 +236,8 @@ export function BlockedTimeManagement() {
 
       setForm((current) => ({
         ...current,
-        startTime: "07:00",
-        endTime: "08:00",
+        startTime: "08:00",
+        endTime: "09:00",
         reason: "",
       }));
 
@@ -397,8 +397,8 @@ export function BlockedTimeManagement() {
             <input
               id="blocked-start-time"
               type="time"
-              min="07:00"
-              max="23:30"
+              min="08:00"
+              max="20:30"
               step={30 * 60}
               value={form.startTime}
               onChange={(event) => updateForm("startTime", event.target.value)}
@@ -418,8 +418,8 @@ export function BlockedTimeManagement() {
             <input
               id="blocked-end-time"
               type="time"
-              min="07:30"
-              max="24:00"
+              min="08:30"
+              max="21:00"
               step={30 * 60}
               value={form.endTime}
               onChange={(event) => updateForm("endTime", event.target.value)}

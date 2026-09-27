@@ -3,14 +3,14 @@ export interface SmsProvider {
 
   sendBookingConfirmation(data: {
     phoneNumber: string;
+    userName: string;
     serviceName: string;
     startsAt: Date;
-    endsAt: Date;
-    status: string;
   }): Promise<void>;
 
   sendBookingReminder(data: {
     phoneNumber: string;
+    userName: string;
     serviceName: string;
     startsAt: Date;
   }): Promise<void>;
@@ -23,59 +23,38 @@ class DevelopmentSmsProvider implements SmsProvider {
 
   async sendBookingConfirmation(data: {
     phoneNumber: string;
+    userName: string;
     serviceName: string;
     startsAt: Date;
-    endsAt: Date;
-    status: string;
   }): Promise<void> {
     console.log("[DEV BOOKING SMS]");
     console.log(`Phone: ${data.phoneNumber}`);
+    console.log(`User: ${data.userName}`);
     console.log(`Service: ${data.serviceName}`);
     console.log(`Starts: ${data.startsAt.toISOString()}`);
-    console.log(`Ends: ${data.endsAt.toISOString()}`);
-    console.log(`Status: ${data.status}`);
   }
 
   async sendBookingReminder(data: {
     phoneNumber: string;
+    userName: string;
     serviceName: string;
     startsAt: Date;
   }): Promise<void> {
     console.log("[DEV REMINDER SMS]");
     console.log(`Phone: ${data.phoneNumber}`);
+    console.log(`User: ${data.userName}`);
     console.log(`Service: ${data.serviceName}`);
     console.log(`Starts: ${data.startsAt.toISOString()}`);
   }
 }
 
-const MELIPAYAMAK_BASE_URL = "https://rest.payamak-panel.com/api/SendSMS";
+const MELIPAYAMAK_SOAP_URL = "https://api.payamak-panel.com/post/Send.asmx";
 
-type MelipayamakResponse = {
-  Value?: string | number;
-  RetStatus?: number;
-  StrRetStatus?: string;
-};
-
-/**
- * "+989121234567" -> "09121234567"
- *
- * This is the local Iranian phone-number format expected by
- * the Melipayamak API.
- */
 function toLocalIranianNumber(phoneNumber: string): string {
   if (phoneNumber.startsWith("+98")) {
     return `0${phoneNumber.slice(3)}`;
   }
-
   return phoneNumber;
-}
-
-function formatSalonDateTime(date: Date): string {
-  return new Intl.DateTimeFormat("fa-IR", {
-    timeZone: "Asia/Tehran",
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(date);
 }
 
 function formatSalonDate(date: Date): string {
@@ -92,160 +71,119 @@ function formatSalonTime(date: Date): string {
   }).format(date);
 }
 
-function formatBookingStatus(status: string): string {
-  switch (status) {
-    case "CONFIRMED":
-      return "تایید شد";
-
-    case "CANCELLED":
-      return "لغو شد";
-
-    case "COMPLETED":
-      return "انجام شد";
-
-    default:
-      return status;
-  }
-}
-
-async function assertMelipayamakSuccess(
-  response: Response,
-  context: string,
-): Promise<void> {
-  if (!response.ok) {
-    const rawText = await response.text();
-
-    throw new Error(
-      `Melipayamak ${context} failed (HTTP ${response.status}): ${rawText.slice(
-        0,
-        500,
-      )}`,
-    );
-  }
-
-  const data = (await response.json()) as MelipayamakResponse;
-
-  if (data.RetStatus !== undefined && data.RetStatus !== 1) {
-    throw new Error(
-      `Melipayamak ${context} failed: ${
-        data.StrRetStatus ?? "unknown error"
-      } (RetStatus=${data.RetStatus}, Value=${data.Value})`,
-    );
-  }
-
-  /*
-   * Defensive fallback for responses that omit RetStatus but return
-   * a negative error code through Value.
-   */
-  if (
-    data.RetStatus === undefined &&
-    typeof data.Value === "string" &&
-    /^-\d+$/.test(data.Value.trim())
-  ) {
-    throw new Error(
-      `Melipayamak ${context} failed with error code ${data.Value}`,
-    );
-  }
-}
-
 class MelipayamakSmsProvider implements SmsProvider {
   private readonly username: string;
   private readonly password: string;
   private readonly otpBodyId: string;
-  private readonly senderNumber: string;
+  private readonly bookingBodyId: string;
+  private readonly reminderBodyId: string;
 
   constructor(config: {
     username: string;
     password: string;
     otpBodyId: string;
-    senderNumber: string;
+    bookingBodyId: string;
+    reminderBodyId: string;
   }) {
     this.username = config.username;
     this.password = config.password;
     this.otpBodyId = config.otpBodyId;
-    this.senderNumber = config.senderNumber;
+    this.bookingBodyId = config.bookingBodyId;
+    this.reminderBodyId = config.reminderBodyId;
   }
 
-  private async sendPlain(
+  private async sendSoapPattern(
     to: string,
-    text: string,
+    bodyId: string,
+    args: string[],
     context: string,
   ): Promise<void> {
-    const body = new URLSearchParams({
-      username: this.username,
-      password: this.password,
-      to: toLocalIranianNumber(to),
-      from: this.senderNumber,
-      text,
-      isFlash: "false",
-    });
+    // اصلاح نام تگ به username (با n کوچک) مطابق با متد C# ملی‌پیامک
+    const soapEnvelope = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <SendByBaseNumber xmlns="http://tempuri.org/">
+      <username>${this.username}</username>
+      <password>${this.password}</password>
+      <text>
+${args.map((arg) => `        <string xmlns="http://tempuri.org/">${arg}</string>`).join("\n")}
+      </text>
+      <to>${toLocalIranianNumber(to)}</to>
+      <bodyId>${bodyId}</bodyId>
+    </SendByBaseNumber>
+  </soap:Body>
+</soap:Envelope>`;
 
-    const response = await fetch(`${MELIPAYAMAK_BASE_URL}/SendSMS`, {
+    const response = await fetch(MELIPAYAMAK_SOAP_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "text/xml; charset=utf-8",
+        SOAPAction: "http://tempuri.org/SendByBaseNumber",
       },
-      body,
+      body: soapEnvelope,
     });
 
-    await assertMelipayamakSuccess(response, context);
+    const rawText = await response.text();
+
+    if (!response.ok) {
+      throw new Error(
+        `Melipayamak SOAP request failed: HTTP ${response.status} - ${rawText.slice(0, 500)}`,
+      );
+    }
+
+    const match = rawText.match(
+      /<SendByBaseNumberResult>(.*?)<\/SendByBaseNumberResult>/,
+    );
+    const resultValue = match ? match[1].trim() : "";
+
+    console.log(
+      `[Melipayamak Response] Context: ${context}, Result: ${resultValue}, Raw XML: ${rawText}`,
+    );
+
+    // اگر نتیجه عدد مثبت بزرگ باشد یعنی پیامک با موفقیت صف شده (کد پیگیری است)
+    if (!resultValue || Number(resultValue) <= 0) {
+      throw new Error(
+        `[Melipayamak Error Code: ${resultValue}] ارسال پیامک ناموفق بود. نام کاربری/رمز عبور یا وضعیت الگوی '${bodyId}' را در پنل بررسی کنید.`,
+      );
+    }
   }
 
   async sendOtp(phoneNumber: string, code: string): Promise<void> {
-    const body = new URLSearchParams({
-      username: this.username,
-      password: this.password,
-      text: code,
-      to: toLocalIranianNumber(phoneNumber),
-      bodyId: this.otpBodyId,
-    });
-
-    const response = await fetch(`${MELIPAYAMAK_BASE_URL}/BaseServiceNumber`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body,
-    });
-
-    await assertMelipayamakSuccess(response, "OTP send");
+    await this.sendSoapPattern(phoneNumber, this.otpBodyId, [code], "OTP send");
   }
 
   async sendBookingConfirmation(data: {
     phoneNumber: string;
+    userName: string;
     serviceName: string;
     startsAt: Date;
-    endsAt: Date;
-    status: string;
   }): Promise<void> {
-    const message = [
-      "سالن ملینا",
-      `سرویس: ${data.serviceName}`,
-      `زمان: ${formatSalonDateTime(data.startsAt)}`,
-      `وضعیت رزرو: ${formatBookingStatus(data.status)}`,
-    ].join("\n");
+    const date = formatSalonDate(data.startsAt);
+    const time = formatSalonTime(data.startsAt);
 
-    await this.sendPlain(
+    await this.sendSoapPattern(
       data.phoneNumber,
-      message,
+      this.bookingBodyId,
+      [data.userName, data.serviceName, date, time],
       "booking confirmation send",
     );
   }
 
   async sendBookingReminder(data: {
     phoneNumber: string;
+    userName: string;
     serviceName: string;
     startsAt: Date;
   }): Promise<void> {
-    const message = [
-      "سالن ملینا",
-      "یادآوری نوبت فردا:",
-      `سرویس: ${data.serviceName}`,
-      `تاریخ: ${formatSalonDate(data.startsAt)}`,
-      `ساعت: ${formatSalonTime(data.startsAt)}`,
-    ].join("\n");
+    const date = formatSalonDate(data.startsAt);
+    const time = formatSalonTime(data.startsAt);
 
-    await this.sendPlain(data.phoneNumber, message, "booking reminder send");
+    await this.sendSoapPattern(
+      data.phoneNumber,
+      this.reminderBodyId,
+      [data.userName, data.serviceName, date, time],
+      "booking reminder send",
+    );
   }
 }
 
@@ -254,23 +192,24 @@ function createSmsProvider(): SmsProvider {
 
   const username = process.env.MELIPAYAMAK_USERNAME;
   const password = process.env.MELIPAYAMAK_PASSWORD;
-  const otpBodyId = process.env.MELIPAYAMAK_OTP_BODY_ID;
-  const senderNumber = process.env.MELIPAYAMAK_SENDER_NUMBER;
 
-  if (username && password && otpBodyId && senderNumber) {
+  const otpBodyId = process.env.MELIPAYAMAK_OTP_BODY_ID || "545244";
+  const bookingBodyId = process.env.MELIPAYAMAK_BOOKING_BODY_ID || "545238";
+  const reminderBodyId = process.env.MELIPAYAMAK_REMINDER_BODY_ID || "545246";
+
+  if (username && password) {
     return new MelipayamakSmsProvider({
       username,
       password,
       otpBodyId,
-      senderNumber,
+      bookingBodyId,
+      reminderBodyId,
     });
   }
 
   if (isProduction) {
     throw new Error(
-      "SMS provider is not configured. Set MELIPAYAMAK_USERNAME, " +
-        "MELIPAYAMAK_PASSWORD, MELIPAYAMAK_OTP_BODY_ID and " +
-        "MELIPAYAMAK_SENDER_NUMBER before running in production.",
+      "SMS provider is not configured. Set MELIPAYAMAK_USERNAME and MELIPAYAMAK_PASSWORD before running in production.",
     );
   }
 

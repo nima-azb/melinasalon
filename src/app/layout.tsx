@@ -10,8 +10,8 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-  title: "ملینا | سالن زیبایی",
-  description: "سالن زیبایی ملینا؛ رزرو آنلاین نوبت و تجربه آرایشگر هوش مصنوعی",
+  title: "Melin Beauty | سالن زیبایی",
+  description: "ملین بیوتی ؛ رزرو آنلاین نوبت و تجربه آرایشگر هوش مصنوعی",
 };
 
 export default function RootLayout({

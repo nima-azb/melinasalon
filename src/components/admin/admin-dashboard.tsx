@@ -92,7 +92,7 @@ export function AdminDashboard({ adminName }: { adminName: string | null }) {
               پنل مدیریت
             </Link>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              سالن زیبایی ملینا
+              سالن زیبایی ملین بیوتی
             </p>
           </div>
 

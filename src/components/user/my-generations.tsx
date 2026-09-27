@@ -150,7 +150,7 @@ export function MyGenerations({ generations }: MyGenerationsProps) {
             </span>
           </div>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            طراحی‌های ساخته‌شده با آرایشگر هوش مصنوعی ملینا
+            طراحی‌های ساخته‌شده با آرایشگر هوش مصنوعی ملین بیوتی
           </p>
         </div>
 

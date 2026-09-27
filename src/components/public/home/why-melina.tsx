@@ -49,7 +49,7 @@ export function WhyMelina() {
             چرا
             <span className="text-[var(--brand-crimson)]">
               {" "}
-              سالن زیبایی ملینا؟
+              سالن زیبایی ملین بیوتی
             </span>
           </h2>
 

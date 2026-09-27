@@ -19,7 +19,7 @@ export function Hero() {
               <div className="relative h-full overflow-hidden rounded-[1.5rem]">
                 <Image
                   src="/images/hero.webp"
-                  alt="سالن زیبایی ملینا"
+                  alt="سالن زیبایی ملین بیوتی"
                   fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 50vw"
@@ -73,7 +73,7 @@ export function Hero() {
 
             {/* Description */}
             <p className="mt-6 max-w-xl text-base leading-8 text-[var(--text-secondary)] sm:text-lg">
-              در سالن زیبایی ملینا، زیبایی شما با تجربه حرفه‌ای، خدمات تخصصی و
+              در سالن زیبایی ملین بیوتی زیبایی شما با تجربه حرفه‌ای، خدمات تخصصی و
               نگاهی مدرن به دنیای زیبایی همراه می‌شود. سبک مورد علاقه‌تان را
               پیدا کنید و نوبت خود را به آسانی رزرو کنید.
             </p>

@@ -660,8 +660,8 @@ export function AIHairdresserForm({
             </h3>
 
             <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-              هوش مصنوعی ملینا در حال بررسی فرم صورت و رنگ پوست شماست تا بهترین
-              استایل را خلق کند.
+              هوش مصنوعی ملین بیوتی در حال بررسی فرم صورت و رنگ پوست شماست تا
+              بهترین استایل را خلق کند.
             </p>
 
             <div className="mt-6 h-1 w-full animate-pulse overflow-hidden rounded-full bg-[var(--bg-card-warm)]">
@@ -684,7 +684,7 @@ export function AIHairdresserForm({
         <section className="mx-auto mt-16 max-w-6xl border-t border-[var(--border-subtle)] pt-16">
           <div className="mb-8 text-center">
             <h2 className="text-2xl font-bold text-[var(--brand-crimson)]">
-              نتیجه جادوی ملینا
+              نتیجه جادوی ملین بیوتی
             </h2>
 
             <p className="mt-2 text-sm text-[var(--text-secondary)]">

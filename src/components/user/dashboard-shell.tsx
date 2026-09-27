@@ -151,7 +151,8 @@ export function DashboardShell({
                 <span className="text-[var(--border-beige)]">•</span>
 
                 <span>
-                  عضو سالن ملینا از سال {formatMemberSinceYear(user.createdAt)}
+                  عضو سالن ملین بیوتی از سال{" "}
+                  {formatMemberSinceYear(user.createdAt)}
                 </span>
               </div>
             </div>
@@ -335,13 +336,13 @@ export function DashboardShell({
 
             <div>
               <h4 className="text-sm font-bold text-[var(--text-primary)]">
-                مشاوره تلفنی با تیم ملینا
+                مشاوره تلفنی با تیم ملین بیوتی
               </h4>
               <p className="mt-1 text-xs leading-6 text-[var(--text-secondary)]">
                 سوالی درباره خدمات یا رزرو نوبت دارید؟ با ما تماس بگیرید.
               </p>
               <a
-                href="tel:+989000000000"
+                href="tel:+989354728448"
                 className="mt-2 inline-block text-sm font-bold text-[var(--brand-crimson)] hover:underline"
                 dir="ltr"
               >

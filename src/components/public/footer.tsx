@@ -38,7 +38,7 @@ export async function Footer() {
               <div className="relative h-20 w-20 overflow-hidden rounded-xl">
                 <Image
                   src="/images/logo1.png"
-                  alt="لوگوی سالن زیبایی ملینا"
+                  alt="لوگوی ملین بیوتی"
                   fill
                   className="object-contain"
                 />
@@ -46,7 +46,7 @@ export async function Footer() {
 
               <div>
                 <p className="text-lg font-bold text-[var(--brand-crimson)]">
-                  ملینا
+                  ملین بیوتی
                 </p>
                 <p className="text-[10px] text-[var(--text-secondary)]">
                   سالن زیبایی
@@ -127,23 +127,33 @@ export async function Footer() {
                 />
 
                 <p className="text-sm leading-6 text-[var(--text-secondary)]">
-                  آدرس سالن زیبایی ملینا
+                  شاهرود - خیابان ۲۲ بهمن - بالاتر از پارک کودک - جنب کوچه ۲۸ -
+                  پلاک ۳۳۶
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-3">
                 <Phone
                   size={17}
-                  className="shrink-0 text-[var(--brand-crimson)]"
+                  className="shrink-0 text-[var(--brand-crimson)] mt-0.5"
                 />
 
-                <a
-                  href="tel:+989000000000"
-                  className="text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--brand-crimson)]"
-                  dir="ltr"
-                >
-                  ۰۹۰۰ ۰۰۰ ۰۰۰۰
-                </a>
+                <div className="flex flex-col gap-1">
+                  <a
+                    href="tel:+989354728448"
+                    className="text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--brand-crimson)]"
+                    dir="ltr"
+                  >
+                    ۰۹۳۵ ۴۷۲ ۸۴۴۸
+                  </a>
+                  <a
+                    href="tel:+982332335960"
+                    className="text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--brand-crimson)]"
+                    dir="ltr"
+                  >
+                    ۰۲۳-۳۲۳۳۵۹۶۰
+                  </a>
+                </div>
               </div>
 
               <div className="flex items-center gap-3">
@@ -153,14 +163,14 @@ export async function Footer() {
                 />
 
                 <p className="text-sm text-[var(--text-secondary)]">
-                  هر روز ۷:۰۰ تا ۲۴:۰۰
+                  هر روز ۸:۰۰ تا ۲۱:۰۰
                 </p>
               </div>
             </div>
 
             <div className="mt-6 flex items-center gap-2">
               <a
-                href="#"
+                href="https://www.instagram.com/melinbeautysalon_/"
                 aria-label="اینستاگرام"
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-beige)] text-[var(--text-secondary)] transition-all hover:border-[var(--brand-crimson)] hover:bg-[var(--brand-crimson)] hover:text-white"
               >
@@ -179,7 +189,7 @@ export async function Footer() {
         {/* Bottom */}
         <div className="mt-12 flex flex-col gap-4 border-t border-[var(--border-subtle)] pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-[var(--text-secondary)]">
-            © {new Date().getFullYear()} سالن زیبایی ملینا. تمامی حقوق محفوظ
+            © {new Date().getFullYear()} سالن زیبایی ملین بیوتی تمامی حقوق محفوظ
             است.
           </p>
 

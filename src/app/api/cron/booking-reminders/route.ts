@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
         user: {
           select: {
             phoneNumber: true,
+            fullName: true,
           },
         },
         service: {
@@ -111,8 +112,12 @@ export async function GET(request: NextRequest) {
 
     for (const booking of bookings) {
       try {
+        const clientName =
+          (booking.user as { fullName?: string | null }).fullName || "کاربر";
+
         await smsProvider.sendBookingReminder({
           phoneNumber: booking.user.phoneNumber,
+          userName: clientName,
           serviceName: booking.service.name,
           startsAt: booking.startsAt,
         });

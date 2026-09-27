@@ -21,7 +21,7 @@ export async function Navbar() {
           <div className="flex items-center gap-6">
             <span className="hidden items-center gap-2 sm:inline-flex">
               <span className="text-[var(--accent-gold)]">◷</span>
-              ساعات کاری: همه روزه ۷:۰۰ تا ۲۴:۰۰
+              ساعات کاری: همه روزه ۸:۰۰ تا ۲۱:۰۰
             </span>
 
             <span className="hidden items-center gap-2 md:inline-flex">
@@ -34,7 +34,10 @@ export async function Navbar() {
           <div className="flex items-center gap-5">
             <span className="hidden items-center gap-2 sm:inline-flex">
               <span className="text-[var(--accent-gold)]">☎</span>
-              شماره تماس: ۰۲۱-۱۲۳۴۵۶۷۸
+              شماره تماس:
+              <a href="tel:+982332335960" className="text-sm" dir="ltr">
+                ۰۹۳۵ ۴۷۲ ۸۴۴۸
+              </a>
             </span>
 
             {user ? (
@@ -62,13 +65,13 @@ export async function Navbar() {
           {/* Brand */}
           <Link
             href="/"
-            aria-label="صفحه اصلی سالن زیبایی ملینا"
+            aria-label="صفحه اصلی سالن زیبایی ملین بیوتی"
             className="flex shrink-0 items-center gap-0"
           >
             <div className="relative h-23 w-23 overflow-hidden rounded-xl">
               <Image
                 src="/images/logo1.png"
-                alt="لوگوی سالن زیبایی ملینا"
+                alt="لوگوی سالن زیبایی ملین بیوتی"
                 fill
                 priority
                 className="object-contain"
@@ -77,7 +80,7 @@ export async function Navbar() {
 
             <div className="hidden sm:block">
               <div className="text-xl font-bold text-[var(--brand-crimson-dark)]">
-                سالن زیبایی ملینا
+                سالن زیبایی ملین بیوتی
               </div>
 
               <div className="mt-0.5 text-xs tracking-[0.18em] text-[var(--brand-crimson)]">

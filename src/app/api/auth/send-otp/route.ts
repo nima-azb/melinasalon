@@ -7,6 +7,7 @@ import {
 import { generateOtp, getOtpExpiry, hashOtp } from "@/lib/auth/otp";
 import { normalizeIranianPhone } from "@/lib/auth/phone";
 import { smsProvider } from "@/lib/sms";
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -16,8 +17,10 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+
     const purpose = body.purpose === "register" ? "REGISTER" : "LOGIN";
     let phoneNumber: string;
+
     try {
       phoneNumber = normalizeIranianPhone(body.phone);
     } catch {
@@ -26,8 +29,10 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+
     let fullName: string | undefined;
     let birthDate: Date | undefined;
+
     if (purpose === "REGISTER") {
       if (typeof body.fullName !== "string") {
         return NextResponse.json(
@@ -46,6 +51,7 @@ export async function POST(request: Request) {
         );
       }
       fullName = trimmedFullName;
+
       if (typeof body.birthDate !== "string") {
         return NextResponse.json(
           { success: false, message: "تاریخ تولد الزامی است." },
@@ -66,6 +72,7 @@ export async function POST(request: Request) {
         );
       }
       birthDate = parsedBirthDate;
+
       const existingUser = await prisma.user.findUnique({
         where: { phoneNumber },
         select: { id: true },
@@ -81,11 +88,13 @@ export async function POST(request: Request) {
         );
       }
     }
+
     const now = new Date();
     const latestRequest = await prisma.otpRequest.findFirst({
       where: { phoneNumber },
       orderBy: { requestedAt: "desc" },
     });
+
     if (latestRequest) {
       const elapsedSeconds =
         (now.getTime() - latestRequest.requestedAt.getTime()) / 1000;
@@ -103,10 +112,13 @@ export async function POST(request: Request) {
         );
       }
     }
+
     const otp = generateOtp();
     const codeHash = hashOtp(otp);
     const expiresAt = getOtpExpiry();
+
     await prisma.otpCode.deleteMany({ where: { phoneNumber } });
+
     await prisma.$transaction([
       prisma.otpRequest.create({ data: { phoneNumber, requestedAt: now } }),
       prisma.otpCode.create({
@@ -120,7 +132,9 @@ export async function POST(request: Request) {
         },
       }),
     ]);
+
     await smsProvider.sendOtp(phoneNumber, otp);
+
     return NextResponse.json({
       success: true,
       message: "کد تأیید با موفقیت ارسال شد.",

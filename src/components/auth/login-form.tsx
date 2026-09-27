@@ -117,7 +117,7 @@ export function LoginForm() {
           </div>
 
           <span className="text-2xl font-bold tracking-tight text-[var(--brand-crimson)]">
-            ملینا
+            ملین بیوتی
           </span>
 
           <span className="mt-1 text-xs font-medium text-[var(--text-secondary)]">

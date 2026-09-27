@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import { Prisma } from "@/generated/prisma/client";
-
 import { getCurrentUser } from "@/lib/auth/get-current-user";
-
 import { prisma } from "@/lib/prisma";
-
 import { smsProvider } from "@/lib/sms";
-
 import {
   getSalonDayBounds,
   getZonedWallTime,
@@ -17,7 +12,6 @@ import {
 
 function isValidDate(value: string) {
   const date = new Date(value);
-
   return !Number.isNaN(date.getTime());
 }
 
@@ -25,25 +19,15 @@ function pad(value: number) {
   return String(value).padStart(2, "0");
 }
 
-/**
- * Returns the [start, end) UTC bounds of the salon-local calendar day that
- * `date` falls on.
- *
- * Using the salon timezone here prevents a booking near midnight Tehran time
- * from being attributed to the wrong calendar day when the server timezone
- * differs from the salon timezone.
- */
 function getSalonCalendarDayBounds(date: Date) {
   const wall = getZonedWallTime(date);
   const dateKey = `${wall.year}-${pad(wall.month)}-${pad(wall.day)}`;
-
   return getSalonDayBounds(dateKey);
 }
 
 export async function GET() {
   try {
     const user = await getCurrentUser();
-
     if (!user) {
       return NextResponse.json(
         {
@@ -55,12 +39,8 @@ export async function GET() {
     }
 
     const bookings = await prisma.booking.findMany({
-      where: {
-        userId: user.id,
-      },
-      orderBy: {
-        startsAt: "asc",
-      },
+      where: { userId: user.id },
+      orderBy: { startsAt: "asc" },
       include: {
         service: {
           select: {
@@ -73,18 +53,11 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      bookings,
-    });
+    return NextResponse.json({ success: true, bookings });
   } catch (error) {
     console.error("GET /api/bookings error:", error);
-
     return NextResponse.json(
-      {
-        success: false,
-        message: "دریافت نوبت‌ها با خطا مواجه شد.",
-      },
+      { success: false, message: "دریافت نوبت‌ها با خطا مواجه شد." },
       { status: 500 },
     );
   }
@@ -93,7 +66,6 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
-
     if (!user) {
       return NextResponse.json(
         {
@@ -126,30 +98,21 @@ export async function POST(request: NextRequest) {
 
     if (typeof serviceId !== "string" || !serviceId) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "انتخاب سرویس الزامی است.",
-        },
+        { success: false, message: "انتخاب سرویس الزامی است." },
         { status: 400 },
       );
     }
 
     if (typeof startsAtValue !== "string" || !startsAtValue) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "زمان شروع نوبت الزامی است.",
-        },
+        { success: false, message: "زمان شروع نوبت الزامی است." },
         { status: 400 },
       );
     }
 
     if (!isValidDate(startsAtValue)) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "زمان شروع نوبت معتبر نیست.",
-        },
+        { success: false, message: "زمان شروع نوبت معتبر نیست." },
         { status: 400 },
       );
     }
@@ -168,18 +131,13 @@ export async function POST(request: NextRequest) {
 
     if (startsAt <= new Date()) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "این زمان دیگر در دسترس نیست.",
-        },
+        { success: false, message: "این زمان دیگر در دسترس نیست." },
         { status: 409 },
       );
     }
 
     const service = await prisma.service.findUnique({
-      where: {
-        id: serviceId,
-      },
+      where: { id: serviceId },
       select: {
         id: true,
         name: true,
@@ -192,20 +150,14 @@ export async function POST(request: NextRequest) {
 
     if (!service) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "سرویس مورد نظر یافت نشد.",
-        },
+        { success: false, message: "سرویس مورد نظر یافت نشد." },
         { status: 404 },
       );
     }
 
     if (!service.isActive) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "این سرویس در حال حاضر فعال نیست.",
-        },
+        { success: false, message: "این سرویس در حال حاضر فعال نیست." },
         { status: 409 },
       );
     }
@@ -226,24 +178,14 @@ export async function POST(request: NextRequest) {
       async (tx) => {
         const { startOfDay, endOfDay } = getSalonCalendarDayBounds(startsAt);
 
-        /*
-         * If this service is configured as one-booking-per-day,
-         * there can be only one confirmed booking for this service
-         * during the salon-local calendar day.
-         */
         if (service.oneBookingPerDay) {
           const existingDailyBooking = await tx.booking.findFirst({
             where: {
               serviceId,
               status: "CONFIRMED",
-              startsAt: {
-                gte: startOfDay,
-                lt: endOfDay,
-              },
+              startsAt: { gte: startOfDay, lt: endOfDay },
             },
-            select: {
-              id: true,
-            },
+            select: { id: true },
           });
 
           if (existingDailyBooking) {
@@ -251,19 +193,12 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        /*
-         * Capacity is per SERVICE, not salon-wide.
-         */
         const overlappingBookingsCount = await tx.booking.count({
           where: {
             serviceId,
             status: "CONFIRMED",
-            startsAt: {
-              lt: endsAt,
-            },
-            endsAt: {
-              gt: startsAt,
-            },
+            startsAt: { lt: endsAt },
+            endsAt: { gt: startsAt },
           },
         });
 
@@ -271,53 +206,27 @@ export async function POST(request: NextRequest) {
           throw new Error("APPOINTMENT_UNAVAILABLE");
         }
 
-        /*
-         * Blocked times are now SERVICE-SPECIFIC.
-         *
-         * A block belonging to another service does not affect this booking.
-         */
         const overlappingBlockedTime = await tx.blockedTime.findFirst({
           where: {
             serviceId,
-            startsAt: {
-              lt: endsAt,
-            },
-            endsAt: {
-              gt: startsAt,
-            },
+            startsAt: { lt: endsAt },
+            endsAt: { gt: startsAt },
           },
-          select: {
-            id: true,
-          },
+          select: { id: true },
         });
 
         if (overlappingBlockedTime) {
           throw new Error("APPOINTMENT_BLOCKED");
         }
 
-        /*
-         * A user can still only book the same service once per calendar day.
-         *
-         * This is separate from oneBookingPerDay:
-         *
-         * - normal service: one booking per USER per day
-         * - oneBookingPerDay service: one booking TOTAL for the service per day
-         */
         const existingSameServiceDay = await tx.booking.findFirst({
           where: {
             userId: user.id,
             serviceId,
-            status: {
-              in: ["CONFIRMED", "COMPLETED"],
-            },
-            startsAt: {
-              gte: startOfDay,
-              lt: endOfDay,
-            },
+            status: { in: ["CONFIRMED", "COMPLETED"] },
+            startsAt: { gte: startOfDay, lt: endOfDay },
           },
-          select: {
-            id: true,
-          },
+          select: { id: true },
         });
 
         if (existingSameServiceDay) {
@@ -344,30 +253,24 @@ export async function POST(request: NextRequest) {
           },
         });
       },
-      {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
 
     try {
+      const clientName =
+        (user as { fullName?: string | null }).fullName || "کاربر";
+
       await smsProvider.sendBookingConfirmation({
         phoneNumber: user.phoneNumber,
+        userName: clientName,
         serviceName: booking.service.name,
         startsAt: booking.startsAt,
-        endsAt: booking.endsAt,
-        status: booking.status,
       });
     } catch (smsError) {
       console.error("Booking confirmation SMS error:", smsError);
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        booking,
-      },
-      { status: 201 },
-    );
+    return NextResponse.json({ success: true, booking }, { status: 201 });
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "SERVICE_BOOKING_PER_DAY_LIMIT") {
@@ -380,27 +283,18 @@ export async function POST(request: NextRequest) {
           { status: 409 },
         );
       }
-
       if (error.message === "APPOINTMENT_UNAVAILABLE") {
         return NextResponse.json(
-          {
-            success: false,
-            message: "ظرفیت این زمان تکمیل شده است.",
-          },
+          { success: false, message: "ظرفیت این زمان تکمیل شده است." },
           { status: 409 },
         );
       }
-
       if (error.message === "APPOINTMENT_BLOCKED") {
         return NextResponse.json(
-          {
-            success: false,
-            message: "این زمان برای این خدمت مسدود شده است.",
-          },
+          { success: false, message: "این زمان برای این خدمت مسدود شده است." },
           { status: 409 },
         );
       }
-
       if (error.message === "DUPLICATE_SERVICE_DAY") {
         return NextResponse.json(
           {
@@ -427,12 +321,8 @@ export async function POST(request: NextRequest) {
     }
 
     console.error("POST /api/bookings error:", error);
-
     return NextResponse.json(
-      {
-        success: false,
-        message: "ثبت نوبت با خطا مواجه شد.",
-      },
+      { success: false, message: "ثبت نوبت با خطا مواجه شد." },
       { status: 500 },
     );
   }

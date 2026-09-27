@@ -21,7 +21,7 @@ export async function Services() {
         <div>
           <div className="mb-3 inline-flex items-center gap-2 text-xs font-medium text-[var(--brand-crimson)]">
             <span className="h-px w-6 bg-[var(--brand-crimson)]" />
-            خدمات تخصصی سالن زیبایی ملینا
+            خدمات تخصصی سالن زیبایی ملین بیوتی
           </div>
 
           <h2 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
@@ -30,8 +30,8 @@ export async function Services() {
           </h2>
 
           <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--text-secondary)] sm:text-base">
-            از استایل و رنگ مو تا میکاپ و مراقبت تخصصی؛ خدمات سالن زیبایی ملینا
-            با توجه به نیاز، سلیقه و ویژگی‌های شما ارائه می‌شوند.
+            از استایل و رنگ مو تا میکاپ و مراقبت تخصصی؛ خدمات سالن زیبایی ملین
+            بیوتی با توجه به نیاز، سلیقه و ویژگی‌های شما ارائه می‌شوند.
           </p>
         </div>
 

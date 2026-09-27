@@ -157,11 +157,11 @@ export function RegisterForm() {
           className="inline-flex flex-col items-center transition-opacity hover:opacity-80"
         >
           <span className="text-2xl font-bold text-[var(--brand-crimson)]">
-            ملینا
+            ملین بیوتی
           </span>
 
           <span className="mt-1 text-xs text-[var(--text-secondary)]">
-            سالن زیبایی ملینا
+            سالن زیبایی ملین بیوتی
           </span>
         </Link>
       </div>

@@ -51,7 +51,7 @@ export default async function AIHairdresserPage() {
           <section className="mx-auto max-w-3xl text-center">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--brand-crimson)]/15 bg-[var(--brand-crimson-light)] px-3.5 py-2 text-xs font-medium tracking-widest text-[var(--brand-crimson)] uppercase">
               <Sparkles size={14} />
-              فناوری انحصاری ملینا
+              فناوری انحصاری ملین بیوتی
             </div>
 
             <h1 className="text-4xl leading-tight font-bold text-[var(--brand-crimson)] sm:text-5xl">
