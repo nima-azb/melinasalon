@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/auth/require-admin";
+
 import { prisma } from "@/lib/prisma";
+
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const RATE_LIMIT_MAX_REQUESTS = 30;
+
 const RATE_LIMIT_WINDOW_MS = 60_000;
 
 const createServiceSchema = z.object({
   name: z.string().trim().min(1).max(100),
+
   description: z.string().trim().max(1000).optional(),
+
   duration: z.number().int().positive().max(480),
+
   capacity: z.number().int().min(1).max(20).default(1),
+
+  oneBookingPerDay: z.boolean().default(false),
 });
 
 export async function GET(request: NextRequest) {
@@ -27,8 +36,6 @@ export async function GET(request: NextRequest) {
         return admin;
       }
     } else {
-      // Only the public, unauthenticated path is rate-limited — admins
-      // managing services from the dashboard shouldn't be throttled.
       const rateLimit = checkRateLimit(
         `services:${getClientIp(request)}`,
         RATE_LIMIT_MAX_REQUESTS,
@@ -43,7 +50,9 @@ export async function GET(request: NextRequest) {
           },
           {
             status: 429,
-            headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+            headers: {
+              "Retry-After": String(rateLimit.retryAfterSeconds),
+            },
           },
         );
       }
@@ -86,6 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: unknown = await request.json();
+
     const result = createServiceSchema.safeParse(body);
 
     if (!result.success) {
@@ -105,6 +115,7 @@ export async function POST(request: NextRequest) {
         description: result.data.description || null,
         duration: result.data.duration,
         capacity: result.data.capacity,
+        oneBookingPerDay: result.data.oneBookingPerDay,
       },
     });
 

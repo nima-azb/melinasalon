@@ -120,6 +120,7 @@ export const ServiceScalarFieldEnum = {
   duration: 'duration',
   imageUrl: 'imageUrl',
   capacity: 'capacity',
+  oneBookingPerDay: 'oneBookingPerDay',
   isActive: 'isActive',
   createdAt: 'createdAt'
 } as const
@@ -129,6 +130,7 @@ export type ServiceScalarFieldEnum = (typeof ServiceScalarFieldEnum)[keyof typeo
 
 export const BlockedTimeScalarFieldEnum = {
   id: 'id',
+  serviceId: 'serviceId',
   startsAt: 'startsAt',
   endsAt: 'endsAt',
   reason: 'reason',

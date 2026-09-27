@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
@@ -9,7 +9,7 @@ type RouteContext = {
   }>;
 };
 
-export async function DELETE(_request: NextRequest, context: RouteContext) {
+export async function DELETE(_request: Request, context: RouteContext) {
   try {
     const admin = await requireAdmin();
 
@@ -19,25 +19,17 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
 
-    if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "شناسه زمان مسدودشده الزامی است.",
-        },
-        { status: 400 },
-      );
-    }
-
     const blockedTime = await prisma.blockedTime.findUnique({
       where: {
         id,
       },
-      select: {
-        id: true,
-        startsAt: true,
-        endsAt: true,
-        reason: true,
+      include: {
+        service: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -45,7 +37,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "زمان مسدودشده یافت نشد.",
+          message: "زمان مسدود شده مورد نظر یافت نشد.",
         },
         { status: 404 },
       );
@@ -59,7 +51,15 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       success: true,
-      blockedTime,
+      message: "زمان مسدود شده با موفقیت حذف شد.",
+      blockedTime: {
+        id: blockedTime.id,
+        serviceId: blockedTime.serviceId,
+        serviceName: blockedTime.service.name,
+        startsAt: blockedTime.startsAt,
+        endsAt: blockedTime.endsAt,
+        reason: blockedTime.reason,
+      },
     });
   } catch (error) {
     console.error("DELETE /api/admin/blocked-times/[id] error:", error);
@@ -67,7 +67,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         success: false,
-        message: "حذف زمان مسدودشده با خطا مواجه شد.",
+        message: "حذف زمان مسدود شده با خطا مواجه شد.",
       },
       { status: 500 },
     );

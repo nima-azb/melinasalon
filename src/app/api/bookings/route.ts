@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { Prisma } from "@/generated/prisma/client";
 
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+
 import { prisma } from "@/lib/prisma";
+
 import { smsProvider } from "@/lib/sms";
+
 import {
   getSalonDayBounds,
   getZonedWallTime,
@@ -13,6 +17,7 @@ import {
 
 function isValidDate(value: string) {
   const date = new Date(value);
+
   return !Number.isNaN(date.getTime());
 }
 
@@ -22,10 +27,11 @@ function pad(value: number) {
 
 /**
  * Returns the [start, end) UTC bounds of the salon-local calendar day that
- * `date` falls on. Using `date.getFullYear()/getMonth()/getDate()` here (as
- * the previous implementation did) reads the SERVER's local timezone, not
- * the salon's, so on a server running in UTC a booking placed near midnight
- * Tehran time could be attributed to the wrong calendar day.
+ * `date` falls on.
+ *
+ * Using the salon timezone here prevents a booking near midnight Tehran time
+ * from being attributed to the wrong calendar day when the server timezone
+ * differs from the salon timezone.
  */
 function getSalonCalendarDayBounds(date: Date) {
   const wall = getZonedWallTime(date);
@@ -61,6 +67,7 @@ export async function GET() {
             id: true,
             name: true,
             duration: true,
+            oneBookingPerDay: true,
           },
         },
       },
@@ -179,6 +186,7 @@ export async function POST(request: NextRequest) {
         duration: true,
         isActive: true,
         capacity: true,
+        oneBookingPerDay: true,
       },
     });
 
@@ -216,12 +224,36 @@ export async function POST(request: NextRequest) {
 
     const booking = await prisma.$transaction(
       async (tx) => {
-        // Capacity is per SERVICE, not salon-wide: a service with 2
-        // specialists can have 2 concurrent confirmed bookings for the same
-        // slot, while a different service's bookings never count against
-        // this one (different specialist/station). Only once the number of
-        // overlapping confirmed bookings for this exact service reaches its
-        // capacity does the slot become unavailable.
+        const { startOfDay, endOfDay } = getSalonCalendarDayBounds(startsAt);
+
+        /*
+         * If this service is configured as one-booking-per-day,
+         * there can be only one confirmed booking for this service
+         * during the salon-local calendar day.
+         */
+        if (service.oneBookingPerDay) {
+          const existingDailyBooking = await tx.booking.findFirst({
+            where: {
+              serviceId,
+              status: "CONFIRMED",
+              startsAt: {
+                gte: startOfDay,
+                lt: endOfDay,
+              },
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          if (existingDailyBooking) {
+            throw new Error("SERVICE_BOOKING_PER_DAY_LIMIT");
+          }
+        }
+
+        /*
+         * Capacity is per SERVICE, not salon-wide.
+         */
         const overlappingBookingsCount = await tx.booking.count({
           where: {
             serviceId,
@@ -239,9 +271,14 @@ export async function POST(request: NextRequest) {
           throw new Error("APPOINTMENT_UNAVAILABLE");
         }
 
-        // Blocked times are salon-wide and apply regardless of service.
+        /*
+         * Blocked times are now SERVICE-SPECIFIC.
+         *
+         * A block belonging to another service does not affect this booking.
+         */
         const overlappingBlockedTime = await tx.blockedTime.findFirst({
           where: {
+            serviceId,
             startsAt: {
               lt: endsAt,
             },
@@ -258,8 +295,14 @@ export async function POST(request: NextRequest) {
           throw new Error("APPOINTMENT_BLOCKED");
         }
 
-        const { startOfDay, endOfDay } = getSalonCalendarDayBounds(startsAt);
-
+        /*
+         * A user can still only book the same service once per calendar day.
+         *
+         * This is separate from oneBookingPerDay:
+         *
+         * - normal service: one booking per USER per day
+         * - oneBookingPerDay service: one booking TOTAL for the service per day
+         */
         const existingSameServiceDay = await tx.booking.findFirst({
           where: {
             userId: user.id,
@@ -295,6 +338,7 @@ export async function POST(request: NextRequest) {
                 id: true,
                 name: true,
                 duration: true,
+                oneBookingPerDay: true,
               },
             },
           },
@@ -326,6 +370,17 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     if (error instanceof Error) {
+      if (error.message === "SERVICE_BOOKING_PER_DAY_LIMIT") {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "این خدمت برای این تاریخ قبلاً رزرو شده است و فقط یک نوبت در روز دارد.",
+          },
+          { status: 409 },
+        );
+      }
+
       if (error.message === "APPOINTMENT_UNAVAILABLE") {
         return NextResponse.json(
           {
@@ -340,7 +395,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message: "این زمان مسدود شده است.",
+            message: "این زمان برای این خدمت مسدود شده است.",
           },
           { status: 409 },
         );

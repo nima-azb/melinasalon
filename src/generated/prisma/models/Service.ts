@@ -43,6 +43,7 @@ export type ServiceMinAggregateOutputType = {
   duration: number | null
   imageUrl: string | null
   capacity: number | null
+  oneBookingPerDay: boolean | null
   isActive: boolean | null
   createdAt: Date | null
 }
@@ -54,6 +55,7 @@ export type ServiceMaxAggregateOutputType = {
   duration: number | null
   imageUrl: string | null
   capacity: number | null
+  oneBookingPerDay: boolean | null
   isActive: boolean | null
   createdAt: Date | null
 }
@@ -65,6 +67,7 @@ export type ServiceCountAggregateOutputType = {
   duration: number
   imageUrl: number
   capacity: number
+  oneBookingPerDay: number
   isActive: number
   createdAt: number
   _all: number
@@ -88,6 +91,7 @@ export type ServiceMinAggregateInputType = {
   duration?: true
   imageUrl?: true
   capacity?: true
+  oneBookingPerDay?: true
   isActive?: true
   createdAt?: true
 }
@@ -99,6 +103,7 @@ export type ServiceMaxAggregateInputType = {
   duration?: true
   imageUrl?: true
   capacity?: true
+  oneBookingPerDay?: true
   isActive?: true
   createdAt?: true
 }
@@ -110,6 +115,7 @@ export type ServiceCountAggregateInputType = {
   duration?: true
   imageUrl?: true
   capacity?: true
+  oneBookingPerDay?: true
   isActive?: true
   createdAt?: true
   _all?: true
@@ -208,6 +214,7 @@ export type ServiceGroupByOutputType = {
   duration: number
   imageUrl: string | null
   capacity: number
+  oneBookingPerDay: boolean
   isActive: boolean
   createdAt: Date
   _count: ServiceCountAggregateOutputType | null
@@ -242,9 +249,11 @@ export type ServiceWhereInput = {
   duration?: Prisma.IntFilter<"Service"> | number
   imageUrl?: Prisma.StringNullableFilter<"Service"> | string | null
   capacity?: Prisma.IntFilter<"Service"> | number
+  oneBookingPerDay?: Prisma.BoolFilter<"Service"> | boolean
   isActive?: Prisma.BoolFilter<"Service"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Service"> | Date | string
   bookings?: Prisma.BookingListRelationFilter
+  blockedTimes?: Prisma.BlockedTimeListRelationFilter
 }
 
 export type ServiceOrderByWithRelationInput = {
@@ -254,9 +263,11 @@ export type ServiceOrderByWithRelationInput = {
   duration?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   capacity?: Prisma.SortOrder
+  oneBookingPerDay?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   bookings?: Prisma.BookingOrderByRelationAggregateInput
+  blockedTimes?: Prisma.BlockedTimeOrderByRelationAggregateInput
 }
 
 export type ServiceWhereUniqueInput = Prisma.AtLeast<{
@@ -269,9 +280,11 @@ export type ServiceWhereUniqueInput = Prisma.AtLeast<{
   duration?: Prisma.IntFilter<"Service"> | number
   imageUrl?: Prisma.StringNullableFilter<"Service"> | string | null
   capacity?: Prisma.IntFilter<"Service"> | number
+  oneBookingPerDay?: Prisma.BoolFilter<"Service"> | boolean
   isActive?: Prisma.BoolFilter<"Service"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Service"> | Date | string
   bookings?: Prisma.BookingListRelationFilter
+  blockedTimes?: Prisma.BlockedTimeListRelationFilter
 }, "id">
 
 export type ServiceOrderByWithAggregationInput = {
@@ -281,6 +294,7 @@ export type ServiceOrderByWithAggregationInput = {
   duration?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   capacity?: Prisma.SortOrder
+  oneBookingPerDay?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ServiceCountOrderByAggregateInput
@@ -300,6 +314,7 @@ export type ServiceScalarWhereWithAggregatesInput = {
   duration?: Prisma.IntWithAggregatesFilter<"Service"> | number
   imageUrl?: Prisma.StringNullableWithAggregatesFilter<"Service"> | string | null
   capacity?: Prisma.IntWithAggregatesFilter<"Service"> | number
+  oneBookingPerDay?: Prisma.BoolWithAggregatesFilter<"Service"> | boolean
   isActive?: Prisma.BoolWithAggregatesFilter<"Service"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Service"> | Date | string
 }
@@ -311,9 +326,11 @@ export type ServiceCreateInput = {
   duration: number
   imageUrl?: string | null
   capacity?: number
+  oneBookingPerDay?: boolean
   isActive?: boolean
   createdAt?: Date | string
   bookings?: Prisma.BookingCreateNestedManyWithoutServiceInput
+  blockedTimes?: Prisma.BlockedTimeCreateNestedManyWithoutServiceInput
 }
 
 export type ServiceUncheckedCreateInput = {
@@ -323,9 +340,11 @@ export type ServiceUncheckedCreateInput = {
   duration: number
   imageUrl?: string | null
   capacity?: number
+  oneBookingPerDay?: boolean
   isActive?: boolean
   createdAt?: Date | string
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutServiceInput
+  blockedTimes?: Prisma.BlockedTimeUncheckedCreateNestedManyWithoutServiceInput
 }
 
 export type ServiceUpdateInput = {
@@ -335,9 +354,11 @@ export type ServiceUpdateInput = {
   duration?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
+  oneBookingPerDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUpdateManyWithoutServiceNestedInput
+  blockedTimes?: Prisma.BlockedTimeUpdateManyWithoutServiceNestedInput
 }
 
 export type ServiceUncheckedUpdateInput = {
@@ -347,9 +368,11 @@ export type ServiceUncheckedUpdateInput = {
   duration?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
+  oneBookingPerDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutServiceNestedInput
+  blockedTimes?: Prisma.BlockedTimeUncheckedUpdateManyWithoutServiceNestedInput
 }
 
 export type ServiceCreateManyInput = {
@@ -359,6 +382,7 @@ export type ServiceCreateManyInput = {
   duration: number
   imageUrl?: string | null
   capacity?: number
+  oneBookingPerDay?: boolean
   isActive?: boolean
   createdAt?: Date | string
 }
@@ -370,6 +394,7 @@ export type ServiceUpdateManyMutationInput = {
   duration?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
+  oneBookingPerDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -381,6 +406,7 @@ export type ServiceUncheckedUpdateManyInput = {
   duration?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
+  oneBookingPerDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -392,6 +418,7 @@ export type ServiceCountOrderByAggregateInput = {
   duration?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   capacity?: Prisma.SortOrder
+  oneBookingPerDay?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -408,6 +435,7 @@ export type ServiceMaxOrderByAggregateInput = {
   duration?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   capacity?: Prisma.SortOrder
+  oneBookingPerDay?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -419,6 +447,7 @@ export type ServiceMinOrderByAggregateInput = {
   duration?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   capacity?: Prisma.SortOrder
+  oneBookingPerDay?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -437,6 +466,20 @@ export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
+export type ServiceCreateNestedOneWithoutBlockedTimesInput = {
+  create?: Prisma.XOR<Prisma.ServiceCreateWithoutBlockedTimesInput, Prisma.ServiceUncheckedCreateWithoutBlockedTimesInput>
+  connectOrCreate?: Prisma.ServiceCreateOrConnectWithoutBlockedTimesInput
+  connect?: Prisma.ServiceWhereUniqueInput
+}
+
+export type ServiceUpdateOneRequiredWithoutBlockedTimesNestedInput = {
+  create?: Prisma.XOR<Prisma.ServiceCreateWithoutBlockedTimesInput, Prisma.ServiceUncheckedCreateWithoutBlockedTimesInput>
+  connectOrCreate?: Prisma.ServiceCreateOrConnectWithoutBlockedTimesInput
+  upsert?: Prisma.ServiceUpsertWithoutBlockedTimesInput
+  connect?: Prisma.ServiceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ServiceUpdateToOneWithWhereWithoutBlockedTimesInput, Prisma.ServiceUpdateWithoutBlockedTimesInput>, Prisma.ServiceUncheckedUpdateWithoutBlockedTimesInput>
+}
+
 export type ServiceCreateNestedOneWithoutBookingsInput = {
   create?: Prisma.XOR<Prisma.ServiceCreateWithoutBookingsInput, Prisma.ServiceUncheckedCreateWithoutBookingsInput>
   connectOrCreate?: Prisma.ServiceCreateOrConnectWithoutBookingsInput
@@ -451,6 +494,74 @@ export type ServiceUpdateOneRequiredWithoutBookingsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ServiceUpdateToOneWithWhereWithoutBookingsInput, Prisma.ServiceUpdateWithoutBookingsInput>, Prisma.ServiceUncheckedUpdateWithoutBookingsInput>
 }
 
+export type ServiceCreateWithoutBlockedTimesInput = {
+  id?: string
+  name: string
+  description?: string | null
+  duration: number
+  imageUrl?: string | null
+  capacity?: number
+  oneBookingPerDay?: boolean
+  isActive?: boolean
+  createdAt?: Date | string
+  bookings?: Prisma.BookingCreateNestedManyWithoutServiceInput
+}
+
+export type ServiceUncheckedCreateWithoutBlockedTimesInput = {
+  id?: string
+  name: string
+  description?: string | null
+  duration: number
+  imageUrl?: string | null
+  capacity?: number
+  oneBookingPerDay?: boolean
+  isActive?: boolean
+  createdAt?: Date | string
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutServiceInput
+}
+
+export type ServiceCreateOrConnectWithoutBlockedTimesInput = {
+  where: Prisma.ServiceWhereUniqueInput
+  create: Prisma.XOR<Prisma.ServiceCreateWithoutBlockedTimesInput, Prisma.ServiceUncheckedCreateWithoutBlockedTimesInput>
+}
+
+export type ServiceUpsertWithoutBlockedTimesInput = {
+  update: Prisma.XOR<Prisma.ServiceUpdateWithoutBlockedTimesInput, Prisma.ServiceUncheckedUpdateWithoutBlockedTimesInput>
+  create: Prisma.XOR<Prisma.ServiceCreateWithoutBlockedTimesInput, Prisma.ServiceUncheckedCreateWithoutBlockedTimesInput>
+  where?: Prisma.ServiceWhereInput
+}
+
+export type ServiceUpdateToOneWithWhereWithoutBlockedTimesInput = {
+  where?: Prisma.ServiceWhereInput
+  data: Prisma.XOR<Prisma.ServiceUpdateWithoutBlockedTimesInput, Prisma.ServiceUncheckedUpdateWithoutBlockedTimesInput>
+}
+
+export type ServiceUpdateWithoutBlockedTimesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacity?: Prisma.IntFieldUpdateOperationsInput | number
+  oneBookingPerDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUpdateManyWithoutServiceNestedInput
+}
+
+export type ServiceUncheckedUpdateWithoutBlockedTimesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacity?: Prisma.IntFieldUpdateOperationsInput | number
+  oneBookingPerDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutServiceNestedInput
+}
+
 export type ServiceCreateWithoutBookingsInput = {
   id?: string
   name: string
@@ -458,8 +569,10 @@ export type ServiceCreateWithoutBookingsInput = {
   duration: number
   imageUrl?: string | null
   capacity?: number
+  oneBookingPerDay?: boolean
   isActive?: boolean
   createdAt?: Date | string
+  blockedTimes?: Prisma.BlockedTimeCreateNestedManyWithoutServiceInput
 }
 
 export type ServiceUncheckedCreateWithoutBookingsInput = {
@@ -469,8 +582,10 @@ export type ServiceUncheckedCreateWithoutBookingsInput = {
   duration: number
   imageUrl?: string | null
   capacity?: number
+  oneBookingPerDay?: boolean
   isActive?: boolean
   createdAt?: Date | string
+  blockedTimes?: Prisma.BlockedTimeUncheckedCreateNestedManyWithoutServiceInput
 }
 
 export type ServiceCreateOrConnectWithoutBookingsInput = {
@@ -496,8 +611,10 @@ export type ServiceUpdateWithoutBookingsInput = {
   duration?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
+  oneBookingPerDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  blockedTimes?: Prisma.BlockedTimeUpdateManyWithoutServiceNestedInput
 }
 
 export type ServiceUncheckedUpdateWithoutBookingsInput = {
@@ -507,8 +624,10 @@ export type ServiceUncheckedUpdateWithoutBookingsInput = {
   duration?: Prisma.IntFieldUpdateOperationsInput | number
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacity?: Prisma.IntFieldUpdateOperationsInput | number
+  oneBookingPerDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  blockedTimes?: Prisma.BlockedTimeUncheckedUpdateManyWithoutServiceNestedInput
 }
 
 
@@ -518,10 +637,12 @@ export type ServiceUncheckedUpdateWithoutBookingsInput = {
 
 export type ServiceCountOutputType = {
   bookings: number
+  blockedTimes: number
 }
 
 export type ServiceCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   bookings?: boolean | ServiceCountOutputTypeCountBookingsArgs
+  blockedTimes?: boolean | ServiceCountOutputTypeCountBlockedTimesArgs
 }
 
 /**
@@ -541,6 +662,13 @@ export type ServiceCountOutputTypeCountBookingsArgs<ExtArgs extends runtime.Type
   where?: Prisma.BookingWhereInput
 }
 
+/**
+ * ServiceCountOutputType without action
+ */
+export type ServiceCountOutputTypeCountBlockedTimesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BlockedTimeWhereInput
+}
+
 
 export type ServiceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -549,9 +677,11 @@ export type ServiceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   duration?: boolean
   imageUrl?: boolean
   capacity?: boolean
+  oneBookingPerDay?: boolean
   isActive?: boolean
   createdAt?: boolean
   bookings?: boolean | Prisma.Service$bookingsArgs<ExtArgs>
+  blockedTimes?: boolean | Prisma.Service$blockedTimesArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["service"]>
 
@@ -562,6 +692,7 @@ export type ServiceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   duration?: boolean
   imageUrl?: boolean
   capacity?: boolean
+  oneBookingPerDay?: boolean
   isActive?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["service"]>
@@ -573,6 +704,7 @@ export type ServiceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   duration?: boolean
   imageUrl?: boolean
   capacity?: boolean
+  oneBookingPerDay?: boolean
   isActive?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["service"]>
@@ -584,13 +716,15 @@ export type ServiceSelectScalar = {
   duration?: boolean
   imageUrl?: boolean
   capacity?: boolean
+  oneBookingPerDay?: boolean
   isActive?: boolean
   createdAt?: boolean
 }
 
-export type ServiceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "duration" | "imageUrl" | "capacity" | "isActive" | "createdAt", ExtArgs["result"]["service"]>
+export type ServiceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "duration" | "imageUrl" | "capacity" | "oneBookingPerDay" | "isActive" | "createdAt", ExtArgs["result"]["service"]>
 export type ServiceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   bookings?: boolean | Prisma.Service$bookingsArgs<ExtArgs>
+  blockedTimes?: boolean | Prisma.Service$blockedTimesArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ServiceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -600,6 +734,7 @@ export type $ServicePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "Service"
   objects: {
     bookings: Prisma.$BookingPayload<ExtArgs>[]
+    blockedTimes: Prisma.$BlockedTimePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -608,6 +743,7 @@ export type $ServicePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     duration: number
     imageUrl: string | null
     capacity: number
+    oneBookingPerDay: boolean
     isActive: boolean
     createdAt: Date
   }, ExtArgs["result"]["service"]>
@@ -1005,6 +1141,7 @@ readonly fields: ServiceFieldRefs;
 export interface Prisma__ServiceClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   bookings<T extends Prisma.Service$bookingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Service$bookingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  blockedTimes<T extends Prisma.Service$blockedTimesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Service$blockedTimesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BlockedTimePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1040,6 +1177,7 @@ export interface ServiceFieldRefs {
   readonly duration: Prisma.FieldRef<"Service", 'Int'>
   readonly imageUrl: Prisma.FieldRef<"Service", 'String'>
   readonly capacity: Prisma.FieldRef<"Service", 'Int'>
+  readonly oneBookingPerDay: Prisma.FieldRef<"Service", 'Boolean'>
   readonly isActive: Prisma.FieldRef<"Service", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Service", 'DateTime'>
 }
@@ -1456,6 +1594,30 @@ export type Service$bookingsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.BookingScalarFieldEnum | Prisma.BookingScalarFieldEnum[]
+}
+
+/**
+ * Service.blockedTimes
+ */
+export type Service$blockedTimesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BlockedTime
+   */
+  select?: Prisma.BlockedTimeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BlockedTime
+   */
+  omit?: Prisma.BlockedTimeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeInclude<ExtArgs> | null
+  where?: Prisma.BlockedTimeWhereInput
+  orderBy?: Prisma.BlockedTimeOrderByWithRelationInput | Prisma.BlockedTimeOrderByWithRelationInput[]
+  cursor?: Prisma.BlockedTimeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BlockedTimeScalarFieldEnum | Prisma.BlockedTimeScalarFieldEnum[]
 }
 
 /**

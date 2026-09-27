@@ -31,7 +31,9 @@ export async function GET(request: NextRequest) {
         },
         {
           status: 429,
-          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
         },
       );
     }
@@ -81,6 +83,7 @@ export async function GET(request: NextRequest) {
         duration: true,
         isActive: true,
         capacity: true,
+        oneBookingPerDay: true,
       },
     });
 
@@ -99,10 +102,6 @@ export async function GET(request: NextRequest) {
     const now = new Date();
 
     const [bookings, blockedTimes] = await Promise.all([
-      // Scoped to this specific service: capacity represents how many
-      // specialists can perform THIS service at once, so a booking for a
-      // different service (a different specialist/station) must never
-      // count against this one's availability.
       prisma.booking.findMany({
         where: {
           serviceId,
@@ -121,10 +120,9 @@ export async function GET(request: NextRequest) {
         },
       }),
 
-      // Blocked times are salon-wide (holidays, closures, etc.) and still
-      // apply regardless of service or capacity.
       prisma.blockedTime.findMany({
         where: {
+          serviceId,
           startsAt: {
             lt: endOfDay,
           },
@@ -140,6 +138,8 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
+    const hasBookingForDay = service.oneBookingPerDay && bookings.length > 0;
+
     const timeSlots: Array<{
       startsAt: Date;
       endsAt: Date;
@@ -153,16 +153,11 @@ export async function GET(request: NextRequest) {
         currentStart.getTime() + service.duration * 60 * 1000,
       );
 
-      // The entire service must finish before or exactly at closing time.
       if (currentEnd > dayClose) {
         break;
       }
 
-      // A slot that has already started (or is in the past) can never be
-      // booked. Without this check, "today" always listed every slot as
-      // available and the customer only discovered it was unbookable after
-      // submitting the booking and receiving a 409 from POST /api/bookings.
-      if (currentStart > now) {
+      if (currentStart > now && !hasBookingForDay) {
         const overlappingBookingsCount = bookings.filter((booking) =>
           intervalsOverlap(
             currentStart,
@@ -204,6 +199,8 @@ export async function GET(request: NextRequest) {
         id: service.id,
         name: service.name,
         duration: service.duration,
+        capacity: service.capacity,
+        oneBookingPerDay: service.oneBookingPerDay,
       },
       timeSlots,
     });

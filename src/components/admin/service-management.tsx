@@ -11,6 +11,7 @@ type Service = {
   duration: number;
   imageUrl: string | null;
   capacity: number;
+  oneBookingPerDay: boolean;
   isActive: boolean;
   createdAt: string;
 };
@@ -20,6 +21,7 @@ type ServiceForm = {
   description: string;
   duration: string;
   capacity: string;
+  oneBookingPerDay: boolean;
 };
 
 const emptyForm: ServiceForm = {
@@ -27,12 +29,14 @@ const emptyForm: ServiceForm = {
   description: "",
   duration: "60",
   capacity: "1",
+  oneBookingPerDay: false,
 };
 
 const MAX_IMAGE_SIZE_MB = 10;
 
 async function uploadServiceImage(serviceId: string, image: File) {
   const formData = new FormData();
+
   formData.append("image", image);
 
   const response = await fetch(`/api/services/${serviceId}/image`, {
@@ -65,22 +69,31 @@ async function removeServiceImage(serviceId: string) {
 
 export function ServiceManagement() {
   const [services, setServices] = useState<Service[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
+
   const [removingImageId, setRemovingImageId] = useState<string | null>(null);
+
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+
   const [error, setError] = useState("");
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState("60");
   const [capacity, setCapacity] = useState("1");
+  const [oneBookingPerDay, setOneBookingPerDay] = useState(false);
+
   const [newImage, setNewImage] = useState<File | null>(null);
+
   const [newImagePreviewUrl, setNewImagePreviewUrl] = useState("");
 
   const [editForm, setEditForm] = useState<ServiceForm>(emptyForm);
+
   const [editImage, setEditImage] = useState<File | null>(null);
+
   const [editImagePreviewUrl, setEditImagePreviewUrl] = useState("");
 
   useEffect(() => {
@@ -89,6 +102,7 @@ export function ServiceManagement() {
     async function fetchServices() {
       try {
         const response = await fetch("/api/services?includeInactive=true");
+
         const data = await response.json();
 
         if (!response.ok || !data.success) {
@@ -111,7 +125,7 @@ export function ServiceManagement() {
       }
     }
 
-    fetchServices();
+    void fetchServices();
 
     return () => {
       cancelled = true;
@@ -126,6 +140,7 @@ export function ServiceManagement() {
     }
 
     setNewImage(file);
+
     setNewImagePreviewUrl(file ? URL.createObjectURL(file) : "");
   }
 
@@ -137,6 +152,7 @@ export function ServiceManagement() {
     }
 
     setEditImage(file);
+
     setEditImagePreviewUrl(file ? URL.createObjectURL(file) : "");
   }
 
@@ -157,6 +173,7 @@ export function ServiceManagement() {
           description: description.trim() || undefined,
           duration: Number(duration),
           capacity: Number(capacity),
+          oneBookingPerDay,
         }),
       });
 
@@ -191,6 +208,7 @@ export function ServiceManagement() {
       setDescription("");
       setDuration("60");
       setCapacity("1");
+      setOneBookingPerDay(false);
 
       if (newImagePreviewUrl) {
         URL.revokeObjectURL(newImagePreviewUrl);
@@ -216,6 +234,7 @@ export function ServiceManagement() {
       description: service.description ?? "",
       duration: String(service.duration),
       capacity: String(service.capacity),
+      oneBookingPerDay: service.oneBookingPerDay,
     });
 
     setEditImage(null);
@@ -235,7 +254,7 @@ export function ServiceManagement() {
     setEditImagePreviewUrl("");
   }
 
-  function updateEditField(field: keyof ServiceForm, value: string) {
+  function updateEditField(field: keyof ServiceForm, value: string | boolean) {
     setEditForm((currentForm) => ({
       ...currentForm,
       [field]: value,
@@ -263,6 +282,7 @@ export function ServiceManagement() {
           description: editForm.description.trim() || null,
           duration: Number(editForm.duration),
           capacity: Number(editForm.capacity),
+          oneBookingPerDay: editForm.oneBookingPerDay,
         }),
       });
 
@@ -376,7 +396,6 @@ export function ServiceManagement() {
 
   return (
     <section className="mt-10 grid gap-8 lg:grid-cols-[1fr_380px]">
-      {/* Services list */}
       <div className="rounded-[2rem] border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6 shadow-[0_20px_60px_rgba(36,20,23,0.06)]">
         <div className="mb-6">
           <h2 className="text-xl font-bold text-[var(--text-primary)]">
@@ -405,7 +424,6 @@ export function ServiceManagement() {
               >
                 {editingServiceId === service.id ? (
                   <form onSubmit={handleUpdateService} className="space-y-4">
-                    {/* Edit image */}
                     <div>
                       <label className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
                         تصویر خدمت
@@ -430,6 +448,7 @@ export function ServiceManagement() {
 
                         <label className="flex-1 cursor-pointer rounded-xl border border-dashed border-[var(--border-beige)] px-3 py-2.5 text-center text-xs font-medium text-[var(--brand-crimson)] transition-colors hover:bg-[var(--bg-card)]">
                           {editImage ? editImage.name : "انتخاب تصویر جدید"}
+
                           <input
                             type="file"
                             accept="image/jpeg,image/png,image/webp"
@@ -440,7 +459,6 @@ export function ServiceManagement() {
                       </div>
                     </div>
 
-                    {/* Edit name */}
                     <div>
                       <label
                         htmlFor={`edit-name-${service.id}`}
@@ -462,7 +480,6 @@ export function ServiceManagement() {
                       />
                     </div>
 
-                    {/* Edit description */}
                     <div>
                       <label
                         htmlFor={`edit-description-${service.id}`}
@@ -483,7 +500,6 @@ export function ServiceManagement() {
                       />
                     </div>
 
-                    {/* Edit duration */}
                     <div>
                       <label
                         htmlFor={`edit-duration-${service.id}`}
@@ -506,7 +522,6 @@ export function ServiceManagement() {
                       />
                     </div>
 
-                    {/* Edit capacity */}
                     <div>
                       <label
                         htmlFor={`edit-capacity-${service.id}`}
@@ -530,12 +545,35 @@ export function ServiceManagement() {
 
                       <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
                         تعداد مشتریانی که می‌توانند هم‌زمان این خدمت را رزرو
-                        کنند (مثلاً اگر ۲ متخصص این خدمت را انجام می‌دهند، ۲
-                        وارد کنید).
+                        کنند.
                       </p>
                     </div>
 
-                    {/* Edit actions */}
+                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
+                      <input
+                        type="checkbox"
+                        checked={editForm.oneBookingPerDay}
+                        onChange={(event) =>
+                          updateEditField(
+                            "oneBookingPerDay",
+                            event.target.checked,
+                          )
+                        }
+                        className="mt-1 h-4 w-4 accent-[var(--brand-crimson)]"
+                      />
+
+                      <span>
+                        <span className="block text-sm font-semibold text-[var(--text-primary)]">
+                          فقط یک نوبت در روز
+                        </span>
+
+                        <span className="mt-1 block text-xs leading-5 text-[var(--text-secondary)]">
+                          برای این خدمت در هر روز فقط یک نوبت قابل رزرو خواهد
+                          بود.
+                        </span>
+                      </span>
+                    </label>
+
                     <div className="flex gap-3">
                       <button
                         type="submit"
@@ -601,10 +639,24 @@ export function ServiceManagement() {
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-secondary)]">
                         <span>{service.duration} دقیقه</span>
+
                         <span className="text-[var(--border-beige)]">•</span>
+
                         <span>ظرفیت همزمان: {service.capacity} نفر</span>
+
+                        {service.oneBookingPerDay && (
+                          <>
+                            <span className="text-[var(--border-beige)]">
+                              •
+                            </span>
+
+                            <span className="font-medium text-[var(--brand-crimson)]">
+                              یک نوبت در روز
+                            </span>
+                          </>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -637,14 +689,12 @@ export function ServiceManagement() {
         )}
       </div>
 
-      {/* Create service */}
       <div className="rounded-[2rem] border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6 shadow-[0_20px_60px_rgba(36,20,23,0.06)]">
         <h2 className="text-xl font-bold text-[var(--text-primary)]">
           افزودن خدمت
         </h2>
 
         <form onSubmit={handleCreateService} className="mt-6 space-y-4">
-          {/* Image */}
           <div>
             <label className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
               تصویر خدمت (اختیاری)
@@ -680,7 +730,6 @@ export function ServiceManagement() {
             </label>
           </div>
 
-          {/* Name */}
           <div>
             <label
               htmlFor="service-name"
@@ -701,7 +750,6 @@ export function ServiceManagement() {
             />
           </div>
 
-          {/* Description */}
           <div>
             <label
               htmlFor="service-description"
@@ -721,7 +769,6 @@ export function ServiceManagement() {
             />
           </div>
 
-          {/* Duration */}
           <div>
             <label
               htmlFor="service-duration"
@@ -743,7 +790,6 @@ export function ServiceManagement() {
             />
           </div>
 
-          {/* Capacity */}
           <div>
             <label
               htmlFor="service-capacity"
@@ -765,19 +811,35 @@ export function ServiceManagement() {
             />
 
             <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
-              تعداد مشتریانی که می‌توانند هم‌زمان این خدمت را رزرو کنند (مثلاً
-              اگر ۲ متخصص این خدمت را انجام می‌دهند، ۲ وارد کنید).
+              تعداد مشتریانی که می‌توانند هم‌زمان این خدمت را رزرو کنند.
             </p>
           </div>
 
-          {/* Error */}
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] p-4">
+            <input
+              type="checkbox"
+              checked={oneBookingPerDay}
+              onChange={(event) => setOneBookingPerDay(event.target.checked)}
+              className="mt-1 h-4 w-4 accent-[var(--brand-crimson)]"
+            />
+
+            <span>
+              <span className="block text-sm font-semibold text-[var(--text-primary)]">
+                فقط یک نوبت در روز
+              </span>
+
+              <span className="mt-1 block text-xs leading-5 text-[var(--text-secondary)]">
+                برای این خدمت در هر روز فقط یک نوبت قابل رزرو خواهد بود.
+              </span>
+            </span>
+          </label>
+
           {error && (
             <p className="text-sm text-red-600" role="alert">
               {error}
             </p>
           )}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={creating}

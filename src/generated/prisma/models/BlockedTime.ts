@@ -26,6 +26,7 @@ export type AggregateBlockedTime = {
 
 export type BlockedTimeMinAggregateOutputType = {
   id: string | null
+  serviceId: string | null
   startsAt: Date | null
   endsAt: Date | null
   reason: string | null
@@ -34,6 +35,7 @@ export type BlockedTimeMinAggregateOutputType = {
 
 export type BlockedTimeMaxAggregateOutputType = {
   id: string | null
+  serviceId: string | null
   startsAt: Date | null
   endsAt: Date | null
   reason: string | null
@@ -42,6 +44,7 @@ export type BlockedTimeMaxAggregateOutputType = {
 
 export type BlockedTimeCountAggregateOutputType = {
   id: number
+  serviceId: number
   startsAt: number
   endsAt: number
   reason: number
@@ -52,6 +55,7 @@ export type BlockedTimeCountAggregateOutputType = {
 
 export type BlockedTimeMinAggregateInputType = {
   id?: true
+  serviceId?: true
   startsAt?: true
   endsAt?: true
   reason?: true
@@ -60,6 +64,7 @@ export type BlockedTimeMinAggregateInputType = {
 
 export type BlockedTimeMaxAggregateInputType = {
   id?: true
+  serviceId?: true
   startsAt?: true
   endsAt?: true
   reason?: true
@@ -68,6 +73,7 @@ export type BlockedTimeMaxAggregateInputType = {
 
 export type BlockedTimeCountAggregateInputType = {
   id?: true
+  serviceId?: true
   startsAt?: true
   endsAt?: true
   reason?: true
@@ -149,6 +155,7 @@ export type BlockedTimeGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 
 export type BlockedTimeGroupByOutputType = {
   id: string
+  serviceId: string
   startsAt: Date
   endsAt: Date
   reason: string | null
@@ -178,18 +185,22 @@ export type BlockedTimeWhereInput = {
   OR?: Prisma.BlockedTimeWhereInput[]
   NOT?: Prisma.BlockedTimeWhereInput | Prisma.BlockedTimeWhereInput[]
   id?: Prisma.StringFilter<"BlockedTime"> | string
+  serviceId?: Prisma.StringFilter<"BlockedTime"> | string
   startsAt?: Prisma.DateTimeFilter<"BlockedTime"> | Date | string
   endsAt?: Prisma.DateTimeFilter<"BlockedTime"> | Date | string
   reason?: Prisma.StringNullableFilter<"BlockedTime"> | string | null
   createdAt?: Prisma.DateTimeFilter<"BlockedTime"> | Date | string
+  service?: Prisma.XOR<Prisma.ServiceScalarRelationFilter, Prisma.ServiceWhereInput>
 }
 
 export type BlockedTimeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  serviceId?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  service?: Prisma.ServiceOrderByWithRelationInput
 }
 
 export type BlockedTimeWhereUniqueInput = Prisma.AtLeast<{
@@ -197,14 +208,17 @@ export type BlockedTimeWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.BlockedTimeWhereInput | Prisma.BlockedTimeWhereInput[]
   OR?: Prisma.BlockedTimeWhereInput[]
   NOT?: Prisma.BlockedTimeWhereInput | Prisma.BlockedTimeWhereInput[]
+  serviceId?: Prisma.StringFilter<"BlockedTime"> | string
   startsAt?: Prisma.DateTimeFilter<"BlockedTime"> | Date | string
   endsAt?: Prisma.DateTimeFilter<"BlockedTime"> | Date | string
   reason?: Prisma.StringNullableFilter<"BlockedTime"> | string | null
   createdAt?: Prisma.DateTimeFilter<"BlockedTime"> | Date | string
+  service?: Prisma.XOR<Prisma.ServiceScalarRelationFilter, Prisma.ServiceWhereInput>
 }, "id">
 
 export type BlockedTimeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  serviceId?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -219,6 +233,7 @@ export type BlockedTimeScalarWhereWithAggregatesInput = {
   OR?: Prisma.BlockedTimeScalarWhereWithAggregatesInput[]
   NOT?: Prisma.BlockedTimeScalarWhereWithAggregatesInput | Prisma.BlockedTimeScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"BlockedTime"> | string
+  serviceId?: Prisma.StringWithAggregatesFilter<"BlockedTime"> | string
   startsAt?: Prisma.DateTimeWithAggregatesFilter<"BlockedTime"> | Date | string
   endsAt?: Prisma.DateTimeWithAggregatesFilter<"BlockedTime"> | Date | string
   reason?: Prisma.StringNullableWithAggregatesFilter<"BlockedTime"> | string | null
@@ -231,10 +246,12 @@ export type BlockedTimeCreateInput = {
   endsAt: Date | string
   reason?: string | null
   createdAt?: Date | string
+  service: Prisma.ServiceCreateNestedOneWithoutBlockedTimesInput
 }
 
 export type BlockedTimeUncheckedCreateInput = {
   id?: string
+  serviceId: string
   startsAt: Date | string
   endsAt: Date | string
   reason?: string | null
@@ -247,10 +264,12 @@ export type BlockedTimeUpdateInput = {
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  service?: Prisma.ServiceUpdateOneRequiredWithoutBlockedTimesNestedInput
 }
 
 export type BlockedTimeUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceId?: Prisma.StringFieldUpdateOperationsInput | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -259,6 +278,7 @@ export type BlockedTimeUncheckedUpdateInput = {
 
 export type BlockedTimeCreateManyInput = {
   id?: string
+  serviceId: string
   startsAt: Date | string
   endsAt: Date | string
   reason?: string | null
@@ -275,14 +295,26 @@ export type BlockedTimeUpdateManyMutationInput = {
 
 export type BlockedTimeUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceId?: Prisma.StringFieldUpdateOperationsInput | string
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type BlockedTimeListRelationFilter = {
+  every?: Prisma.BlockedTimeWhereInput
+  some?: Prisma.BlockedTimeWhereInput
+  none?: Prisma.BlockedTimeWhereInput
+}
+
+export type BlockedTimeOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
 export type BlockedTimeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  serviceId?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   reason?: Prisma.SortOrder
@@ -291,6 +323,7 @@ export type BlockedTimeCountOrderByAggregateInput = {
 
 export type BlockedTimeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  serviceId?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   reason?: Prisma.SortOrder
@@ -299,53 +332,201 @@ export type BlockedTimeMaxOrderByAggregateInput = {
 
 export type BlockedTimeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  serviceId?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
+export type BlockedTimeCreateNestedManyWithoutServiceInput = {
+  create?: Prisma.XOR<Prisma.BlockedTimeCreateWithoutServiceInput, Prisma.BlockedTimeUncheckedCreateWithoutServiceInput> | Prisma.BlockedTimeCreateWithoutServiceInput[] | Prisma.BlockedTimeUncheckedCreateWithoutServiceInput[]
+  connectOrCreate?: Prisma.BlockedTimeCreateOrConnectWithoutServiceInput | Prisma.BlockedTimeCreateOrConnectWithoutServiceInput[]
+  createMany?: Prisma.BlockedTimeCreateManyServiceInputEnvelope
+  connect?: Prisma.BlockedTimeWhereUniqueInput | Prisma.BlockedTimeWhereUniqueInput[]
+}
+
+export type BlockedTimeUncheckedCreateNestedManyWithoutServiceInput = {
+  create?: Prisma.XOR<Prisma.BlockedTimeCreateWithoutServiceInput, Prisma.BlockedTimeUncheckedCreateWithoutServiceInput> | Prisma.BlockedTimeCreateWithoutServiceInput[] | Prisma.BlockedTimeUncheckedCreateWithoutServiceInput[]
+  connectOrCreate?: Prisma.BlockedTimeCreateOrConnectWithoutServiceInput | Prisma.BlockedTimeCreateOrConnectWithoutServiceInput[]
+  createMany?: Prisma.BlockedTimeCreateManyServiceInputEnvelope
+  connect?: Prisma.BlockedTimeWhereUniqueInput | Prisma.BlockedTimeWhereUniqueInput[]
+}
+
+export type BlockedTimeUpdateManyWithoutServiceNestedInput = {
+  create?: Prisma.XOR<Prisma.BlockedTimeCreateWithoutServiceInput, Prisma.BlockedTimeUncheckedCreateWithoutServiceInput> | Prisma.BlockedTimeCreateWithoutServiceInput[] | Prisma.BlockedTimeUncheckedCreateWithoutServiceInput[]
+  connectOrCreate?: Prisma.BlockedTimeCreateOrConnectWithoutServiceInput | Prisma.BlockedTimeCreateOrConnectWithoutServiceInput[]
+  upsert?: Prisma.BlockedTimeUpsertWithWhereUniqueWithoutServiceInput | Prisma.BlockedTimeUpsertWithWhereUniqueWithoutServiceInput[]
+  createMany?: Prisma.BlockedTimeCreateManyServiceInputEnvelope
+  set?: Prisma.BlockedTimeWhereUniqueInput | Prisma.BlockedTimeWhereUniqueInput[]
+  disconnect?: Prisma.BlockedTimeWhereUniqueInput | Prisma.BlockedTimeWhereUniqueInput[]
+  delete?: Prisma.BlockedTimeWhereUniqueInput | Prisma.BlockedTimeWhereUniqueInput[]
+  connect?: Prisma.BlockedTimeWhereUniqueInput | Prisma.BlockedTimeWhereUniqueInput[]
+  update?: Prisma.BlockedTimeUpdateWithWhereUniqueWithoutServiceInput | Prisma.BlockedTimeUpdateWithWhereUniqueWithoutServiceInput[]
+  updateMany?: Prisma.BlockedTimeUpdateManyWithWhereWithoutServiceInput | Prisma.BlockedTimeUpdateManyWithWhereWithoutServiceInput[]
+  deleteMany?: Prisma.BlockedTimeScalarWhereInput | Prisma.BlockedTimeScalarWhereInput[]
+}
+
+export type BlockedTimeUncheckedUpdateManyWithoutServiceNestedInput = {
+  create?: Prisma.XOR<Prisma.BlockedTimeCreateWithoutServiceInput, Prisma.BlockedTimeUncheckedCreateWithoutServiceInput> | Prisma.BlockedTimeCreateWithoutServiceInput[] | Prisma.BlockedTimeUncheckedCreateWithoutServiceInput[]
+  connectOrCreate?: Prisma.BlockedTimeCreateOrConnectWithoutServiceInput | Prisma.BlockedTimeCreateOrConnectWithoutServiceInput[]
+  upsert?: Prisma.BlockedTimeUpsertWithWhereUniqueWithoutServiceInput | Prisma.BlockedTimeUpsertWithWhereUniqueWithoutServiceInput[]
+  createMany?: Prisma.BlockedTimeCreateManyServiceInputEnvelope
+  set?: Prisma.BlockedTimeWhereUniqueInput | Prisma.BlockedTimeWhereUniqueInput[]
+  disconnect?: Prisma.BlockedTimeWhereUniqueInput | Prisma.BlockedTimeWhereUniqueInput[]
+  delete?: Prisma.BlockedTimeWhereUniqueInput | Prisma.BlockedTimeWhereUniqueInput[]
+  connect?: Prisma.BlockedTimeWhereUniqueInput | Prisma.BlockedTimeWhereUniqueInput[]
+  update?: Prisma.BlockedTimeUpdateWithWhereUniqueWithoutServiceInput | Prisma.BlockedTimeUpdateWithWhereUniqueWithoutServiceInput[]
+  updateMany?: Prisma.BlockedTimeUpdateManyWithWhereWithoutServiceInput | Prisma.BlockedTimeUpdateManyWithWhereWithoutServiceInput[]
+  deleteMany?: Prisma.BlockedTimeScalarWhereInput | Prisma.BlockedTimeScalarWhereInput[]
+}
+
+export type BlockedTimeCreateWithoutServiceInput = {
+  id?: string
+  startsAt: Date | string
+  endsAt: Date | string
+  reason?: string | null
+  createdAt?: Date | string
+}
+
+export type BlockedTimeUncheckedCreateWithoutServiceInput = {
+  id?: string
+  startsAt: Date | string
+  endsAt: Date | string
+  reason?: string | null
+  createdAt?: Date | string
+}
+
+export type BlockedTimeCreateOrConnectWithoutServiceInput = {
+  where: Prisma.BlockedTimeWhereUniqueInput
+  create: Prisma.XOR<Prisma.BlockedTimeCreateWithoutServiceInput, Prisma.BlockedTimeUncheckedCreateWithoutServiceInput>
+}
+
+export type BlockedTimeCreateManyServiceInputEnvelope = {
+  data: Prisma.BlockedTimeCreateManyServiceInput | Prisma.BlockedTimeCreateManyServiceInput[]
+  skipDuplicates?: boolean
+}
+
+export type BlockedTimeUpsertWithWhereUniqueWithoutServiceInput = {
+  where: Prisma.BlockedTimeWhereUniqueInput
+  update: Prisma.XOR<Prisma.BlockedTimeUpdateWithoutServiceInput, Prisma.BlockedTimeUncheckedUpdateWithoutServiceInput>
+  create: Prisma.XOR<Prisma.BlockedTimeCreateWithoutServiceInput, Prisma.BlockedTimeUncheckedCreateWithoutServiceInput>
+}
+
+export type BlockedTimeUpdateWithWhereUniqueWithoutServiceInput = {
+  where: Prisma.BlockedTimeWhereUniqueInput
+  data: Prisma.XOR<Prisma.BlockedTimeUpdateWithoutServiceInput, Prisma.BlockedTimeUncheckedUpdateWithoutServiceInput>
+}
+
+export type BlockedTimeUpdateManyWithWhereWithoutServiceInput = {
+  where: Prisma.BlockedTimeScalarWhereInput
+  data: Prisma.XOR<Prisma.BlockedTimeUpdateManyMutationInput, Prisma.BlockedTimeUncheckedUpdateManyWithoutServiceInput>
+}
+
+export type BlockedTimeScalarWhereInput = {
+  AND?: Prisma.BlockedTimeScalarWhereInput | Prisma.BlockedTimeScalarWhereInput[]
+  OR?: Prisma.BlockedTimeScalarWhereInput[]
+  NOT?: Prisma.BlockedTimeScalarWhereInput | Prisma.BlockedTimeScalarWhereInput[]
+  id?: Prisma.StringFilter<"BlockedTime"> | string
+  serviceId?: Prisma.StringFilter<"BlockedTime"> | string
+  startsAt?: Prisma.DateTimeFilter<"BlockedTime"> | Date | string
+  endsAt?: Prisma.DateTimeFilter<"BlockedTime"> | Date | string
+  reason?: Prisma.StringNullableFilter<"BlockedTime"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"BlockedTime"> | Date | string
+}
+
+export type BlockedTimeCreateManyServiceInput = {
+  id?: string
+  startsAt: Date | string
+  endsAt: Date | string
+  reason?: string | null
+  createdAt?: Date | string
+}
+
+export type BlockedTimeUpdateWithoutServiceInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type BlockedTimeUncheckedUpdateWithoutServiceInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type BlockedTimeUncheckedUpdateManyWithoutServiceInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 
 
 export type BlockedTimeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  serviceId?: boolean
   startsAt?: boolean
   endsAt?: boolean
   reason?: boolean
   createdAt?: boolean
+  service?: boolean | Prisma.ServiceDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["blockedTime"]>
 
 export type BlockedTimeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  serviceId?: boolean
   startsAt?: boolean
   endsAt?: boolean
   reason?: boolean
   createdAt?: boolean
+  service?: boolean | Prisma.ServiceDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["blockedTime"]>
 
 export type BlockedTimeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  serviceId?: boolean
   startsAt?: boolean
   endsAt?: boolean
   reason?: boolean
   createdAt?: boolean
+  service?: boolean | Prisma.ServiceDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["blockedTime"]>
 
 export type BlockedTimeSelectScalar = {
   id?: boolean
+  serviceId?: boolean
   startsAt?: boolean
   endsAt?: boolean
   reason?: boolean
   createdAt?: boolean
 }
 
-export type BlockedTimeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "startsAt" | "endsAt" | "reason" | "createdAt", ExtArgs["result"]["blockedTime"]>
+export type BlockedTimeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "serviceId" | "startsAt" | "endsAt" | "reason" | "createdAt", ExtArgs["result"]["blockedTime"]>
+export type BlockedTimeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  service?: boolean | Prisma.ServiceDefaultArgs<ExtArgs>
+}
+export type BlockedTimeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  service?: boolean | Prisma.ServiceDefaultArgs<ExtArgs>
+}
+export type BlockedTimeIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  service?: boolean | Prisma.ServiceDefaultArgs<ExtArgs>
+}
 
 export type $BlockedTimePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "BlockedTime"
-  objects: {}
+  objects: {
+    service: Prisma.$ServicePayload<ExtArgs>
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    serviceId: string
     startsAt: Date
     endsAt: Date
     reason: string | null
@@ -744,6 +925,7 @@ readonly fields: BlockedTimeFieldRefs;
  */
 export interface Prisma__BlockedTimeClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  service<T extends Prisma.ServiceDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceDefaultArgs<ExtArgs>>): Prisma.Prisma__ServiceClient<runtime.Types.Result.GetResult<Prisma.$ServicePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -774,6 +956,7 @@ export interface Prisma__BlockedTimeClient<T, Null = never, ExtArgs extends runt
  */
 export interface BlockedTimeFieldRefs {
   readonly id: Prisma.FieldRef<"BlockedTime", 'String'>
+  readonly serviceId: Prisma.FieldRef<"BlockedTime", 'String'>
   readonly startsAt: Prisma.FieldRef<"BlockedTime", 'DateTime'>
   readonly endsAt: Prisma.FieldRef<"BlockedTime", 'DateTime'>
   readonly reason: Prisma.FieldRef<"BlockedTime", 'String'>
@@ -795,6 +978,10 @@ export type BlockedTimeFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.BlockedTimeOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeInclude<ExtArgs> | null
+  /**
    * Filter, which BlockedTime to fetch.
    */
   where: Prisma.BlockedTimeWhereUniqueInput
@@ -813,6 +1000,10 @@ export type BlockedTimeFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exten
    */
   omit?: Prisma.BlockedTimeOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeInclude<ExtArgs> | null
+  /**
    * Filter, which BlockedTime to fetch.
    */
   where: Prisma.BlockedTimeWhereUniqueInput
@@ -830,6 +1021,10 @@ export type BlockedTimeFindFirstArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the BlockedTime
    */
   omit?: Prisma.BlockedTimeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeInclude<ExtArgs> | null
   /**
    * Filter, which BlockedTime to fetch.
    */
@@ -879,6 +1074,10 @@ export type BlockedTimeFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extens
    */
   omit?: Prisma.BlockedTimeOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeInclude<ExtArgs> | null
+  /**
    * Filter, which BlockedTime to fetch.
    */
   where?: Prisma.BlockedTimeWhereInput
@@ -926,6 +1125,10 @@ export type BlockedTimeFindManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the BlockedTime
    */
   omit?: Prisma.BlockedTimeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeInclude<ExtArgs> | null
   /**
    * Filter, which BlockedTimes to fetch.
    */
@@ -975,6 +1178,10 @@ export type BlockedTimeCreateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.BlockedTimeOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeInclude<ExtArgs> | null
+  /**
    * The data needed to create a BlockedTime.
    */
   data: Prisma.XOR<Prisma.BlockedTimeCreateInput, Prisma.BlockedTimeUncheckedCreateInput>
@@ -1008,6 +1215,10 @@ export type BlockedTimeCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    */
   data: Prisma.BlockedTimeCreateManyInput | Prisma.BlockedTimeCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1022,6 +1233,10 @@ export type BlockedTimeUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the BlockedTime
    */
   omit?: Prisma.BlockedTimeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeInclude<ExtArgs> | null
   /**
    * The data needed to update a BlockedTime.
    */
@@ -1074,6 +1289,10 @@ export type BlockedTimeUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    * Limit how many BlockedTimes to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1088,6 +1307,10 @@ export type BlockedTimeUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the BlockedTime
    */
   omit?: Prisma.BlockedTimeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeInclude<ExtArgs> | null
   /**
    * The filter to search for the BlockedTime to update in case it exists.
    */
@@ -1114,6 +1337,10 @@ export type BlockedTimeDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the BlockedTime
    */
   omit?: Prisma.BlockedTimeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeInclude<ExtArgs> | null
   /**
    * Filter which BlockedTime to delete.
    */
@@ -1146,4 +1373,8 @@ export type BlockedTimeDefaultArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Omit specific fields from the BlockedTime
    */
   omit?: Prisma.BlockedTimeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedTimeInclude<ExtArgs> | null
 }

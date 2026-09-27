@@ -48,28 +48,34 @@ model OtpRequest {
 }
 
 model Service {
-  id          String    @id @default(cuid())
-  name        String
-  description String?
-  duration    Int
-  imageUrl    String?
-  capacity    Int       @default(1)
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  bookings    Booking[]
+  id               String        @id @default(cuid())
+  name             String
+  description      String?
+  duration         Int
+  imageUrl         String?
+  capacity         Int           @default(1)
+  oneBookingPerDay Boolean       @default(false)
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  bookings         Booking[]
+  blockedTimes     BlockedTime[]
 
   @@map("services")
 }
 
 model BlockedTime {
   id        String   @id @default(cuid())
+  serviceId String
   startsAt  DateTime
   endsAt    DateTime
   reason    String?
   createdAt DateTime @default(now())
 
-  @@index([startsAt])
-  @@index([endsAt])
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@index([serviceId, startsAt])
+  @@index([serviceId, endsAt])
   @@map("blocked_times")
 }
 

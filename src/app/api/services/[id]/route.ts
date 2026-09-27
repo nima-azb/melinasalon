@@ -10,9 +10,15 @@ import {
 
 const updateServiceSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
+
   description: z.string().trim().max(1000).nullable().optional(),
+
   duration: z.number().int().positive().max(480).optional(),
+
   capacity: z.number().int().min(1).max(20).optional(),
+
+  oneBookingPerDay: z.boolean().optional(),
+
   isActive: z.boolean().optional(),
 });
 
@@ -76,6 +82,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
 
     const body: unknown = await request.json();
+
     const result = updateServiceSchema.safeParse(body);
 
     if (!result.success) {
@@ -118,21 +125,31 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
               name: result.data.name,
             }
           : {}),
+
         ...(result.data.description !== undefined
           ? {
               description: result.data.description || null,
             }
           : {}),
+
         ...(result.data.duration !== undefined
           ? {
               duration: result.data.duration,
             }
           : {}),
+
         ...(result.data.capacity !== undefined
           ? {
               capacity: result.data.capacity,
             }
           : {}),
+
+        ...(result.data.oneBookingPerDay !== undefined
+          ? {
+              oneBookingPerDay: result.data.oneBookingPerDay,
+            }
+          : {}),
+
         ...(result.data.isActive !== undefined
           ? {
               isActive: result.data.isActive,
