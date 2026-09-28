@@ -9,3 +9,12 @@ export const OTP_MAX_ATTEMPTS = 5;
 export const SESSION_COOKIE_NAME = "melina_session";
 
 export const SESSION_EXPIRES_DAYS = 30;
+
+/**
+ * Admin password.
+ *
+ * IMPORTANT:
+ * Keep this value server-side.
+ * Do not import this constant into a client component.
+ */
+export const ADMIN_PASSWORD = "melina";

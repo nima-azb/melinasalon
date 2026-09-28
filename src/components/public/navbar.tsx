@@ -9,6 +9,9 @@ import { MobileNav } from "./mobile-nav";
 export async function Navbar() {
   const user = await getCurrentUser();
 
+  const isAdmin = user?.role === "ADMIN";
+  const profileHref = isAdmin ? "/admin" : "/dashboard";
+
   const fullName = user?.fullName?.trim() || "کاربر";
   const userInitial = fullName.charAt(0);
 
@@ -20,7 +23,7 @@ export async function Navbar() {
           {/* Right side */}
           <div className="flex items-center gap-6">
             <span className="hidden items-center gap-2 sm:inline-flex">
-              <span className="text-[var(--accent-gold)]">◷</span>
+              <span className="text-[var(--accent-gold)]">•</span>
               ساعات کاری: همه روزه ۸:۰۰ تا ۲۱:۰۰
             </span>
 
@@ -36,13 +39,13 @@ export async function Navbar() {
               <span className="text-[var(--accent-gold)]">☎</span>
               شماره تماس:
               <a href="tel:+982332335960" className="text-sm" dir="ltr">
-                ۰۹۳۵ ۴۷۲ ۸۴۴۸
+                ۰۹۱۳ ۴۷۲ ۸۴۴۸
               </a>
             </span>
 
             {user ? (
               <Link
-                href="/dashboard"
+                href={profileHref}
                 className="rounded-full border border-[var(--accent-gold)]/40 bg-white/10 px-3 py-1 transition-colors hover:bg-white/20"
               >
                 خوش آمدید، {fullName.split(/\s+/)[0]}
@@ -65,13 +68,13 @@ export async function Navbar() {
           {/* Brand */}
           <Link
             href="/"
-            aria-label="صفحه اصلی سالن زیبایی ملین بیوتی"
+            aria-label="صفحه اصلی سالن زیبایی ملینا بیوتی"
             className="flex shrink-0 items-center gap-0"
           >
             <div className="relative h-23 w-23 overflow-hidden rounded-xl">
               <Image
                 src="/images/logo1.png"
-                alt="لوگوی سالن زیبایی ملین بیوتی"
+                alt="لوگوی سالن زیبایی ملینا بیوتی"
                 fill
                 priority
                 className="object-contain"
@@ -80,7 +83,7 @@ export async function Navbar() {
 
             <div className="hidden sm:block">
               <div className="text-xl font-bold text-[var(--brand-crimson-dark)]">
-                سالن زیبایی ملین بیوتی
+                سالن زیبایی ملینا بیوتی
               </div>
 
               <div className="mt-0.5 text-xs tracking-[0.18em] text-[var(--brand-crimson)]">
@@ -128,11 +131,15 @@ export async function Navbar() {
 
           {/* Actions */}
           <div className="flex shrink-0 items-center gap-3">
-            {/* User */}
+            {/* User / Admin profile */}
             <Link
-              href={user ? "/dashboard" : "/login"}
+              href={user ? profileHref : "/login"}
               aria-label={
-                user ? `حساب کاربری ${fullName}` : "ورود به حساب کاربری"
+                user
+                  ? isAdmin
+                    ? `پنل مدیریت ${fullName}`
+                    : `حساب کاربری ${fullName}`
+                  : "ورود به حساب کاربری"
               }
               className="group hidden h-12 max-w-52 items-center gap-2 rounded-xl border border-[var(--border-beige)] bg-white px-4 text-sm font-medium text-[var(--text-primary)] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-crimson)] hover:text-[var(--brand-crimson)] hover:shadow-md md:flex"
             >
@@ -164,7 +171,7 @@ export async function Navbar() {
               رزرو نوبت
             </Link>
 
-            <MobileNav isLoggedIn={Boolean(user)} />
+            <MobileNav isLoggedIn={Boolean(user)} isAdmin={isAdmin} />
           </div>
         </div>
       </div>

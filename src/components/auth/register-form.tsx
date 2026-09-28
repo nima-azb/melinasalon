@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { JalaliDatePicker } from "../ui/jalali-date-picker";
 
 type Step = "details" | "otp";
 
@@ -252,19 +253,13 @@ export function RegisterForm() {
               <div className="relative">
                 <CalendarDays
                   size={18}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] z-10"
                 />
 
-                <input
-                  id="birthDate"
-                  name="birthDate"
-                  type="date"
-                  autoComplete="bday"
+                <JalaliDatePicker
                   value={birthDate}
-                  onChange={(event) => setBirthDate(event.target.value)}
-                  max={new Date().toISOString().split("T")[0]}
-                  disabled={loading}
-                  dir="ltr"
+                  onChange={(date) => setBirthDate(date)}
+                  placeholder="تاریخ تولد خود را انتخاب کنید"
                   className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] py-3 pr-10 pl-4 text-sm text-[var(--text-primary)] outline-none transition-all focus:border-[var(--brand-crimson)] focus:ring-3 focus:ring-[var(--brand-crimson)]/10 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>

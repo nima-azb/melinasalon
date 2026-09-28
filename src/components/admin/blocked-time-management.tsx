@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { JalaliDatePicker } from "../ui/jalali-date-picker";
 
 type Service = {
   id: string;
@@ -374,13 +375,10 @@ export function BlockedTimeManagement() {
               تاریخ
             </label>
 
-            <input
-              id="blocked-date"
-              type="date"
+            <JalaliDatePicker
               value={form.date}
-              onChange={(event) => updateForm("date", event.target.value)}
-              disabled={creating}
-              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-crimson)]"
+              onChange={(date) => updateForm("date", date)}
+              placeholder="تاریخ را انتخاب کنید"
             />
           </div>
 

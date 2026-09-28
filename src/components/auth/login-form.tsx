@@ -24,11 +24,31 @@ export function LoginForm() {
   const [error, setError] = useState("");
 
   async function sendOtp() {
+    const response = await fetch("/api/auth/send-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        phone,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "خطا در ارسال کد تأیید");
+    }
+
+    setStep("otp");
+  }
+
+  async function checkPhone() {
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("/api/auth/send-otp", {
+      const response = await fetch("/api/auth/check-phone", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,12 +61,22 @@ export function LoginForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "خطا در ارسال کد");
+        throw new Error(data.message || "خطایی هنگام بررسی شماره تلفن رخ داد.");
       }
 
-      setStep("otp");
+      if (data.isAdmin) {
+        router.push(`/admin/login?phone=${encodeURIComponent(phone)}`);
+
+        return;
+      }
+
+      await sendOtp();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطایی رخ داد");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "خطایی هنگام بررسی شماره تلفن رخ داد.",
+      );
     } finally {
       setLoading(false);
     }
@@ -71,13 +101,13 @@ export function LoginForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "کد اشتباه است");
+        throw new Error(data.message || "کد تأیید اشتباه است.");
       }
 
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطایی رخ داد");
+      setError(err instanceof Error ? err.message : "خطایی هنگام ورود رخ داد.");
     } finally {
       setLoading(false);
     }
@@ -91,10 +121,11 @@ export function LoginForm() {
     }
 
     if (step === "phone") {
-      void sendOtp();
-    } else {
-      void verifyOtp();
+      void checkPhone();
+      return;
     }
+
+    void verifyOtp();
   }
 
   function changePhone() {
@@ -117,7 +148,7 @@ export function LoginForm() {
           </div>
 
           <span className="text-2xl font-bold tracking-tight text-[var(--brand-crimson)]">
-            ملین بیوتی
+            ملینا بیوتی
           </span>
 
           <span className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
@@ -128,7 +159,6 @@ export function LoginForm() {
 
       {/* Card */}
       <div className="overflow-hidden rounded-[2rem] border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-[0_25px_80px_rgba(36,20,23,0.10)]">
-        {/* Top accent */}
         <div className="h-1 w-full bg-[var(--brand-crimson)]" />
 
         <div className="p-6 sm:p-8">
@@ -143,25 +173,19 @@ export function LoginForm() {
             </div>
 
             <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-[26px]">
-              {step === "phone" ? "خوش آمدید" : "تایید شماره موبایل"}
+              {step === "phone" ? "خوش آمدید" : "تأیید شماره موبایل"}
             </h1>
 
             <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[var(--text-secondary)]">
               {step === "phone"
-                ? "برای ورود به حساب کاربری، شماره موبایل خود را وارد کنید."
-                : `کد تایید ارسال‌شده به ${phone} را وارد کنید.`}
+                ? "شماره موبایل خود را وارد کنید تا وارد حساب کاربری خود شوید."
+                : `کد تأیید ارسال‌شده به ${phone} را وارد کنید.`}
             </p>
           </div>
 
           {/* Progress */}
           <div className="mt-7 flex items-center justify-center gap-2">
-            <div
-              className={`h-1.5 w-14 rounded-full transition-colors ${
-                step === "phone"
-                  ? "bg-[var(--brand-crimson)]"
-                  : "bg-[var(--brand-crimson)]"
-              }`}
-            />
+            <div className="h-1.5 w-14 rounded-full bg-[var(--brand-crimson)]" />
 
             <div
               className={`h-1.5 w-14 rounded-full transition-colors ${
@@ -212,8 +236,7 @@ export function LoginForm() {
                   />
 
                   <span>
-                    ورود با کد یکبارمصرف انجام می‌شود و نیازی به حفظ رمز عبور
-                    ندارید.
+                    برای کاربران عادی، ورود با کد یکبارمصرف انجام می‌شود.
                   </span>
                 </div>
               </div>
@@ -223,7 +246,7 @@ export function LoginForm() {
                   htmlFor="code"
                   className="mb-2.5 block text-sm font-semibold text-[var(--text-primary)]"
                 >
-                  کد تایید
+                  کد تأیید
                 </label>
 
                 <input
@@ -271,6 +294,7 @@ export function LoginForm() {
               {loading ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+
                   <span>لطفاً صبر کنید...</span>
                 </>
               ) : (
@@ -289,9 +313,7 @@ export function LoginForm() {
                     />
                   )}
 
-                  <span>
-                    {step === "phone" ? "دریافت کد تایید" : "ورود به حساب"}
-                  </span>
+                  <span>{step === "phone" ? "ادامه" : "ورود به حساب"}</span>
                 </>
               )}
             </button>
@@ -305,6 +327,7 @@ export function LoginForm() {
                 className="flex w-full items-center justify-center gap-1.5 text-sm font-medium text-[var(--brand-crimson)] transition-colors hover:text-[var(--brand-crimson-hover)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ChevronLeft size={16} />
+
                 <span>تغییر شماره موبایل</span>
               </button>
             )}
@@ -313,7 +336,9 @@ export function LoginForm() {
           {/* Divider */}
           <div className="my-7 flex items-center gap-4">
             <div className="h-px flex-1 bg-[var(--border-subtle)]" />
+
             <span className="text-[11px] text-[var(--text-secondary)]">یا</span>
+
             <div className="h-px flex-1 bg-[var(--border-subtle)]" />
           </div>
 
@@ -348,6 +373,7 @@ export function LoginForm() {
           className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--brand-crimson)]"
         >
           <ChevronLeft size={14} />
+
           <span>بازگشت به صفحه اصلی</span>
         </Link>
       </div>

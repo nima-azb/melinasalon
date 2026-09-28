@@ -5,14 +5,35 @@ import Link from "next/link";
 import { useState } from "react";
 
 const navigationItems = [
-  { href: "/", label: "صفحه اصلی" },
-  { href: "/#services", label: "خدمات" },
-  { href: "/ai-hairdresser", label: "آرایشگر هوش مصنوعی", isNew: true },
-  { href: "/#why-melina", label: "درباره ما" },
+  {
+    href: "/",
+    label: "صفحه اصلی",
+  },
+  {
+    href: "/#services",
+    label: "خدمات",
+  },
+  {
+    href: "/ai-hairdresser",
+    label: "آرایشگر هوش مصنوعی",
+    isNew: true,
+  },
+  {
+    href: "/#why-melina",
+    label: "درباره ما",
+  },
 ];
 
-export function MobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
+export function MobileNav({
+  isLoggedIn,
+  isAdmin,
+}: {
+  isLoggedIn: boolean;
+  isAdmin: boolean;
+}) {
   const [open, setOpen] = useState(false);
+
+  const profileHref = isAdmin ? "/admin" : "/dashboard";
 
   return (
     <div className="lg:hidden">
@@ -48,11 +69,15 @@ export function MobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
               ))}
 
               <Link
-                href={isLoggedIn ? "/dashboard" : "/login"}
+                href={isLoggedIn ? profileHref : "/login"}
                 onClick={() => setOpen(false)}
                 className="mt-4 rounded-xl border border-[var(--border-beige)] bg-[var(--bg-card-warm)] px-4 py-3 text-center text-sm font-medium text-[var(--text-primary)]"
               >
-                {isLoggedIn ? "حساب کاربری" : "ورود / ثبت‌نام"}
+                {isLoggedIn
+                  ? isAdmin
+                    ? "پنل مدیریت"
+                    : "حساب کاربری"
+                  : "ورود / ثبت‌نام"}
               </Link>
             </div>
           </nav>

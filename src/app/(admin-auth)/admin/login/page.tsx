@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 
-import { LoginForm } from "@/components/auth/login-form";
+import { AdminLoginForm } from "@/components/auth/admin-login-form";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 
-export default async function LoginPage() {
+export default async function AdminLoginPage() {
   const user = await getCurrentUser();
 
   if (user) {
@@ -34,7 +34,7 @@ export default async function LoginPage() {
         className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--brand-crimson)]/[0.03]"
       />
 
-      <LoginForm />
+      <AdminLoginForm />
     </main>
   );
 }

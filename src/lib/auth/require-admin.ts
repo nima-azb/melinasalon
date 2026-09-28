@@ -9,7 +9,7 @@ export async function requireAdmin() {
     return NextResponse.json(
       {
         success: false,
-        message: "برای ادامه باید وارد حساب کاربری خود شوید.",
+        message: "برای ادامه باید وارد پنل مدیریت شوید.",
       },
       { status: 401 },
     );

@@ -2,7 +2,13 @@
 
 import { useRouter } from "next/navigation";
 
-export function LogoutButton({ className = "" }: { className?: string }) {
+export function LogoutButton({
+  className = "",
+  redirectTo = "/login",
+}: {
+  className?: string;
+  redirectTo?: string;
+}) {
   const router = useRouter();
 
   async function logout() {
@@ -10,12 +16,13 @@ export function LogoutButton({ className = "" }: { className?: string }) {
       method: "POST",
     });
 
-    router.push("/login");
+    router.push(redirectTo);
     router.refresh();
   }
 
   return (
     <button
+      type="button"
       onClick={logout}
       className={`rounded-xl bg-[var(--brand-crimson)] px-5 py-3 text-sm font-bold text-white ${className}`}
     >

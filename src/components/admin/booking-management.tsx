@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { JalaliDatePicker } from "../ui/jalali-date-picker";
 
 type BookingStatus = "CONFIRMED" | "CANCELLED" | "COMPLETED";
 
@@ -299,36 +300,26 @@ export function BookingManagement() {
           </div>
 
           <div>
-            <label
-              htmlFor="booking-from-date"
-              className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
-            >
+            <label className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
               از تاریخ
             </label>
 
-            <input
-              id="booking-from-date"
-              type="date"
+            <JalaliDatePicker
               value={fromDate}
-              onChange={(event) => setFromDate(event.target.value)}
-              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)]"
+              onChange={(date) => setFromDate(date)}
+              placeholder="از تاریخ"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="booking-to-date"
-              className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
-            >
+            <label className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
               تا تاریخ
             </label>
 
-            <input
-              id="booking-to-date"
-              type="date"
+            <JalaliDatePicker
               value={toDate}
-              onChange={(event) => setToDate(event.target.value)}
-              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)]"
+              onChange={(date) => setToDate(date)}
+              placeholder="تا تاریخ"
             />
           </div>
 
