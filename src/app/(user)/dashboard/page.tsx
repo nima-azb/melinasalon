@@ -17,68 +17,91 @@ export default async function DashboardPage() {
     now.getTime() - AI_WINDOW_HOURS * 60 * 60 * 1000,
   );
 
-  const [bookings, generations, recentAiRequests, confirmedBooking] =
-    await Promise.all([
-      prisma.booking.findMany({
-        where: {
-          userId: user.id,
-        },
-        orderBy: {
-          startsAt: "asc",
-        },
-        select: {
-          id: true,
-          startsAt: true,
-          endsAt: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
-          service: {
-            select: {
-              id: true,
-              name: true,
-              duration: true,
-            },
+  const [
+    bookings,
+    generations,
+    recentAiRequests,
+    confirmedBooking,
+    activeDiscount,
+  ] = await Promise.all([
+    prisma.booking.findMany({
+      where: {
+        userId: user.id,
+      },
+      orderBy: {
+        startsAt: "asc",
+      },
+      select: {
+        id: true,
+        startsAt: true,
+        endsAt: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        service: {
+          select: {
+            id: true,
+            name: true,
+            duration: true,
           },
         },
-      }),
+      },
+    }),
 
-      prisma.generation.findMany({
-        where: {
-          userId: user.id,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        select: {
-          id: true,
-          workflowType: true,
-          originalPhotoUrl: true,
-          resultPhotoUrl: true,
-          styleChosen: true,
-          createdAt: true,
-        },
-      }),
+    prisma.generation.findMany({
+      where: {
+        userId: user.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        workflowType: true,
+        originalPhotoUrl: true,
+        resultPhotoUrl: true,
+        styleChosen: true,
+        createdAt: true,
+      },
+    }),
 
-      prisma.aiGenerationRequest.count({
-        where: {
-          userId: user.id,
-          requestedAt: {
-            gte: aiWindowStart,
-          },
+    prisma.aiGenerationRequest.count({
+      where: {
+        userId: user.id,
+        requestedAt: {
+          gte: aiWindowStart,
         },
-      }),
+      },
+    }),
 
-      prisma.booking.findFirst({
-        where: {
-          userId: user.id,
-          status: "CONFIRMED",
+    prisma.booking.findFirst({
+      where: {
+        userId: user.id,
+        status: "CONFIRMED",
+      },
+      select: {
+        id: true,
+      },
+    }),
+
+    prisma.discountCode.findFirst({
+      where: {
+        userId: user.id,
+        isUsed: false,
+        expiresAt: {
+          gte: now,
         },
-        select: {
-          id: true,
-        },
-      }),
-    ]);
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        code: true,
+        discountPercent: true,
+        expiresAt: true,
+      },
+    }),
+  ]);
 
   const generationsWithUrls = await Promise.all(
     generations.map(async (generation) => {
@@ -130,6 +153,15 @@ export default async function DashboardPage() {
             birthDate: user.birthDate?.toISOString() ?? null,
             createdAt: user.createdAt.toISOString(),
           }}
+          activeBirthdayDiscount={
+            activeDiscount
+              ? {
+                  code: activeDiscount.code,
+                  discountPercent: activeDiscount.discountPercent,
+                  expiresAt: activeDiscount.expiresAt.toISOString(),
+                }
+              : null
+          }
           bookings={bookings.map((booking) => ({
             id: booking.id,
             startsAt: booking.startsAt.toISOString(),

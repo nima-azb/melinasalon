@@ -1,57 +1,29 @@
 const RECOMMENDATION_PROMPT = `
-You are an expert professional hair stylist, makeup artist, and beauty consultant
-creating a personalized salon visualization for the person in the provided photo.
+Photorealistic professional salon visualization of the exact same person from the input image, presented as a clean two-panel split-screen comparison (Left Panel: Look 1 | Right Panel: Look 2). 
 
-Analyze the person's visible facial characteristics, including:
-- face shape
-- facial proportions
-- jawline and cheek structure
-- forehead and hairline
-- complexion and skin undertone
-- eyes and brows
-- overall visual balance
-- current hair characteristics
+CRITICAL IDENTITY & REALISM RULES:
+- Photorealistic, high-end editorial beauty photography style. Must look like a real, high-resolution photograph taken with a professional studio camera (Sony A7R IV, 85mm lens, f/2.8, soft studio lighting). Absolutely no illustrations, digital art, 3D renders, plastic skin, or cartoon styles.
+- Preserve 100% of the person's exact identity, facial structure, bone structure, eye shape, nose, mouth, ethnicity, and age from the source photo. 
+- The head pose, facial expression, camera angle, and background must remain identical or seamlessly matched across both panels.
+- Maintain natural, un-retouched skin texture with visible pores and fine details. No smoothing or airbrushing.
 
-Based specifically on this person's features, create TWO distinctly different
-beauty looks that would genuinely suit them.
+MAKEUP & HAIR MODIFICATIONS ONLY:
+Modify ONLY the hair styling, hair color, or makeup according to the two distinct looks below. The underlying face must remain strictly identical to the input photo.
 
-The two looks should be different from each other while both remaining realistic,
-elegant, flattering, and appropriate for a professional salon consultation.
+LOOK 1 (Natural Elegance - Left Panel):
+- Focus: A harmonious, naturally polished enhancement of existing features.
+- Hair: Refined version of the current cut or a soft, classic blowout with natural texture and subtle, realistic color gloss.
+- Makeup: Clean, minimal "no-makeup makeup" or soft everyday professional look with neutral tones, gentle definition to brows, and a natural lip tint.
 
-LOOK 1:
-Create a balanced, naturally flattering recommendation that enhances the person's
-existing features.
+LOOK 2 (Creative Transformation - Right Panel):
+- Focus: A noticeable, stylish shift that still flatters the same face structure.
+- Hair: A distinctly different professional option—such as a chic modern bob, sophisticated layering, elegant updo, or a complementary, realistic new hair shade (e.g., warm chestnut, rich espresso, or soft caramel highlights).
+- Makeup: A polished evening or statement look featuring refined contouring, a defined lip color, or sophisticated eye makeup that matches the skin undertone.
 
-LOOK 2:
-Create a noticeably different recommendation that still suits the same person's
-face and overall appearance. It may explore a different hairstyle, hair length,
-hair color, texture, or makeup direction when appropriate.
-
-IMPORTANT:
-- Both looks must be designed specifically for the person in the input photo.
-- Do not use generic beauty-model assumptions.
-- Preserve the person's identity and recognizable facial features.
-- Preserve realistic skin texture and natural facial proportions.
-- Do not change the person's identity, ethnicity, age, or fundamental facial structure.
-- Do not create two different people.
-- Do not simply duplicate the same look twice.
-- Do not make either look intentionally extreme or unrealistic.
-- The result should look like a professional salon visualization.
-
-COMPOSITION:
-Return ONE single image containing BOTH recommended looks.
-Present them clearly as two distinct side-by-side visual panels.
-The left side must show LOOK 1.
-The right side must show LOOK 2.
-Both panels must contain the same person with the corresponding recommended look.
-
-Keep the composition clean and professional.
-Do not add unnecessary decorative graphics.
-Do not add large amounts of text.
-Do not distort, crop, or obscure the person's face.
-
-The final image must be a realistic professional salon preview showing
-two different personalized possibilities for the same person.
+COMPOSITION & FORMAT:
+- Output a single image divided cleanly down the middle into two vertical panels.
+- Left side displays Look 1; Right side displays Look 2.
+- Clean, minimalist aesthetic with neutral studio background. No text overlays, graphic watermarks, or distorted features.
 `.trim();
 
 export function buildRecommendationPrompt() {

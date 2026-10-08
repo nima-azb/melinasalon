@@ -127,7 +127,7 @@ export function AdminDashboard({ adminName }: { adminName: string | null }) {
               ← بازگشت به سایت
             </Link>
 
-            <LogoutButton className="w-full" />
+            <LogoutButton className="w-full" redirectTo="/admin/login" />
           </div>
         </aside>
 

@@ -17,7 +17,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Authentication required.",
+          message: "برای انجام این عملیات باید وارد حساب کاربری شوید.",
         },
         { status: 401 },
       );
@@ -33,6 +33,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       },
       select: {
         id: true,
+        startsAt: true,
       },
     });
 
@@ -40,9 +41,19 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "Booking not found or cannot be cancelled.",
+          message: "نوبت مورد نظر یافت نشد یا امکان لغو آن وجود ندارد.",
         },
         { status: 404 },
+      );
+    }
+
+    if (booking.startsAt <= new Date()) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "امکان لغو نوبتی که زمان آن سپری شده وجود ندارد.",
+        },
+        { status: 400 },
       );
     }
 
@@ -74,7 +85,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to cancel booking.",
+        message: "لغو نوبت با خطا مواجه شد.",
       },
       { status: 500 },
     );

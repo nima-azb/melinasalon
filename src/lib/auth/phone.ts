@@ -21,6 +21,10 @@ export function normalizeIranianPhone(phone: string): string {
     return `+98${normalizedDigits.slice(1)}`;
   }
 
+  if (/^9\d{9}$/.test(normalizedDigits)) {
+    return `+98${normalizedDigits}`;
+  }
+
   if (/^989\d{9}$/.test(normalizedDigits)) {
     return `+${normalizedDigits}`;
   }

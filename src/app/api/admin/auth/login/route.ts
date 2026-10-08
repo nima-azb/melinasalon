@@ -1,14 +1,63 @@
+import { timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import { SESSION_EXPIRES_DAYS } from "@/lib/auth/constants";
-import { createSession, SESSION_COOKIE_NAME } from "@/lib/auth/session";
+import {
+  SESSION_EXPIRES_DAYS,
+  SESSION_COOKIE_NAME,
+} from "@/lib/auth/constants";
+import { normalizeIranianPhone } from "@/lib/auth/phone";
+import { createSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
-const ADMIN_PASSWORD = "melina";
+function safePasswordCompare(provided: string, expected: string): boolean {
+  const providedBuffer = Buffer.from(provided);
+  const expectedBuffer = Buffer.from(expected);
 
-export async function POST(request: Request) {
+  if (providedBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(providedBuffer, expectedBuffer);
+}
+
+export async function POST(request: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(
+      `admin-login:${getClientIp(request)}`,
+      5,
+      60_000,
+    );
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "تعداد تلاش‌ها بیش از حد مجاز است. لطفاً ۱ دقیقه صبر کنید.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
+    const envAdminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!envAdminPassword) {
+      console.error("ADMIN_PASSWORD environment variable is not configured.");
+      return NextResponse.json(
+        {
+          success: false,
+          message: "تنظیمات ورود مدیر کامل نیست.",
+        },
+        { status: 500 },
+      );
+    }
+
     const body = await request.json();
 
     if (
@@ -25,32 +74,48 @@ export async function POST(request: Request) {
       );
     }
 
-    if (body.password !== ADMIN_PASSWORD) {
+    if (!body.phone || typeof body.phone !== "string") {
       return NextResponse.json(
         {
           success: false,
-          message: "رمز عبور صحیح نیست.",
+          message: "شماره موبایل مدیر الزامی است.",
         },
-        { status: 401 },
+        { status: 400 },
       );
     }
 
-    const admin = await prisma.user.findFirst({
-      where: {
-        role: "ADMIN",
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-    });
-
-    if (!admin) {
+    let normalizedPhone: string;
+    try {
+      normalizedPhone = normalizeIranianPhone(body.phone);
+    } catch {
       return NextResponse.json(
         {
           success: false,
-          message: "حساب مدیر در سیستم پیدا نشد.",
+          message: "شماره موبایل نامعتبر است.",
         },
-        { status: 500 },
+        { status: 400 },
+      );
+    }
+
+    const isPasswordValid = safePasswordCompare(
+      body.password,
+      envAdminPassword,
+    );
+
+    const admin = await prisma.user.findFirst({
+      where: {
+        phoneNumber: normalizedPhone,
+        role: "ADMIN",
+      },
+    });
+
+    if (!isPasswordValid || !admin) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "شماره موبایل یا رمز عبور اشتباه است.",
+        },
+        { status: 401 },
       );
     }
 

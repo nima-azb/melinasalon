@@ -419,6 +419,7 @@ export function GenerationManagement() {
                               src={generationImages.originalUrl}
                               alt={`تصویر اصلی ${generation.user.fullName || "کاربر"}`}
                               fill
+                              unoptimized
                               sizes="(max-width: 1024px) 50vw, 180px"
                               className="object-cover transition-transform duration-300 hover:scale-105"
                             />
@@ -450,6 +451,7 @@ export function GenerationManagement() {
                               src={generationImages.resultUrl}
                               alt={`نتیجه هوش مصنوعی ${generation.user.fullName || "کاربر"}`}
                               fill
+                              unoptimized
                               sizes="(max-width: 1024px) 50vw, 180px"
                               className="object-cover transition-transform duration-300 hover:scale-105"
                             />

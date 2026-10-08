@@ -69,15 +69,23 @@ export async function GET() {
       toDateKey(yesterdayWall.year, yesterdayWall.month, yesterdayWall.day),
     );
 
-    // Sat-through-Fri salon week containing "today".
     const todayWeekdayIndex = WEEKDAY_ORDER.indexOf(getShortWeekday(now));
 
     const weekDayKeys = Array.from({ length: 7 }, (_, index) => {
-      const { year, month, day } = todayWall;
       const offset = index - todayWeekdayIndex;
-      const bounds = getSalonDayBounds(toDateKey(year, month, day + offset));
+      const targetInstant = new Date(
+        today.startOfDay.getTime() + offset * 24 * 60 * 60 * 1000,
+      );
+      const targetWall = getZonedWallTime(targetInstant);
+      const dayKey = toDateKey(
+        targetWall.year,
+        targetWall.month,
+        targetWall.day,
+      );
+      const bounds = getSalonDayBounds(dayKey);
+
       return {
-        key: toDateKey(year, month, day + offset),
+        key: dayKey,
         isToday: offset === 0,
         ...bounds,
       };

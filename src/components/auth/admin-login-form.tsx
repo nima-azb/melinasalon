@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, LockKeyhole, ShieldCheck } from "lucide-react";
+import { ArrowRight, LockKeyhole, Phone, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -8,8 +8,7 @@ export function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const phone = searchParams.get("phone") ?? "";
-
+  const [phone, setPhone] = useState(() => searchParams.get("phone") ?? "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -31,6 +30,7 @@ export function AdminLoginForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          phone,
           password,
         }),
       });
@@ -38,7 +38,7 @@ export function AdminLoginForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "رمز عبور صحیح نیست.");
+        throw new Error(data.message || "اطلاعات ورود صحیح نیست.");
       }
 
       router.push("/admin");
@@ -59,11 +59,11 @@ export function AdminLoginForm() {
         </div>
 
         <h1 className="text-2xl font-bold tracking-tight text-[var(--brand-crimson)]">
-          ورود مدیر
+          ورود به پنل مدیریت
         </h1>
 
         <p className="mt-2 text-sm text-[var(--text-secondary)]">
-          برای ورود به پنل مدیریت رمز عبور خود را وارد کنید.
+          شماره موبایل و رمز عبور مدیریت را وارد کنید.
         </p>
       </div>
 
@@ -72,22 +72,38 @@ export function AdminLoginForm() {
         <div className="h-1 w-full bg-[var(--brand-crimson)]" />
 
         <div className="p-6 sm:p-8">
-          {phone && (
-            <div className="mb-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-4 py-3 text-center">
-              <p className="text-xs text-[var(--text-secondary)]">
-                حساب مدیر شناسایی شد
-              </p>
-
-              <p
-                dir="ltr"
-                className="mt-1 text-sm font-semibold text-[var(--text-primary)]"
-              >
-                {phone}
-              </p>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label
+                htmlFor="admin-phone"
+                className="mb-2.5 block text-sm font-semibold text-[var(--text-primary)]"
+              >
+                شماره موبایل مدیر
+              </label>
+
+              <div className="group relative">
+                <Phone
+                  size={18}
+                  strokeWidth={1.8}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] transition-colors group-focus-within:text-[var(--brand-crimson)]"
+                />
+
+                <input
+                  id="admin-phone"
+                  name="phone"
+                  type="tel"
+                  dir="ltr"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  placeholder="09121234567"
+                  required
+                  disabled={loading}
+                  className="w-full rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] py-3.5 pl-4 pr-11 text-sm text-[var(--text-primary)] outline-none transition-all placeholder:text-[var(--text-secondary)]/60 focus:border-[var(--brand-crimson)] focus:bg-[var(--bg-card)] focus:ring-4 focus:ring-[var(--brand-crimson)]/6 disabled:cursor-not-allowed disabled:opacity-60"
+                />
+              </div>
+            </div>
+
             <div>
               <label
                 htmlFor="admin-password"
@@ -144,7 +160,6 @@ export function AdminLoginForm() {
                     strokeWidth={2}
                     className="transition-transform group-hover:-translate-x-0.5"
                   />
-
                   <span>ورود به پنل مدیریت</span>
                 </>
               )}
@@ -155,8 +170,7 @@ export function AdminLoginForm() {
         <div className="border-t border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-6 py-4 sm:px-8">
           <div className="flex items-center justify-center gap-2 text-xs text-[var(--text-secondary)]">
             <ShieldCheck size={15} className="text-[var(--brand-crimson)]" />
-
-            <span>ورود مدیر بدون ارسال پیامک انجام می‌شود.</span>
+            <span>ورود امن و محافظت‌شده مدیران سالن</span>
           </div>
         </div>
       </div>

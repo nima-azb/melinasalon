@@ -1,4 +1,4 @@
-import { createHash, randomInt } from "crypto";
+import { createHmac, randomInt } from "crypto";
 
 import { OTP_EXPIRY_SECONDS, OTP_LENGTH } from "./constants";
 
@@ -10,7 +10,8 @@ export function generateOtp(): string {
 }
 
 export function hashOtp(otp: string): string {
-  return createHash("sha256").update(otp).digest("hex");
+  const salt = process.env.SESSION_SECRET || "melina_default_otp_salt";
+  return createHmac("sha256", salt).update(otp).digest("hex");
 }
 
 export function getOtpExpiry(): Date {

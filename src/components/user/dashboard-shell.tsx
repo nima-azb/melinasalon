@@ -1,13 +1,5 @@
 import Link from "next/link";
-import {
-  Award,
-  Cake,
-  CalendarCheck,
-  Phone,
-  PhoneCall,
-  Sparkles,
-  Wand2,
-} from "lucide-react";
+import { Award, CalendarCheck, Gift, Phone, Wand2 } from "lucide-react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { MyBookings } from "@/components/user/my-bookings";
@@ -40,6 +32,12 @@ type Generation = {
   createdAt: string;
 };
 
+type ActiveDiscount = {
+  code: string;
+  discountPercent: number;
+  expiresAt: string;
+};
+
 type DashboardShellProps = {
   user: {
     fullName: string | null;
@@ -47,6 +45,7 @@ type DashboardShellProps = {
     birthDate: string | null;
     createdAt: string;
   };
+  activeBirthdayDiscount?: ActiveDiscount | null;
   bookings: Booking[];
   generations: Generation[];
   stats: {
@@ -72,36 +71,22 @@ function getInitial(fullName: string | null) {
   return firstName ? firstName.charAt(0) : "م";
 }
 
-function formatDate(dateString: string | null) {
-  if (!dateString) {
-    return "ثبت نشده";
-  }
-
-  return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(new Date(dateString));
-}
-
 function formatMemberSinceYear(dateString: string) {
   return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
     year: "numeric",
   }).format(new Date(dateString));
 }
 
-function formatBookingDateTime(dateString: string) {
+function formatExpiryDate(dateString: string) {
   return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-    weekday: "long",
-    day: "numeric",
     month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
+    day: "numeric",
   }).format(new Date(dateString));
 }
 
 export function DashboardShell({
   user,
+  activeBirthdayDiscount,
   bookings,
   generations,
   stats,
@@ -112,6 +97,37 @@ export function DashboardShell({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      {/* Birthday discount banner */}
+      {activeBirthdayDiscount && (
+        <div className="mb-6 overflow-hidden rounded-2xl border border-[var(--accent-gold)]/40 bg-gradient-to-r from-[var(--brand-crimson)] via-[var(--brand-crimson-hover)] to-[var(--brand-crimson-dark)] p-5 text-white shadow-lg sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white shadow-sm">
+                <Gift size={26} className="text-[var(--accent-gold)]" />
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold sm:text-lg">
+                    تولدتان مبارک! هدیه اختصاصی سالن ملینا بیوتی
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-xs text-white/80 sm:text-sm">
+                  کد تخفیف {activeBirthdayDiscount.discountPercent}٪ اختصاصی شما
+                  تا تاریخ {formatExpiryDate(activeBirthdayDiscount.expiresAt)}{" "}
+                  معتبر است.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2 font-mono text-sm font-bold tracking-wider text-white backdrop-blur-sm sm:self-auto sm:text-base">
+              <span>{activeBirthdayDiscount.code}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Welcome card */}
       <section className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 shadow-sm sm:p-7">
         <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
@@ -199,21 +215,7 @@ export function DashboardShell({
           <div className="rounded-xl bg-[var(--bg-card-warm)] p-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-[var(--text-secondary)]">
-                استایل‌های هوش مصنوعی
-              </span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
-                <Sparkles size={15} />
-              </span>
-            </div>
-            <p className="mt-3 text-2xl font-bold text-[var(--text-primary)]">
-              {stats.generationCount}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-[var(--bg-card-warm)] p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[var(--text-secondary)]">
-                مجموع حضور در سالن
+                بازدیدهای تکمیل‌شده
               </span>
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
                 <Award size={15} />
@@ -224,133 +226,40 @@ export function DashboardShell({
             </p>
           </div>
 
-          <div className="rounded-xl bg-[var(--brand-crimson)] p-4 text-white">
+          <div className="rounded-xl bg-[var(--bg-card-warm)] p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-white/80">
-                سهمیه هوش مصنوعی امروز
+              <span className="text-xs font-medium text-[var(--text-secondary)]">
+                استایل‌های هوش مصنوعی
               </span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
                 <Wand2 size={15} />
               </span>
             </div>
-            <p className="mt-3 text-2xl font-bold">
-              {stats.remainingAiGenerations} از ۳
+            <p className="mt-3 text-2xl font-bold text-[var(--text-primary)]">
+              {stats.generationCount}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-[var(--bg-card-warm)] p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-[var(--text-secondary)]">
+                فرصت‌های باقیمانده هوش مصنوعی
+              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
+                <Wand2 size={15} />
+              </span>
+            </div>
+            <p className="mt-3 text-2xl font-bold text-[var(--text-primary)]">
+              {stats.remainingAiGenerations}
             </p>
           </div>
         </div>
       </section>
 
-      {/* Main two-column layout */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Left column */}
-        <div className="flex flex-col gap-6 lg:col-span-8">
-          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 shadow-sm sm:p-7">
-            <MyBookings bookings={bookings} />
-          </div>
-
-          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 shadow-sm sm:p-7">
-            <MyGenerations generations={generations} />
-          </div>
-        </div>
-
-        {/* Right column */}
-        <aside className="flex flex-col gap-6 lg:col-span-4">
-          {/* Next booking CTA card */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--brand-crimson)] to-[var(--brand-crimson-dark)] p-6 text-white shadow-[0_8px_30px_rgba(108,0,32,0.15)]">
-            <div className="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
-
-            <div className="relative flex items-center gap-2">
-              <CalendarCheck size={20} />
-              <span className="font-bold">نوبت بعدی شما</span>
-            </div>
-
-            {stats.nextBooking ? (
-              <div className="relative mt-4">
-                <p className="text-lg font-bold">
-                  {stats.nextBooking.serviceName}
-                </p>
-                <p className="mt-1 text-sm text-white/80">
-                  {formatBookingDateTime(stats.nextBooking.startsAt)}
-                </p>
-              </div>
-            ) : (
-              <p className="relative mt-4 text-sm leading-6 text-white/85">
-                در حال حاضر نوبت فعالی ندارید. برای رزرو نوبت جدید کلیک کنید.
-              </p>
-            )}
-
-            <Link
-              href="/#booking"
-              className="relative mt-5 inline-flex w-full items-center justify-center rounded-full bg-white/15 px-5 py-3 text-sm font-semibold backdrop-blur-sm transition-colors hover:bg-white/25"
-            >
-              {stats.nextBooking ? "مشاهده و مدیریت نوبت‌ها" : "رزرو نوبت"}
-            </Link>
-          </div>
-
-          {/* Account details */}
-          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6 shadow-sm">
-            <h3 className="font-bold text-[var(--text-primary)]">
-              اطلاعات حساب کاربری
-            </h3>
-
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center justify-between border-b border-[var(--border-subtle)] py-2.5">
-                <span className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                  <Phone size={15} />
-                  شماره همراه
-                </span>
-                <span
-                  className="text-sm font-medium text-[var(--text-primary)]"
-                  dir="ltr"
-                >
-                  {user.phoneNumber}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between border-b border-[var(--border-subtle)] py-2.5">
-                <span className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                  <Cake size={15} />
-                  تاریخ تولد
-                </span>
-                <span className="text-sm font-medium text-[var(--text-primary)]">
-                  {formatDate(user.birthDate)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-sm text-[var(--text-secondary)]">
-                  تاریخ عضویت
-                </span>
-                <span className="text-sm font-medium text-[var(--text-primary)]">
-                  {formatDate(user.createdAt)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Consultation banner */}
-          <div className="flex items-start gap-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 shadow-sm">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--brand-crimson-light)] text-[var(--brand-crimson)]">
-              <PhoneCall size={19} />
-            </span>
-
-            <div>
-              <h4 className="text-sm font-bold text-[var(--text-primary)]">
-                مشاوره تلفنی با تیم ملین بیوتی
-              </h4>
-              <p className="mt-1 text-xs leading-6 text-[var(--text-secondary)]">
-                سوالی درباره خدمات یا رزرو نوبت دارید؟ با ما تماس بگیرید.
-              </p>
-              <a
-                href="tel:+989354728448"
-                className="mt-2 inline-block text-sm font-bold text-[var(--brand-crimson)] hover:underline"
-                dir="ltr"
-              >
-                تماس مستقیم
-              </a>
-            </div>
-          </div>
-        </aside>
+      {/* Bookings & Generations section */}
+      <div className="mt-10 space-y-10">
+        <MyBookings bookings={bookings} />
+        <MyGenerations generations={generations} />
       </div>
     </div>
   );

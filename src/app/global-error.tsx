@@ -1,15 +1,8 @@
 "use client";
 
-import { Vazirmatn } from "next/font/google";
 import { useEffect } from "react";
 
 import "./globals.css";
-
-const vazirmatn = Vazirmatn({
-  variable: "--font-vazirmatn",
-  subsets: ["arabic"],
-  display: "swap",
-});
 
 export default function GlobalError({
   error,
@@ -24,7 +17,7 @@ export default function GlobalError({
 
   return (
     <html lang="fa" dir="rtl">
-      <body className={vazirmatn.variable}>
+      <body className="font-sans antialiased">
         <main className="flex min-h-screen w-full flex-col items-center justify-center gap-5 bg-[var(--bg-cream)] px-6 py-24 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
             <svg

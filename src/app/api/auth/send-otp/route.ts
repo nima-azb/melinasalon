@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   OTP_EXPIRY_SECONDS,
@@ -6,10 +6,33 @@ import {
 } from "@/lib/auth/constants";
 import { generateOtp, getOtpExpiry, hashOtp } from "@/lib/auth/otp";
 import { normalizeIranianPhone } from "@/lib/auth/phone";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { smsProvider } from "@/lib/sms";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(
+      `send-otp:${getClientIp(request)}`,
+      10,
+      60_000,
+    );
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً ۱ دقیقه صبر کنید.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
     const body = await request.json();
     if (!body || typeof body.phone !== "string") {
       return NextResponse.json(
@@ -85,6 +108,21 @@ export async function POST(request: Request) {
               "حسابی با این شماره تلفن از قبل وجود دارد. لطفاً وارد حساب خود شوید.",
           },
           { status: 409 },
+        );
+      }
+    } else {
+      const existingUser = await prisma.user.findUnique({
+        where: { phoneNumber },
+        select: { id: true },
+      });
+      if (!existingUser) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "حسابی با این شماره تلفن یافت نشد. لطفاً ابتدا ثبت‌نام کنید.",
+          },
+          { status: 404 },
         );
       }
     }

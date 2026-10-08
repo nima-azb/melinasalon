@@ -20,8 +20,18 @@ export type UserModel = runtime.Types.Result.DefaultSelection<Prisma.$UserPayloa
 
 export type AggregateUser = {
   _count: UserCountAggregateOutputType | null
+  _avg: UserAvgAggregateOutputType | null
+  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
+}
+
+export type UserAvgAggregateOutputType = {
+  lastBirthdaySmsYear: number | null
+}
+
+export type UserSumAggregateOutputType = {
+  lastBirthdaySmsYear: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -31,6 +41,7 @@ export type UserMinAggregateOutputType = {
   createdAt: Date | null
   birthDate: Date | null
   fullName: string | null
+  lastBirthdaySmsYear: number | null
 }
 
 export type UserMaxAggregateOutputType = {
@@ -40,6 +51,7 @@ export type UserMaxAggregateOutputType = {
   createdAt: Date | null
   birthDate: Date | null
   fullName: string | null
+  lastBirthdaySmsYear: number | null
 }
 
 export type UserCountAggregateOutputType = {
@@ -49,9 +61,18 @@ export type UserCountAggregateOutputType = {
   createdAt: number
   birthDate: number
   fullName: number
+  lastBirthdaySmsYear: number
   _all: number
 }
 
+
+export type UserAvgAggregateInputType = {
+  lastBirthdaySmsYear?: true
+}
+
+export type UserSumAggregateInputType = {
+  lastBirthdaySmsYear?: true
+}
 
 export type UserMinAggregateInputType = {
   id?: true
@@ -60,6 +81,7 @@ export type UserMinAggregateInputType = {
   createdAt?: true
   birthDate?: true
   fullName?: true
+  lastBirthdaySmsYear?: true
 }
 
 export type UserMaxAggregateInputType = {
@@ -69,6 +91,7 @@ export type UserMaxAggregateInputType = {
   createdAt?: true
   birthDate?: true
   fullName?: true
+  lastBirthdaySmsYear?: true
 }
 
 export type UserCountAggregateInputType = {
@@ -78,6 +101,7 @@ export type UserCountAggregateInputType = {
   createdAt?: true
   birthDate?: true
   fullName?: true
+  lastBirthdaySmsYear?: true
   _all?: true
 }
 
@@ -119,6 +143,18 @@ export type UserAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: UserAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: UserSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: UserMinAggregateInputType
@@ -149,6 +185,8 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   _count?: UserCountAggregateInputType | true
+  _avg?: UserAvgAggregateInputType
+  _sum?: UserSumAggregateInputType
   _min?: UserMinAggregateInputType
   _max?: UserMaxAggregateInputType
 }
@@ -160,7 +198,10 @@ export type UserGroupByOutputType = {
   createdAt: Date
   birthDate: Date | null
   fullName: string | null
+  lastBirthdaySmsYear: number | null
   _count: UserCountAggregateOutputType | null
+  _avg: UserAvgAggregateOutputType | null
+  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
 }
@@ -190,9 +231,11 @@ export type UserWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   birthDate?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   fullName?: Prisma.StringNullableFilter<"User"> | string | null
+  lastBirthdaySmsYear?: Prisma.IntNullableFilter<"User"> | number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestListRelationFilter
   bookings?: Prisma.BookingListRelationFilter
   generations?: Prisma.GenerationListRelationFilter
+  discountCodes?: Prisma.DiscountCodeListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -202,9 +245,11 @@ export type UserOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   birthDate?: Prisma.SortOrderInput | Prisma.SortOrder
   fullName?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastBirthdaySmsYear?: Prisma.SortOrderInput | Prisma.SortOrder
   aiGenerationRequests?: Prisma.AiGenerationRequestOrderByRelationAggregateInput
   bookings?: Prisma.BookingOrderByRelationAggregateInput
   generations?: Prisma.GenerationOrderByRelationAggregateInput
+  discountCodes?: Prisma.DiscountCodeOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -217,9 +262,11 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   birthDate?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   fullName?: Prisma.StringNullableFilter<"User"> | string | null
+  lastBirthdaySmsYear?: Prisma.IntNullableFilter<"User"> | number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestListRelationFilter
   bookings?: Prisma.BookingListRelationFilter
   generations?: Prisma.GenerationListRelationFilter
+  discountCodes?: Prisma.DiscountCodeListRelationFilter
 }, "id" | "phoneNumber">
 
 export type UserOrderByWithAggregationInput = {
@@ -229,9 +276,12 @@ export type UserOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   birthDate?: Prisma.SortOrderInput | Prisma.SortOrder
   fullName?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastBirthdaySmsYear?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
+  _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
+  _sum?: Prisma.UserSumOrderByAggregateInput
 }
 
 export type UserScalarWhereWithAggregatesInput = {
@@ -244,6 +294,7 @@ export type UserScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   birthDate?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   fullName?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  lastBirthdaySmsYear?: Prisma.IntNullableWithAggregatesFilter<"User"> | number | null
 }
 
 export type UserCreateInput = {
@@ -253,9 +304,11 @@ export type UserCreateInput = {
   createdAt?: Date | string
   birthDate?: Date | string | null
   fullName?: string | null
+  lastBirthdaySmsYear?: number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestCreateNestedManyWithoutUserInput
   bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+  discountCodes?: Prisma.DiscountCodeCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -265,9 +318,11 @@ export type UserUncheckedCreateInput = {
   createdAt?: Date | string
   birthDate?: Date | string | null
   fullName?: string | null
+  lastBirthdaySmsYear?: number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedCreateNestedManyWithoutUserInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+  discountCodes?: Prisma.DiscountCodeUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -277,9 +332,11 @@ export type UserUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestUpdateManyWithoutUserNestedInput
   bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+  discountCodes?: Prisma.DiscountCodeUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -289,9 +346,11 @@ export type UserUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedUpdateManyWithoutUserNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
+  discountCodes?: Prisma.DiscountCodeUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -301,6 +360,7 @@ export type UserCreateManyInput = {
   createdAt?: Date | string
   birthDate?: Date | string | null
   fullName?: string | null
+  lastBirthdaySmsYear?: number | null
 }
 
 export type UserUpdateManyMutationInput = {
@@ -310,6 +370,7 @@ export type UserUpdateManyMutationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -319,6 +380,7 @@ export type UserUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -328,6 +390,11 @@ export type UserCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
+  lastBirthdaySmsYear?: Prisma.SortOrder
+}
+
+export type UserAvgOrderByAggregateInput = {
+  lastBirthdaySmsYear?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -337,6 +404,7 @@ export type UserMaxOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
+  lastBirthdaySmsYear?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
@@ -346,6 +414,11 @@ export type UserMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
+  lastBirthdaySmsYear?: Prisma.SortOrder
+}
+
+export type UserSumOrderByAggregateInput = {
+  lastBirthdaySmsYear?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -371,6 +444,28 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type UserCreateNestedOneWithoutDiscountCodesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDiscountCodesInput, Prisma.UserUncheckedCreateWithoutDiscountCodesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDiscountCodesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutDiscountCodesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDiscountCodesInput, Prisma.UserUncheckedCreateWithoutDiscountCodesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDiscountCodesInput
+  upsert?: Prisma.UserUpsertWithoutDiscountCodesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDiscountCodesInput, Prisma.UserUpdateWithoutDiscountCodesInput>, Prisma.UserUncheckedUpdateWithoutDiscountCodesInput>
 }
 
 export type UserCreateNestedOneWithoutBookingsInput = {
@@ -415,6 +510,74 @@ export type UserUpdateOneRequiredWithoutAiGenerationRequestsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAiGenerationRequestsInput, Prisma.UserUpdateWithoutAiGenerationRequestsInput>, Prisma.UserUncheckedUpdateWithoutAiGenerationRequestsInput>
 }
 
+export type UserCreateWithoutDiscountCodesInput = {
+  id?: string
+  phoneNumber: string
+  role?: $Enums.UserRole
+  createdAt?: Date | string
+  birthDate?: Date | string | null
+  fullName?: string | null
+  lastBirthdaySmsYear?: number | null
+  aiGenerationRequests?: Prisma.AiGenerationRequestCreateNestedManyWithoutUserInput
+  bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
+  generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutDiscountCodesInput = {
+  id?: string
+  phoneNumber: string
+  role?: $Enums.UserRole
+  createdAt?: Date | string
+  birthDate?: Date | string | null
+  fullName?: string | null
+  lastBirthdaySmsYear?: number | null
+  aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedCreateNestedManyWithoutUserInput
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
+  generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutDiscountCodesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDiscountCodesInput, Prisma.UserUncheckedCreateWithoutDiscountCodesInput>
+}
+
+export type UserUpsertWithoutDiscountCodesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDiscountCodesInput, Prisma.UserUncheckedUpdateWithoutDiscountCodesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDiscountCodesInput, Prisma.UserUncheckedCreateWithoutDiscountCodesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDiscountCodesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDiscountCodesInput, Prisma.UserUncheckedUpdateWithoutDiscountCodesInput>
+}
+
+export type UserUpdateWithoutDiscountCodesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aiGenerationRequests?: Prisma.AiGenerationRequestUpdateManyWithoutUserNestedInput
+  bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
+  generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDiscountCodesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedUpdateManyWithoutUserNestedInput
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
+  generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
+}
+
 export type UserCreateWithoutBookingsInput = {
   id?: string
   phoneNumber: string
@@ -422,8 +585,10 @@ export type UserCreateWithoutBookingsInput = {
   createdAt?: Date | string
   birthDate?: Date | string | null
   fullName?: string | null
+  lastBirthdaySmsYear?: number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+  discountCodes?: Prisma.DiscountCodeCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutBookingsInput = {
@@ -433,8 +598,10 @@ export type UserUncheckedCreateWithoutBookingsInput = {
   createdAt?: Date | string
   birthDate?: Date | string | null
   fullName?: string | null
+  lastBirthdaySmsYear?: number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+  discountCodes?: Prisma.DiscountCodeUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutBookingsInput = {
@@ -460,8 +627,10 @@ export type UserUpdateWithoutBookingsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+  discountCodes?: Prisma.DiscountCodeUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutBookingsInput = {
@@ -471,8 +640,10 @@ export type UserUncheckedUpdateWithoutBookingsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
+  discountCodes?: Prisma.DiscountCodeUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutGenerationsInput = {
@@ -482,8 +653,10 @@ export type UserCreateWithoutGenerationsInput = {
   createdAt?: Date | string
   birthDate?: Date | string | null
   fullName?: string | null
+  lastBirthdaySmsYear?: number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestCreateNestedManyWithoutUserInput
   bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
+  discountCodes?: Prisma.DiscountCodeCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutGenerationsInput = {
@@ -493,8 +666,10 @@ export type UserUncheckedCreateWithoutGenerationsInput = {
   createdAt?: Date | string
   birthDate?: Date | string | null
   fullName?: string | null
+  lastBirthdaySmsYear?: number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedCreateNestedManyWithoutUserInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
+  discountCodes?: Prisma.DiscountCodeUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutGenerationsInput = {
@@ -520,8 +695,10 @@ export type UserUpdateWithoutGenerationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestUpdateManyWithoutUserNestedInput
   bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
+  discountCodes?: Prisma.DiscountCodeUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutGenerationsInput = {
@@ -531,8 +708,10 @@ export type UserUncheckedUpdateWithoutGenerationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedUpdateManyWithoutUserNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
+  discountCodes?: Prisma.DiscountCodeUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAiGenerationRequestsInput = {
@@ -542,8 +721,10 @@ export type UserCreateWithoutAiGenerationRequestsInput = {
   createdAt?: Date | string
   birthDate?: Date | string | null
   fullName?: string | null
+  lastBirthdaySmsYear?: number | null
   bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+  discountCodes?: Prisma.DiscountCodeCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAiGenerationRequestsInput = {
@@ -553,8 +734,10 @@ export type UserUncheckedCreateWithoutAiGenerationRequestsInput = {
   createdAt?: Date | string
   birthDate?: Date | string | null
   fullName?: string | null
+  lastBirthdaySmsYear?: number | null
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+  discountCodes?: Prisma.DiscountCodeUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAiGenerationRequestsInput = {
@@ -580,8 +763,10 @@ export type UserUpdateWithoutAiGenerationRequestsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+  discountCodes?: Prisma.DiscountCodeUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAiGenerationRequestsInput = {
@@ -591,8 +776,10 @@ export type UserUncheckedUpdateWithoutAiGenerationRequestsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
+  discountCodes?: Prisma.DiscountCodeUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -604,12 +791,14 @@ export type UserCountOutputType = {
   aiGenerationRequests: number
   bookings: number
   generations: number
+  discountCodes: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   aiGenerationRequests?: boolean | UserCountOutputTypeCountAiGenerationRequestsArgs
   bookings?: boolean | UserCountOutputTypeCountBookingsArgs
   generations?: boolean | UserCountOutputTypeCountGenerationsArgs
+  discountCodes?: boolean | UserCountOutputTypeCountDiscountCodesArgs
 }
 
 /**
@@ -643,6 +832,13 @@ export type UserCountOutputTypeCountGenerationsArgs<ExtArgs extends runtime.Type
   where?: Prisma.GenerationWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountDiscountCodesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DiscountCodeWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -651,9 +847,11 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   birthDate?: boolean
   fullName?: boolean
+  lastBirthdaySmsYear?: boolean
   aiGenerationRequests?: boolean | Prisma.User$aiGenerationRequestsArgs<ExtArgs>
   bookings?: boolean | Prisma.User$bookingsArgs<ExtArgs>
   generations?: boolean | Prisma.User$generationsArgs<ExtArgs>
+  discountCodes?: boolean | Prisma.User$discountCodesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -664,6 +862,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   createdAt?: boolean
   birthDate?: boolean
   fullName?: boolean
+  lastBirthdaySmsYear?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -673,6 +872,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   createdAt?: boolean
   birthDate?: boolean
   fullName?: boolean
+  lastBirthdaySmsYear?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -682,13 +882,15 @@ export type UserSelectScalar = {
   createdAt?: boolean
   birthDate?: boolean
   fullName?: boolean
+  lastBirthdaySmsYear?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "phoneNumber" | "role" | "createdAt" | "birthDate" | "fullName", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "phoneNumber" | "role" | "createdAt" | "birthDate" | "fullName" | "lastBirthdaySmsYear", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   aiGenerationRequests?: boolean | Prisma.User$aiGenerationRequestsArgs<ExtArgs>
   bookings?: boolean | Prisma.User$bookingsArgs<ExtArgs>
   generations?: boolean | Prisma.User$generationsArgs<ExtArgs>
+  discountCodes?: boolean | Prisma.User$discountCodesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -700,6 +902,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     aiGenerationRequests: Prisma.$AiGenerationRequestPayload<ExtArgs>[]
     bookings: Prisma.$BookingPayload<ExtArgs>[]
     generations: Prisma.$GenerationPayload<ExtArgs>[]
+    discountCodes: Prisma.$DiscountCodePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -708,6 +911,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     createdAt: Date
     birthDate: Date | null
     fullName: string | null
+    lastBirthdaySmsYear: number | null
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -1105,6 +1309,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   aiGenerationRequests<T extends Prisma.User$aiGenerationRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$aiGenerationRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AiGenerationRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bookings<T extends Prisma.User$bookingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$bookingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   generations<T extends Prisma.User$generationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$generationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GenerationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  discountCodes<T extends Prisma.User$discountCodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$discountCodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DiscountCodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1140,6 +1345,7 @@ export interface UserFieldRefs {
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly birthDate: Prisma.FieldRef<"User", 'DateTime'>
   readonly fullName: Prisma.FieldRef<"User", 'String'>
+  readonly lastBirthdaySmsYear: Prisma.FieldRef<"User", 'Int'>
 }
     
 
@@ -1602,6 +1808,30 @@ export type User$generationsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.GenerationScalarFieldEnum | Prisma.GenerationScalarFieldEnum[]
+}
+
+/**
+ * User.discountCodes
+ */
+export type User$discountCodesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DiscountCode
+   */
+  select?: Prisma.DiscountCodeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DiscountCode
+   */
+  omit?: Prisma.DiscountCodeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscountCodeInclude<ExtArgs> | null
+  where?: Prisma.DiscountCodeWhereInput
+  orderBy?: Prisma.DiscountCodeOrderByWithRelationInput | Prisma.DiscountCodeOrderByWithRelationInput[]
+  cursor?: Prisma.DiscountCodeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DiscountCodeScalarFieldEnum | Prisma.DiscountCodeScalarFieldEnum[]
 }
 
 /**

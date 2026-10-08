@@ -38,8 +38,8 @@ export async function Navbar() {
             <span className="hidden items-center gap-2 sm:inline-flex">
               <span className="text-[var(--accent-gold)]">☎</span>
               شماره تماس:
-              <a href="tel:+982332335960" className="text-sm" dir="ltr">
-                ۰۹۱۳ ۴۷۲ ۸۴۴۸
+              <a href="tel:+989354728448" className="text-sm" dir="ltr">
+                ۰۹۳۵ ۴۷۲ ۸۴۴۸
               </a>
             </span>
 

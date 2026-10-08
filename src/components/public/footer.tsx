@@ -175,8 +175,8 @@ export async function Footer() {
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-beige)] text-[var(--text-secondary)] transition-all hover:border-[var(--brand-crimson)] hover:bg-[var(--brand-crimson)] hover:text-white"
               >
                 <Image
-                  src="/images/instagram.svg"
-                  alt=""
+                  src="/images/Instagram.svg"
+                  alt="instagram"
                   width={16}
                   height={16}
                   className="h-4 w-4"

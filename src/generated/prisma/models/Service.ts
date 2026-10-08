@@ -462,10 +462,6 @@ export type ServiceScalarRelationFilter = {
   isNot?: Prisma.ServiceWhereInput
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type ServiceCreateNestedOneWithoutBlockedTimesInput = {
   create?: Prisma.XOR<Prisma.ServiceCreateWithoutBlockedTimesInput, Prisma.ServiceUncheckedCreateWithoutBlockedTimesInput>
   connectOrCreate?: Prisma.ServiceCreateOrConnectWithoutBlockedTimesInput

@@ -29,11 +29,12 @@ export function JalaliDatePicker({
           typeof dateObject === "object" &&
           "toDate" in dateObject
         ) {
-          // استفاده از تایپ مشخص به جای any برای رفع خطای لینتر
-          const gregorianDate = (dateObject as { toDate: () => Date })
-            .toDate()
-            .toISOString()
-            .split("T")[0];
+          const date = (dateObject as { toDate: () => Date }).toDate();
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          const gregorianDate = `${year}-${month}-${day}`;
+
           onChange(gregorianDate);
         } else {
           onChange("");

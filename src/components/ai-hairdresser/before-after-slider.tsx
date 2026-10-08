@@ -46,8 +46,14 @@ export function BeforeAfterSlider({
           updateFromClientX(event.clientX);
         }
       }}
-      onPointerUp={() => setIsDragging(false)}
-      onPointerLeave={() => setIsDragging(false)}
+      onPointerUp={(event) => {
+        setIsDragging(false);
+        try {
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        } catch {
+          // Ignore if pointer capture was already released
+        }
+      }}
     >
       {/* After image (full, bottom layer) */}
       <Image

@@ -1,10 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { normalizeIranianPhone } from "@/lib/auth/phone";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(
+      `check-phone:${getClientIp(request)}`,
+      15,
+      60_000,
+    );
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "تعداد درخواست‌ها بیش از حد مجاز است. کمی صبر کنید.",
+        },
+        { status: 429 },
+      );
+    }
+
     const body = await request.json();
 
     if (!body || typeof body.phone !== "string") {

@@ -7,6 +7,10 @@ export default async function RegisterPage() {
   const user = await getCurrentUser();
 
   if (user) {
+    if (user.role === "ADMIN") {
+      redirect("/admin");
+    }
+
     redirect("/dashboard");
   }
 

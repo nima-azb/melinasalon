@@ -14,6 +14,13 @@ export interface SmsProvider {
     serviceName: string;
     startsAt: Date;
   }): Promise<void>;
+
+  sendBirthdayGreeting(data: {
+    phoneNumber: string;
+    userName: string;
+    discountCode: string;
+    validDays: number;
+  }): Promise<void>;
 }
 
 class DevelopmentSmsProvider implements SmsProvider {
@@ -46,6 +53,19 @@ class DevelopmentSmsProvider implements SmsProvider {
     console.log(`Service: ${data.serviceName}`);
     console.log(`Starts: ${data.startsAt.toISOString()}`);
   }
+
+  async sendBirthdayGreeting(data: {
+    phoneNumber: string;
+    userName: string;
+    discountCode: string;
+    validDays: number;
+  }): Promise<void> {
+    console.log("[DEV BIRTHDAY SMS]");
+    console.log(`Phone: ${data.phoneNumber}`);
+    console.log(`User: ${data.userName}`);
+    console.log(`Code: ${data.discountCode}`);
+    console.log(`Valid: ${data.validDays} days`);
+  }
 }
 
 const MELIPAYAMAK_SOAP_URL = "https://api.payamak-panel.com/post/Send.asmx";
@@ -71,12 +91,32 @@ function formatSalonTime(date: Date): string {
   }).format(date);
 }
 
+function escapeXml(unsafe: string): string {
+  return unsafe.replace(/[<>&'"]/g, (char) => {
+    switch (char) {
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case "&":
+        return "&amp;";
+      case "'":
+        return "&apos;";
+      case '"':
+        return "&quot;";
+      default:
+        return char;
+    }
+  });
+}
+
 class MelipayamakSmsProvider implements SmsProvider {
   private readonly username: string;
   private readonly password: string;
   private readonly otpBodyId: string;
   private readonly bookingBodyId: string;
   private readonly reminderBodyId: string;
+  private readonly birthdayBodyId: string;
 
   constructor(config: {
     username: string;
@@ -84,12 +124,14 @@ class MelipayamakSmsProvider implements SmsProvider {
     otpBodyId: string;
     bookingBodyId: string;
     reminderBodyId: string;
+    birthdayBodyId: string;
   }) {
     this.username = config.username;
     this.password = config.password;
     this.otpBodyId = config.otpBodyId;
     this.bookingBodyId = config.bookingBodyId;
     this.reminderBodyId = config.reminderBodyId;
+    this.birthdayBodyId = config.birthdayBodyId;
   }
 
   private async sendSoapPattern(
@@ -98,18 +140,19 @@ class MelipayamakSmsProvider implements SmsProvider {
     args: string[],
     context: string,
   ): Promise<void> {
-    // اصلاح نام تگ به username (با n کوچک) مطابق با متد C# ملی‌پیامک
+    const escapedArgs = args.map((arg) => escapeXml(arg));
+
     const soapEnvelope = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <SendByBaseNumber xmlns="http://tempuri.org/">
-      <username>${this.username}</username>
-      <password>${this.password}</password>
+      <username>${escapeXml(this.username)}</username>
+      <password>${escapeXml(this.password)}</password>
       <text>
-${args.map((arg) => `        <string xmlns="http://tempuri.org/">${arg}</string>`).join("\n")}
+${escapedArgs.map((arg) => `        <string xmlns="http://tempuri.org/">${arg}</string>`).join("\n")}
       </text>
-      <to>${toLocalIranianNumber(to)}</to>
-      <bodyId>${bodyId}</bodyId>
+      <to>${escapeXml(toLocalIranianNumber(to))}</to>
+      <bodyId>${escapeXml(bodyId)}</bodyId>
     </SendByBaseNumber>
   </soap:Body>
 </soap:Envelope>`;
@@ -140,7 +183,6 @@ ${args.map((arg) => `        <string xmlns="http://tempuri.org/">${arg}</string>
       `[Melipayamak Response] Context: ${context}, Result: ${resultValue}, Raw XML: ${rawText}`,
     );
 
-    // اگر نتیجه عدد مثبت بزرگ باشد یعنی پیامک با موفقیت صف شده (کد پیگیری است)
     if (!resultValue || Number(resultValue) <= 0) {
       throw new Error(
         `[Melipayamak Error Code: ${resultValue}] ارسال پیامک ناموفق بود. نام کاربری/رمز عبور یا وضعیت الگوی '${bodyId}' را در پنل بررسی کنید.`,
@@ -185,6 +227,20 @@ ${args.map((arg) => `        <string xmlns="http://tempuri.org/">${arg}</string>
       "booking reminder send",
     );
   }
+
+  async sendBirthdayGreeting(data: {
+    phoneNumber: string;
+    userName: string;
+    discountCode: string;
+    validDays: number;
+  }): Promise<void> {
+    await this.sendSoapPattern(
+      data.phoneNumber,
+      this.birthdayBodyId,
+      [data.userName, data.discountCode, String(data.validDays)],
+      "birthday greeting send",
+    );
+  }
 }
 
 function createSmsProvider(): SmsProvider {
@@ -196,6 +252,7 @@ function createSmsProvider(): SmsProvider {
   const otpBodyId = process.env.MELIPAYAMAK_OTP_BODY_ID || "545244";
   const bookingBodyId = process.env.MELIPAYAMAK_BOOKING_BODY_ID || "545238";
   const reminderBodyId = process.env.MELIPAYAMAK_REMINDER_BODY_ID || "545246";
+  const birthdayBodyId = process.env.MELIPAYAMAK_BIRTHDAY_BODY_ID || "";
 
   if (username && password) {
     return new MelipayamakSmsProvider({
@@ -204,6 +261,7 @@ function createSmsProvider(): SmsProvider {
       otpBodyId,
       bookingBodyId,
       reminderBodyId,
+      birthdayBodyId,
     });
   }
 
