@@ -236,6 +236,7 @@ export type UserWhereInput = {
   bookings?: Prisma.BookingListRelationFilter
   generations?: Prisma.GenerationListRelationFilter
   discountCodes?: Prisma.DiscountCodeListRelationFilter
+  payments?: Prisma.PaymentListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -250,6 +251,7 @@ export type UserOrderByWithRelationInput = {
   bookings?: Prisma.BookingOrderByRelationAggregateInput
   generations?: Prisma.GenerationOrderByRelationAggregateInput
   discountCodes?: Prisma.DiscountCodeOrderByRelationAggregateInput
+  payments?: Prisma.PaymentOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -267,6 +269,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   bookings?: Prisma.BookingListRelationFilter
   generations?: Prisma.GenerationListRelationFilter
   discountCodes?: Prisma.DiscountCodeListRelationFilter
+  payments?: Prisma.PaymentListRelationFilter
 }, "id" | "phoneNumber">
 
 export type UserOrderByWithAggregationInput = {
@@ -309,6 +312,7 @@ export type UserCreateInput = {
   bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
   discountCodes?: Prisma.DiscountCodeCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -323,6 +327,7 @@ export type UserUncheckedCreateInput = {
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
   discountCodes?: Prisma.DiscountCodeUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -337,6 +342,7 @@ export type UserUpdateInput = {
   bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
   discountCodes?: Prisma.DiscountCodeUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -351,6 +357,7 @@ export type UserUncheckedUpdateInput = {
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
   discountCodes?: Prisma.DiscountCodeUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -510,6 +517,20 @@ export type UserUpdateOneRequiredWithoutAiGenerationRequestsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAiGenerationRequestsInput, Prisma.UserUpdateWithoutAiGenerationRequestsInput>, Prisma.UserUncheckedUpdateWithoutAiGenerationRequestsInput>
 }
 
+export type UserCreateNestedOneWithoutPaymentsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPaymentsInput, Prisma.UserUncheckedCreateWithoutPaymentsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPaymentsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPaymentsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPaymentsInput, Prisma.UserUncheckedCreateWithoutPaymentsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPaymentsInput
+  upsert?: Prisma.UserUpsertWithoutPaymentsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPaymentsInput, Prisma.UserUpdateWithoutPaymentsInput>, Prisma.UserUncheckedUpdateWithoutPaymentsInput>
+}
+
 export type UserCreateWithoutDiscountCodesInput = {
   id?: string
   phoneNumber: string
@@ -521,6 +542,7 @@ export type UserCreateWithoutDiscountCodesInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestCreateNestedManyWithoutUserInput
   bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutDiscountCodesInput = {
@@ -534,6 +556,7 @@ export type UserUncheckedCreateWithoutDiscountCodesInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedCreateNestedManyWithoutUserInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutDiscountCodesInput = {
@@ -563,6 +586,7 @@ export type UserUpdateWithoutDiscountCodesInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestUpdateManyWithoutUserNestedInput
   bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDiscountCodesInput = {
@@ -576,6 +600,7 @@ export type UserUncheckedUpdateWithoutDiscountCodesInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedUpdateManyWithoutUserNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutBookingsInput = {
@@ -589,6 +614,7 @@ export type UserCreateWithoutBookingsInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
   discountCodes?: Prisma.DiscountCodeCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutBookingsInput = {
@@ -602,6 +628,7 @@ export type UserUncheckedCreateWithoutBookingsInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
   discountCodes?: Prisma.DiscountCodeUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutBookingsInput = {
@@ -631,6 +658,7 @@ export type UserUpdateWithoutBookingsInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
   discountCodes?: Prisma.DiscountCodeUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutBookingsInput = {
@@ -644,6 +672,7 @@ export type UserUncheckedUpdateWithoutBookingsInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
   discountCodes?: Prisma.DiscountCodeUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutGenerationsInput = {
@@ -657,6 +686,7 @@ export type UserCreateWithoutGenerationsInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestCreateNestedManyWithoutUserInput
   bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
   discountCodes?: Prisma.DiscountCodeCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutGenerationsInput = {
@@ -670,6 +700,7 @@ export type UserUncheckedCreateWithoutGenerationsInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedCreateNestedManyWithoutUserInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
   discountCodes?: Prisma.DiscountCodeUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutGenerationsInput = {
@@ -699,6 +730,7 @@ export type UserUpdateWithoutGenerationsInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestUpdateManyWithoutUserNestedInput
   bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
   discountCodes?: Prisma.DiscountCodeUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutGenerationsInput = {
@@ -712,6 +744,7 @@ export type UserUncheckedUpdateWithoutGenerationsInput = {
   aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedUpdateManyWithoutUserNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
   discountCodes?: Prisma.DiscountCodeUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAiGenerationRequestsInput = {
@@ -725,6 +758,7 @@ export type UserCreateWithoutAiGenerationRequestsInput = {
   bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
   discountCodes?: Prisma.DiscountCodeCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAiGenerationRequestsInput = {
@@ -738,6 +772,7 @@ export type UserUncheckedCreateWithoutAiGenerationRequestsInput = {
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
   discountCodes?: Prisma.DiscountCodeUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAiGenerationRequestsInput = {
@@ -767,6 +802,7 @@ export type UserUpdateWithoutAiGenerationRequestsInput = {
   bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
   discountCodes?: Prisma.DiscountCodeUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAiGenerationRequestsInput = {
@@ -777,6 +813,79 @@ export type UserUncheckedUpdateWithoutAiGenerationRequestsInput = {
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
+  generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
+  discountCodes?: Prisma.DiscountCodeUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutPaymentsInput = {
+  id?: string
+  phoneNumber: string
+  role?: $Enums.UserRole
+  createdAt?: Date | string
+  birthDate?: Date | string | null
+  fullName?: string | null
+  lastBirthdaySmsYear?: number | null
+  aiGenerationRequests?: Prisma.AiGenerationRequestCreateNestedManyWithoutUserInput
+  bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
+  generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+  discountCodes?: Prisma.DiscountCodeCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutPaymentsInput = {
+  id?: string
+  phoneNumber: string
+  role?: $Enums.UserRole
+  createdAt?: Date | string
+  birthDate?: Date | string | null
+  fullName?: string | null
+  lastBirthdaySmsYear?: number | null
+  aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedCreateNestedManyWithoutUserInput
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
+  generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+  discountCodes?: Prisma.DiscountCodeUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutPaymentsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPaymentsInput, Prisma.UserUncheckedCreateWithoutPaymentsInput>
+}
+
+export type UserUpsertWithoutPaymentsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPaymentsInput, Prisma.UserUncheckedUpdateWithoutPaymentsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPaymentsInput, Prisma.UserUncheckedCreateWithoutPaymentsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPaymentsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPaymentsInput, Prisma.UserUncheckedUpdateWithoutPaymentsInput>
+}
+
+export type UserUpdateWithoutPaymentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aiGenerationRequests?: Prisma.AiGenerationRequestUpdateManyWithoutUserNestedInput
+  bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
+  generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+  discountCodes?: Prisma.DiscountCodeUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPaymentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastBirthdaySmsYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aiGenerationRequests?: Prisma.AiGenerationRequestUncheckedUpdateManyWithoutUserNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
   discountCodes?: Prisma.DiscountCodeUncheckedUpdateManyWithoutUserNestedInput
@@ -792,6 +901,7 @@ export type UserCountOutputType = {
   bookings: number
   generations: number
   discountCodes: number
+  payments: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -799,6 +909,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   bookings?: boolean | UserCountOutputTypeCountBookingsArgs
   generations?: boolean | UserCountOutputTypeCountGenerationsArgs
   discountCodes?: boolean | UserCountOutputTypeCountDiscountCodesArgs
+  payments?: boolean | UserCountOutputTypeCountPaymentsArgs
 }
 
 /**
@@ -839,6 +950,13 @@ export type UserCountOutputTypeCountDiscountCodesArgs<ExtArgs extends runtime.Ty
   where?: Prisma.DiscountCodeWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPaymentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PaymentWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -852,6 +970,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   bookings?: boolean | Prisma.User$bookingsArgs<ExtArgs>
   generations?: boolean | Prisma.User$generationsArgs<ExtArgs>
   discountCodes?: boolean | Prisma.User$discountCodesArgs<ExtArgs>
+  payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -891,6 +1010,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   bookings?: boolean | Prisma.User$bookingsArgs<ExtArgs>
   generations?: boolean | Prisma.User$generationsArgs<ExtArgs>
   discountCodes?: boolean | Prisma.User$discountCodesArgs<ExtArgs>
+  payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -903,6 +1023,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     bookings: Prisma.$BookingPayload<ExtArgs>[]
     generations: Prisma.$GenerationPayload<ExtArgs>[]
     discountCodes: Prisma.$DiscountCodePayload<ExtArgs>[]
+    payments: Prisma.$PaymentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1310,6 +1431,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   bookings<T extends Prisma.User$bookingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$bookingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   generations<T extends Prisma.User$generationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$generationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GenerationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   discountCodes<T extends Prisma.User$discountCodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$discountCodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DiscountCodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  payments<T extends Prisma.User$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1832,6 +1954,30 @@ export type User$discountCodesArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.DiscountCodeScalarFieldEnum | Prisma.DiscountCodeScalarFieldEnum[]
+}
+
+/**
+ * User.payments
+ */
+export type User$paymentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Payment
+   */
+  select?: Prisma.PaymentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Payment
+   */
+  omit?: Prisma.PaymentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PaymentInclude<ExtArgs> | null
+  where?: Prisma.PaymentWhereInput
+  orderBy?: Prisma.PaymentOrderByWithRelationInput | Prisma.PaymentOrderByWithRelationInput[]
+  cursor?: Prisma.PaymentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PaymentScalarFieldEnum | Prisma.PaymentScalarFieldEnum[]
 }
 
 /**

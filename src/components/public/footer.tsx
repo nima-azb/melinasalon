@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Phone, Clock3, ArrowUp } from "lucide-react";
+import { unstable_cache } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 
@@ -13,20 +14,29 @@ const navigation = [
 
 const FOOTER_SERVICES_LIMIT = 5;
 
+// کش کردن کوئری سرویس‌های فوتر به مدت ۱ ساعت در حافظه سرور
+const getFooterServices = unstable_cache(
+  async () => {
+    return prisma.service.findMany({
+      where: {
+        isActive: true,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      take: FOOTER_SERVICES_LIMIT,
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+  },
+  ["footer-services"],
+  { revalidate: 3600, tags: ["services"] },
+);
+
 export async function Footer() {
-  const services = await prisma.service.findMany({
-    where: {
-      isActive: true,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-    take: FOOTER_SERVICES_LIMIT,
-    select: {
-      id: true,
-      name: true,
-    },
-  });
+  const services = await getFooterServices();
 
   return (
     <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-card-warm)]">

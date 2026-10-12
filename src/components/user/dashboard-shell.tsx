@@ -21,6 +21,11 @@ type Booking = {
     name: string;
     duration: number;
   };
+  payment?: {
+    amount: number;
+    status: string;
+    refId: string | null;
+  } | null;
 };
 
 type Generation = {

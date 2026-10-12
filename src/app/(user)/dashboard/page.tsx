@@ -45,6 +45,13 @@ export default async function DashboardPage() {
             duration: true,
           },
         },
+        payment: {
+          select: {
+            amount: true,
+            status: true,
+            refId: true,
+          },
+        },
       },
     }),
 
@@ -170,6 +177,13 @@ export default async function DashboardPage() {
             createdAt: booking.createdAt.toISOString(),
             updatedAt: booking.updatedAt.toISOString(),
             service: booking.service,
+            payment: booking.payment
+              ? {
+                  amount: booking.payment.amount,
+                  status: booking.payment.status,
+                  refId: booking.payment.refId,
+                }
+              : null,
           }))}
           generations={generationsWithUrls}
           stats={{

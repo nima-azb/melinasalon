@@ -9,6 +9,9 @@ type RouteContext = {
   }>;
 };
 
+// حداقل فاصله زمانی مجاز برای لغو نوبت توسط کاربر به ساعت
+const CANCELLATION_MIN_HOURS_NOTICE = 12;
+
 export async function POST(_request: NextRequest, context: RouteContext) {
   try {
     const user = await getCurrentUser();
@@ -28,7 +31,8 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     const booking = await prisma.booking.findFirst({
       where: {
         id,
-        userId: user.id,
+        // مدیر می‌تواند هر نوبتی را لغو کند، کاربر عادی فقط نوبت‌های خودش
+        ...(user.role === "ADMIN" ? {} : { userId: user.id }),
         status: "CONFIRMED",
       },
       select: {
@@ -41,13 +45,15 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "نوبت مورد نظر یافت نشد یا امکان لغو آن وجود ندارد.",
+          message: "نوبت مورد نظر یافت نشد یا قبلاً لغو شده است.",
         },
         { status: 404 },
       );
     }
 
-    if (booking.startsAt <= new Date()) {
+    const now = new Date();
+
+    if (booking.startsAt <= now) {
       return NextResponse.json(
         {
           success: false,
@@ -55,6 +61,22 @@ export async function POST(_request: NextRequest, context: RouteContext) {
         },
         { status: 400 },
       );
+    }
+
+    // کاربران عادی نمی‌توانند در کمتر از ۱۲ ساعت مانده به نوبت آن را لغو کنند
+    if (user.role !== "ADMIN") {
+      const hoursUntilAppointment =
+        (booking.startsAt.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+      if (hoursUntilAppointment < CANCELLATION_MIN_HOURS_NOTICE) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `امکان لغو آنلاین نوبت تنها تا ${CANCELLATION_MIN_HOURS_NOTICE} ساعت قبل از شروع نوبت وجود دارد. لطفاً جهت هماهنگی با سالن تماس بگیرید.`,
+          },
+          { status: 400 },
+        );
+      }
     }
 
     const updatedBooking = await prisma.booking.update({

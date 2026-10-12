@@ -62,3 +62,8 @@ export type Generation = Prisma.GenerationModel
  * 
  */
 export type AiGenerationRequest = Prisma.AiGenerationRequestModel
+/**
+ * Model Payment
+ * 
+ */
+export type Payment = Prisma.PaymentModel

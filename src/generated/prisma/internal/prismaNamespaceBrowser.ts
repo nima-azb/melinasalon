@@ -59,7 +59,8 @@ export const ModelName = {
   BlockedTime: 'BlockedTime',
   Booking: 'Booking',
   Generation: 'Generation',
-  AiGenerationRequest: 'AiGenerationRequest'
+  AiGenerationRequest: 'AiGenerationRequest',
+  Payment: 'Payment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -191,6 +192,25 @@ export const AiGenerationRequestScalarFieldEnum = {
 } as const
 
 export type AiGenerationRequestScalarFieldEnum = (typeof AiGenerationRequestScalarFieldEnum)[keyof typeof AiGenerationRequestScalarFieldEnum]
+
+
+export const PaymentScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  serviceId: 'serviceId',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  amount: 'amount',
+  authority: 'authority',
+  status: 'status',
+  refId: 'refId',
+  cardPan: 'cardPan',
+  bookingId: 'bookingId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
 
 
 export const SortOrder = {

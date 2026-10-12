@@ -53,13 +53,12 @@ export async function POST(request: NextRequest) {
         phoneNumber,
       },
       select: {
-        role: true,
+        id: true,
       },
     });
 
     return NextResponse.json({
       success: true,
-      isAdmin: user?.role === "ADMIN",
     });
   } catch (error) {
     console.error("POST /api/auth/check-phone error:", error);

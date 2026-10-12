@@ -40,3 +40,12 @@ export const AiWorkflowType = {
 } as const
 
 export type AiWorkflowType = (typeof AiWorkflowType)[keyof typeof AiWorkflowType]
+
+
+export const PaymentStatus = {
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  FAILED: 'FAILED'
+} as const
+
+export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]

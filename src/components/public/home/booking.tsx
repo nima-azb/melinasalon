@@ -1,8 +1,16 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Check, Clock3, Loader2, Scissors } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  Clock3,
+  CreditCard,
+  Loader2,
+  Scissors,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { PAYMENT_CONFIG, formatTomanPrice } from "@/lib/payment/config";
 
 type Service = {
   id: string;
@@ -28,22 +36,6 @@ type AvailabilityResponse = {
   };
   timeSlots: AvailabilityTimeSlot[];
   message?: string;
-};
-
-type BookingResponse = {
-  success: boolean;
-  message?: string;
-  booking?: {
-    id: string;
-    status: string;
-    startsAt: string;
-    endsAt: string;
-    service: {
-      id: string;
-      name: string;
-      duration: number;
-    };
-  };
 };
 
 function formatPersianDate(date: Date) {
@@ -74,6 +66,9 @@ function BookingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const isPaymentSuccess = searchParams.get("payment") === "success";
+  const paymentRefId = searchParams.get("refId");
+
   const dates = useMemo(() => {
     const result: Array<{
       id: string;
@@ -101,7 +96,6 @@ function BookingForm() {
 
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
-
     return getDateKey(today);
   });
 
@@ -118,6 +112,8 @@ function BookingForm() {
   const [error, setError] = useState("");
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
+  const isSuccessBannerVisible = isPaymentSuccess || bookingSuccess;
+
   const selectedServiceData = services.find(
     (service) => service.id === selectedService,
   );
@@ -127,7 +123,19 @@ function BookingForm() {
   );
 
   /*
-   * Load active services.
+   * اسکرول خودکار به بخش رزرو در صورت بازگشت موفق از درگاه
+   */
+  useEffect(() => {
+    if (isPaymentSuccess) {
+      const element = document.getElementById("booking");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [isPaymentSuccess]);
+
+  /*
+   * دریافت لیست خدمات فعال
    */
   useEffect(() => {
     let cancelled = false;
@@ -186,10 +194,7 @@ function BookingForm() {
   }, [searchParams]);
 
   /*
-   * Load availability whenever the selected date or service changes.
-   *
-   * The service duration determines which start times are available,
-   * therefore both date and service are required.
+   * دریافت زمان‌های خالی بر اساس تاریخ و خدمت انتخاب‌شده
    */
   useEffect(() => {
     const serviceId = selectedService;
@@ -281,41 +286,9 @@ function BookingForm() {
     setError("");
   }
 
-  async function refreshAvailability() {
-    if (selectedService === null) {
-      return;
-    }
-
-    const serviceId = selectedService;
-
-    try {
-      const params = new URLSearchParams();
-
-      params.set("date", selectedDate);
-      params.set("serviceId", serviceId);
-
-      const response = await fetch(`/api/availability?${params.toString()}`, {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        return;
-      }
-
-      const data: AvailabilityResponse = await response.json();
-
-      if (data.success) {
-        setTimeSlots(data.timeSlots ?? []);
-      }
-    } catch {
-      /*
-       * The booking itself already succeeded.
-       * Availability refresh is only a UI update.
-       */
-    }
-  }
-
+  /*
+   * کلیک روی دکمه پرداخت بیعانه و هدایت به درگاه بانک
+   */
   async function handleBooking() {
     if (!selectedService || !selectedStartsAt) {
       setError("لطفاً خدمت و زمان موردنظر خود را انتخاب کنید.");
@@ -327,7 +300,7 @@ function BookingForm() {
     setBookingSuccess(false);
 
     try {
-      const response = await fetch("/api/bookings", {
+      const response = await fetch("/api/payments/request", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -338,11 +311,11 @@ function BookingForm() {
         }),
       });
 
-      const data: BookingResponse = await response.json();
+      const data = await response.json();
 
       if (response.status === 401) {
         setError(
-          "برای ثبت نوبت باید وارد حساب کاربری خود شوید. در حال انتقال به صفحه ورود...",
+          "برای ثبت نوبت و پرداخت باید وارد حساب کاربری خود شوید. در حال انتقال به صفحه ورود...",
         );
 
         setTimeout(() => {
@@ -352,19 +325,16 @@ function BookingForm() {
         return;
       }
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "ثبت نوبت با خطا مواجه شد.");
+      if (!response.ok || !data.success || !data.paymentUrl) {
+        throw new Error(data.message || "شروع فرآیند پرداخت با خطا مواجه شد.");
       }
 
-      setBookingSuccess(true);
-      setSelectedStartsAt(null);
-
-      await refreshAvailability();
+      // هدایت مرورگر به درگاه پرداخت زرین‌پال
+      window.location.href = data.paymentUrl;
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "ثبت نوبت با خطا مواجه شد.",
+        err instanceof Error ? err.message : "خطا در اتصال به درگاه پرداخت.",
       );
-    } finally {
       setBooking(false);
     }
   }
@@ -388,14 +358,14 @@ function BookingForm() {
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-[var(--text-secondary)] sm:text-base">
-            خدمت موردنظر، تاریخ و زمان مناسب خود را انتخاب کنید و نوبتتان را
-            به‌سادگی ثبت کنید.
+            خدمت موردنظر، تاریخ و زمان مناسب خود را انتخاب کرده و با پرداخت
+            بیعانه نوبتتان را به‌سادگی قطعی کنید.
           </p>
         </div>
 
         {/* Booking panel */}
         <div className="mx-auto mt-12 max-w-5xl overflow-hidden rounded-[2rem] border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-[0_20px_60px_rgba(36,20,23,0.08)]">
-          <div className="grid lg:grid-cols-[1fr_0.72fr]">
+          <div className="grid lg:grid-cols-[1fr_0.75fr]">
             {/* Main form */}
             <div className="p-6 sm:p-8 lg:p-10">
               {/* Step 1 */}
@@ -497,7 +467,6 @@ function BookingForm() {
                 <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {dates.map((date) => {
                     const active = selectedDate === date.value;
-
                     const dateParts = date.label.split("،");
 
                     return (
@@ -528,9 +497,7 @@ function BookingForm() {
                 <div className="mt-5">
                   <div className="mb-3 flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]">
                     <Clock3 size={14} />
-
                     <span>ساعت‌های موجود</span>
-
                     {selectedServiceData && (
                       <span className="text-[10px]">
                         ({selectedServiceData.duration} دقیقه)
@@ -575,16 +542,32 @@ function BookingForm() {
                 </div>
               </div>
 
+              {/* نمایش پیام خطا */}
               {error && (
                 <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                   {error}
                 </div>
               )}
 
-              {bookingSuccess && (
-                <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm leading-6 text-green-700">
-                  نوبت شما با موفقیت ثبت و تأیید شد. اطلاعات نوبت در پنل کاربری
-                  شما قابل مشاهده است.
+              {/* نمایش پیام تایید ثبت نوبت و پیامک */}
+              {isSuccessBannerVisible && (
+                <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm leading-6 text-green-800">
+                  <div className="flex items-center gap-2 font-bold text-green-900">
+                    <Check size={18} />
+                    نوبت شما با موفقیت ثبت و تأیید شد!
+                  </div>
+                  <p className="mt-1.5 text-xs text-green-700">
+                    پیامک تایید نوبت برای شماره همراه شما ارسال گردید. جزئیات
+                    کامل نوبت در پنل کاربری شما در دسترس است.
+                  </p>
+                  {paymentRefId && (
+                    <div className="mt-2 text-xs font-medium text-green-800">
+                      شماره پیگیری پرداخت:{" "}
+                      <span className="font-mono font-bold">
+                        {paymentRefId}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -601,7 +584,6 @@ function BookingForm() {
                 <div className="space-y-5">
                   <div>
                     <p className="text-[10px] text-white/50">خدمت</p>
-
                     <p className="mt-1 text-sm font-semibold">
                       {selectedServiceData?.name ?? "انتخاب نشده"}
                     </p>
@@ -609,7 +591,6 @@ function BookingForm() {
 
                   <div>
                     <p className="text-[10px] text-white/50">تاریخ</p>
-
                     <p className="mt-1 text-sm font-semibold">
                       {dates.find((date) => date.value === selectedDate)?.label}
                     </p>
@@ -617,7 +598,6 @@ function BookingForm() {
 
                   <div>
                     <p className="text-[10px] text-white/50">ساعت</p>
-
                     <p className="mt-1 text-sm font-semibold">
                       {selectedTimeSlotData
                         ? formatTime(selectedTimeSlotData.startsAt)
@@ -628,15 +608,27 @@ function BookingForm() {
                   {selectedServiceData && (
                     <div>
                       <p className="text-[10px] text-white/50">مدت زمان</p>
-
                       <p className="mt-1 text-sm font-semibold">
                         {selectedServiceData.duration} دقیقه
                       </p>
                     </div>
                   )}
+
+                  {/* ردیف مبلغ بیعانه */}
+                  <div className="rounded-xl border border-white/15 bg-white/5 p-3.5">
+                    <p className="text-[10px] text-white/60">
+                      مبلغ بیعانه رزرو نوبت
+                    </p>
+                    <p className="mt-1 text-base font-bold text-white">
+                      {formatTomanPrice(PAYMENT_CONFIG.depositAmountToman)}
+                    </p>
+                    <p className="mt-1 text-[10px] text-white/50 leading-4">
+                      مابقی هزینه خدمت در سالن تسویه خواهد شد.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="mt-auto pt-10">
+                <div className="mt-auto pt-8">
                   <button
                     type="button"
                     onClick={handleBooking}
@@ -647,24 +639,24 @@ function BookingForm() {
                       !selectedService ||
                       !selectedStartsAt
                     }
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-[var(--brand-crimson-dark)] transition-all hover:bg-[var(--bg-cream)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-[var(--brand-crimson-dark)] transition-all hover:bg-[var(--bg-cream)] disabled:cursor-not-allowed disabled:opacity-50 shadow-md"
                   >
                     {booking ? (
                       <>
                         <Loader2 size={17} className="animate-spin" />
-                        در حال ثبت نوبت...
+                        در حال اتصال به درگاه پرداخت...
                       </>
                     ) : (
                       <>
-                        <CalendarDays size={17} />
-                        ثبت نوبت
+                        <CreditCard size={17} />
+                        پرداخت بیعانه و ثبت نوبت
                       </>
                     )}
                   </button>
 
                   <p className="mt-3 text-center text-[10px] leading-5 text-white/50">
-                    پس از ثبت نوبت، اطلاعات آن در پنل کاربری شما نمایش داده
-                    می‌شود.
+                    با کلیک بر روی دکمه بالا، جهت پرداخت بیعانه به درگاه امن
+                    زرین‌پال منتقل می‌شوید.
                   </p>
                 </div>
               </div>

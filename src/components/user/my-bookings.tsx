@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, CalendarDays, Clock3 } from "lucide-react";
+import { Ban, CalendarDays, Clock3, CreditCard, Receipt } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -18,6 +18,11 @@ type Booking = {
     name: string;
     duration: number;
   };
+  payment?: {
+    amount: number;
+    status: string;
+    refId: string | null;
+  } | null;
 };
 
 type MyBookingsProps = {
@@ -45,6 +50,10 @@ function formatTime(dateString: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(dateString));
+}
+
+function formatToman(amount: number) {
+  return new Intl.NumberFormat("fa-IR").format(amount);
 }
 
 function isFutureBooking(booking: Booking) {
@@ -170,6 +179,34 @@ export function MyBookings({ bookings: initialBookings }: MyBookingsProps) {
             </span>
           </div>
         </div>
+
+        {booking.payment && booking.payment.status === "PAID" && (
+          <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3.5 py-2.5 text-xs">
+            <div className="flex items-center gap-1.5 text-emerald-800">
+              <CreditCard size={15} className="text-emerald-600" />
+              <span>بیعانه:</span>
+              <span className="font-bold">
+                {formatToman(booking.payment.amount)} تومان
+              </span>
+              <span className="rounded-md bg-emerald-200/60 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">
+                پرداخت‌شده
+              </span>
+            </div>
+
+            {booking.payment.refId && (
+              <div className="flex items-center gap-1.5 text-emerald-900/80">
+                <Receipt size={14} className="text-emerald-600" />
+                <span>کد رهگیری بانکی:</span>
+                <span
+                  className="font-mono font-bold text-emerald-950"
+                  dir="ltr"
+                >
+                  {booking.payment.refId}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {canCancel && (
           <div className="mt-4 flex justify-end border-t border-[var(--border-subtle)] pt-4">

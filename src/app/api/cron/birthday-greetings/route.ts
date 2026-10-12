@@ -108,6 +108,15 @@ export async function GET(request: NextRequest) {
         const discountCode = generateDiscountCode();
         const clientName = user.fullName?.trim() || "کاربر عزیز";
 
+        // ۱. ابتدا پیامک ارسال می‌شود
+        await smsProvider.sendBirthdayGreeting({
+          phoneNumber: user.phoneNumber,
+          userName: clientName,
+          discountCode,
+          validDays: DISCOUNT_VALID_DAYS,
+        });
+
+        // ۲. تنها پس از ارسال موفق پیامک، کد در دیتابیس ثبت و وضعیت کاربر بروزرسانی می‌شود
         await prisma.$transaction([
           prisma.discountCode.create({
             data: {
@@ -124,13 +133,6 @@ export async function GET(request: NextRequest) {
             },
           }),
         ]);
-
-        await smsProvider.sendBirthdayGreeting({
-          phoneNumber: user.phoneNumber,
-          userName: clientName,
-          discountCode,
-          validDays: DISCOUNT_VALID_DAYS,
-        });
 
         sentCount += 1;
       } catch (userError) {

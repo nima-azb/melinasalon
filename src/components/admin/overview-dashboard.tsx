@@ -11,6 +11,8 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { ServiceCredits } from "@/components/admin/service-credits";
+
 type OverviewStats = {
   todayBookings: { count: number; changePercent: number | null };
   newUsers: { count: number; changePercent: number | null };
@@ -120,13 +122,19 @@ export function OverviewDashboard() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div
-            key={index}
-            className="h-32 animate-pulse rounded-2xl bg-[var(--bg-card)]"
-          />
-        ))}
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-32 animate-pulse rounded-2xl bg-[var(--bg-card)]"
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="h-44 animate-pulse rounded-2xl bg-[var(--bg-card)]" />
+          <div className="h-44 animate-pulse rounded-2xl bg-[var(--bg-card)]" />
+        </div>
       </div>
     );
   }
@@ -236,6 +244,9 @@ export function OverviewDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Service Credits Live Balance Section */}
+      <ServiceCredits />
 
       {/* Chart + upcoming list */}
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">

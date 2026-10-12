@@ -100,12 +100,34 @@ export async function GET(request: NextRequest) {
     const { startOfDay, endOfDay, dayOpen, dayClose } = getSalonDayBounds(date);
 
     const now = new Date();
+    const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
 
-    const [bookings, blockedTimes] = await Promise.all([
+    const [bookings, pendingPayments, blockedTimes] = await Promise.all([
       prisma.booking.findMany({
         where: {
           serviceId,
           status: "CONFIRMED",
+          startsAt: {
+            lt: endOfDay,
+          },
+          endsAt: {
+            gt: startOfDay,
+          },
+        },
+        select: {
+          id: true,
+          startsAt: true,
+          endsAt: true,
+        },
+      }),
+
+      prisma.payment.findMany({
+        where: {
+          serviceId,
+          status: "PENDING",
+          createdAt: {
+            gte: fifteenMinutesAgo,
+          },
           startsAt: {
             lt: endOfDay,
           },
@@ -138,7 +160,9 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    const hasBookingForDay = service.oneBookingPerDay && bookings.length > 0;
+    const hasBookingForDay =
+      service.oneBookingPerDay &&
+      (bookings.length > 0 || pendingPayments.length > 0);
 
     const timeSlots: Array<{
       startsAt: Date;
@@ -167,7 +191,18 @@ export async function GET(request: NextRequest) {
           ),
         ).length;
 
-        const isFull = overlappingBookingsCount >= service.capacity;
+        const overlappingPendingCount = pendingPayments.filter((payment) =>
+          intervalsOverlap(
+            currentStart,
+            currentEnd,
+            payment.startsAt,
+            payment.endsAt,
+          ),
+        ).length;
+
+        const isFull =
+          overlappingBookingsCount + overlappingPendingCount >=
+          service.capacity;
 
         const overlapsBlockedTime = blockedTimes.some((blockedTime) =>
           intervalsOverlap(

@@ -122,6 +122,7 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({
       success: true,
+      role: user.role,
       message:
         purpose === "REGISTER"
           ? "ثبت‌نام با موفقیت انجام شد."

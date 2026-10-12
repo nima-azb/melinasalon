@@ -43,39 +43,17 @@ export function LoginForm() {
     setStep("otp");
   }
 
-  async function checkPhone() {
+  async function handlePhoneSubmit() {
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("/api/auth/check-phone", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          phone,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "خطایی هنگام بررسی شماره تلفن رخ داد.");
-      }
-
-      if (data.isAdmin) {
-        router.push(`/admin/login?phone=${encodeURIComponent(phone)}`);
-
-        return;
-      }
-
       await sendOtp();
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "خطایی هنگام بررسی شماره تلفن رخ داد.",
+          : "خطایی هنگام ارسال کد تأیید رخ داد.",
       );
     } finally {
       setLoading(false);
@@ -104,7 +82,11 @@ export function LoginForm() {
         throw new Error(data.message || "کد تأیید اشتباه است.");
       }
 
-      router.push("/dashboard");
+      if (data.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطایی هنگام ورود رخ داد.");
@@ -121,7 +103,7 @@ export function LoginForm() {
     }
 
     if (step === "phone") {
-      void checkPhone();
+      void handlePhoneSubmit();
       return;
     }
 
@@ -358,10 +340,17 @@ export function LoginForm() {
 
         {/* Security footer */}
         <div className="border-t border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-6 py-4 sm:px-8">
-          <div className="flex items-center justify-center gap-2 text-xs text-[var(--text-secondary)]">
-            <CheckCircle2 size={15} className="text-[var(--brand-crimson)]" />
-
-            <span>ورود امن و محافظت‌شده با کد یکبارمصرف</span>
+          <div className="flex items-center justify-between gap-2 text-xs text-[var(--text-secondary)]">
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 size={15} className="text-[var(--brand-crimson)]" />
+              <span>ورود امن با کد یکبارمصرف</span>
+            </div>
+            <Link
+              href="/admin/login"
+              className="text-[11px] text-[var(--text-secondary)] transition-colors hover:text-[var(--brand-crimson)] hover:underline"
+            >
+              ورود مدیران
+            </Link>
           </div>
         </div>
       </div>

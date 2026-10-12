@@ -1,328 +1,300 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@/generated/prisma/client";
-import { getCurrentUser } from "@/lib/auth/get-current-user";
+
+import { BookingStatus } from "@/generated/prisma/client";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
-import { smsProvider } from "@/lib/sms";
 import {
-  getSalonDayBounds,
-  getZonedWallTime,
-  isSlotAligned,
-  isWithinSalonHours,
+  isValidCalendarDateString,
+  parseCalendarDateString,
+  zonedWallTimeToUtc,
 } from "@/lib/time/salon-time";
 
-function isValidDate(value: string) {
-  const date = new Date(value);
-  return !Number.isNaN(date.getTime());
+const VALID_STATUSES = ["CONFIRMED", "CANCELLED", "COMPLETED"] as const;
+
+const VALID_SORT_FIELDS = [
+  "appointment",
+  "createdAt",
+  "customer",
+  "service",
+  "status",
+] as const;
+
+const VALID_SORT_DIRECTIONS = ["asc", "desc"] as const;
+
+type SortField = (typeof VALID_SORT_FIELDS)[number];
+type SortDirection = (typeof VALID_SORT_DIRECTIONS)[number];
+
+function isBookingStatus(value: string): value is BookingStatus {
+  return VALID_STATUSES.includes(value as (typeof VALID_STATUSES)[number]);
 }
 
-function pad(value: number) {
-  return String(value).padStart(2, "0");
+function isSortField(value: string): value is SortField {
+  return VALID_SORT_FIELDS.includes(value as SortField);
 }
 
-function getSalonCalendarDayBounds(date: Date) {
-  const wall = getZonedWallTime(date);
-  const dateKey = `${wall.year}-${pad(wall.month)}-${pad(wall.day)}`;
-  return getSalonDayBounds(dateKey);
+function isSortDirection(value: string): value is SortDirection {
+  return VALID_SORT_DIRECTIONS.includes(value as SortDirection);
 }
 
-export async function GET() {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "برای این عملیات باید وارد حساب کاربری خود شوید.",
-        },
-        { status: 401 },
-      );
+function parseDateRange(fromDate: string | null, toDate: string | null) {
+  let start: Date | undefined;
+  let end: Date | undefined;
+
+  if (fromDate) {
+    if (!isValidCalendarDateString(fromDate)) {
+      return {
+        error: "تاریخ شروع معتبر نیست. از فرمت YYYY-MM-DD استفاده کنید.",
+      };
     }
 
-    const bookings = await prisma.booking.findMany({
-      where: { userId: user.id },
-      orderBy: { startsAt: "asc" },
-      include: {
-        service: {
-          select: {
-            id: true,
-            name: true,
-            duration: true,
-            oneBookingPerDay: true,
-          },
-        },
-      },
-    });
-
-    return NextResponse.json({ success: true, bookings });
-  } catch (error) {
-    console.error("GET /api/bookings error:", error);
-    return NextResponse.json(
-      { success: false, message: "دریافت نوبت‌ها با خطا مواجه شد." },
-      { status: 500 },
-    );
+    const { year, month, day } = parseCalendarDateString(fromDate);
+    start = zonedWallTimeToUtc(year, month, day, 0, 0, 0);
   }
+
+  if (toDate) {
+    if (!isValidCalendarDateString(toDate)) {
+      return {
+        error: "تاریخ پایان معتبر نیست. از فرمت YYYY-MM-DD استفاده کنید.",
+      };
+    }
+
+    const { year, month, day } = parseCalendarDateString(toDate);
+    end = zonedWallTimeToUtc(year, month, day + 1, 0, 0, 0);
+  }
+
+  if (start && end && start >= end) {
+    return {
+      error: "تاریخ شروع باید قبل یا برابر با تاریخ پایان باشد.",
+    };
+  }
+
+  return {
+    start,
+    end,
+  };
 }
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "برای ثبت نوبت باید وارد حساب کاربری خود شوید.",
-        },
-        { status: 401 },
-      );
+    const admin = await requireAdmin();
+
+    if (admin instanceof NextResponse) {
+      return admin;
     }
 
-    const body: unknown = await request.json();
+    const searchParams = request.nextUrl.searchParams;
 
-    if (
-      typeof body !== "object" ||
-      body === null ||
-      !("serviceId" in body) ||
-      !("startsAt" in body)
-    ) {
+    const search = searchParams.get("search")?.trim() ?? "";
+    const fromDate = searchParams.get("fromDate");
+    const toDate = searchParams.get("toDate");
+    const status = searchParams.get("status");
+    const serviceId = searchParams.get("serviceId");
+    const sort = searchParams.get("sort") ?? "appointment";
+    const direction = searchParams.get("direction") ?? "asc";
+
+    if (status && !isBookingStatus(status)) {
       return NextResponse.json(
         {
           success: false,
-          message: "انتخاب سرویس و زمان شروع نوبت الزامی است.",
+          message: "وضعیت نوبت معتبر نیست.",
         },
         { status: 400 },
       );
     }
 
-    const serviceId = body.serviceId;
-    const startsAtValue = body.startsAt;
-
-    if (typeof serviceId !== "string" || !serviceId) {
-      return NextResponse.json(
-        { success: false, message: "انتخاب سرویس الزامی است." },
-        { status: 400 },
-      );
-    }
-
-    if (typeof startsAtValue !== "string" || !startsAtValue) {
-      return NextResponse.json(
-        { success: false, message: "زمان شروع نوبت الزامی است." },
-        { status: 400 },
-      );
-    }
-
-    if (!isValidDate(startsAtValue)) {
-      return NextResponse.json(
-        { success: false, message: "زمان شروع نوبت معتبر نیست." },
-        { status: 400 },
-      );
-    }
-
-    const startsAt = new Date(startsAtValue);
-
-    if (!isSlotAligned(startsAt)) {
+    if (!isSortField(sort)) {
       return NextResponse.json(
         {
           success: false,
-          message: "نوبت‌ها باید در بازه‌های ۳۰ دقیقه‌ای شروع شوند.",
+          message: "فیلد مرتب‌سازی معتبر نیست.",
         },
         { status: 400 },
       );
     }
 
-    if (startsAt <= new Date()) {
-      return NextResponse.json(
-        { success: false, message: "این زمان دیگر در دسترس نیست." },
-        { status: 409 },
-      );
-    }
-
-    const service = await prisma.service.findUnique({
-      where: { id: serviceId },
-      select: {
-        id: true,
-        name: true,
-        duration: true,
-        isActive: true,
-        capacity: true,
-        oneBookingPerDay: true,
-      },
-    });
-
-    if (!service) {
-      return NextResponse.json(
-        { success: false, message: "سرویس مورد نظر یافت نشد." },
-        { status: 404 },
-      );
-    }
-
-    if (!service.isActive) {
-      return NextResponse.json(
-        { success: false, message: "این سرویس در حال حاضر فعال نیست." },
-        { status: 409 },
-      );
-    }
-
-    const endsAt = new Date(startsAt.getTime() + service.duration * 60 * 1000);
-
-    if (!isWithinSalonHours(startsAt, endsAt)) {
+    if (!isSortDirection(direction)) {
       return NextResponse.json(
         {
           success: false,
-          message: "زمان انتخابی در ساعات کاری سالن نمی‌گنجد.",
+          message: "جهت مرتب‌سازی معتبر نیست.",
         },
-        { status: 409 },
+        { status: 400 },
       );
     }
 
-    const booking = await prisma.$transaction(
-      async (tx) => {
-        const { startOfDay, endOfDay } = getSalonCalendarDayBounds(startsAt);
+    if (search.length > 100) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Search text cannot exceed 100 characters.",
+        },
+        { status: 400 },
+      );
+    }
 
-        if (service.oneBookingPerDay) {
-          const existingDailyBooking = await tx.booking.findFirst({
-            where: {
-              serviceId,
-              status: "CONFIRMED",
-              startsAt: { gte: startOfDay, lt: endOfDay },
-            },
-            select: { id: true },
-          });
+    const dateRange = parseDateRange(fromDate, toDate);
 
-          if (existingDailyBooking) {
-            throw new Error("SERVICE_BOOKING_PER_DAY_LIMIT");
+    if ("error" in dateRange) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: dateRange.error,
+        },
+        { status: 400 },
+      );
+    }
+
+    const where = {
+      ...(status
+        ? {
+            status: status as BookingStatus,
           }
-        }
-
-        const overlappingBookingsCount = await tx.booking.count({
-          where: {
+        : {}),
+      ...(serviceId
+        ? {
             serviceId,
-            status: "CONFIRMED",
-            startsAt: { lt: endsAt },
-            endsAt: { gt: startsAt },
+          }
+        : {}),
+      ...(dateRange.start || dateRange.end
+        ? {
+            startsAt: {
+              ...(dateRange.start ? { gte: dateRange.start } : {}),
+              ...(dateRange.end ? { lt: dateRange.end } : {}),
+            },
+          }
+        : {}),
+      ...(search
+        ? {
+            user: {
+              OR: [
+                {
+                  fullName: {
+                    contains: search,
+                    mode: "insensitive" as const,
+                  },
+                },
+                {
+                  phoneNumber: {
+                    contains: search,
+                    mode: "insensitive" as const,
+                  },
+                },
+              ],
+            },
+          }
+        : {}),
+    };
+
+    let orderBy:
+      | { startsAt: SortDirection }
+      | { createdAt: SortDirection }
+      | { status: SortDirection }
+      | { user: { fullName: SortDirection } }
+      | { service: { name: SortDirection } };
+
+    switch (sort) {
+      case "createdAt":
+        orderBy = {
+          createdAt: direction,
+        };
+        break;
+
+      case "customer":
+        orderBy = {
+          user: {
+            fullName: direction,
           },
-        });
+        };
+        break;
 
-        if (overlappingBookingsCount >= service.capacity) {
-          throw new Error("APPOINTMENT_UNAVAILABLE");
-        }
-
-        const overlappingBlockedTime = await tx.blockedTime.findFirst({
-          where: {
-            serviceId,
-            startsAt: { lt: endsAt },
-            endsAt: { gt: startsAt },
+      case "service":
+        orderBy = {
+          service: {
+            name: direction,
           },
-          select: { id: true },
-        });
+        };
+        break;
 
-        if (overlappingBlockedTime) {
-          throw new Error("APPOINTMENT_BLOCKED");
-        }
+      case "status":
+        orderBy = {
+          status: direction,
+        };
+        break;
 
-        const existingSameServiceDay = await tx.booking.findFirst({
-          where: {
-            userId: user.id,
-            serviceId,
-            status: { in: ["CONFIRMED", "COMPLETED"] },
-            startsAt: { gte: startOfDay, lt: endOfDay },
-          },
-          select: { id: true },
-        });
+      case "appointment":
+      default:
+        orderBy = {
+          startsAt: direction,
+        };
+        break;
+    }
 
-        if (existingSameServiceDay) {
-          throw new Error("DUPLICATE_SERVICE_DAY");
-        }
+    const pageParam = searchParams.get("page");
+    const limitParam = searchParams.get("limit");
 
-        return tx.booking.create({
-          data: {
-            userId: user.id,
-            serviceId,
-            startsAt,
-            endsAt,
-            status: "CONFIRMED",
-          },
-          include: {
-            service: {
-              select: {
-                id: true,
-                name: true,
-                duration: true,
-                oneBookingPerDay: true,
-              },
+    const page = pageParam ? Math.max(1, Number(pageParam)) : 1;
+    const limit = limitParam
+      ? Math.min(200, Math.max(1, Number(limitParam)))
+      : 100;
+    const skip = (page - 1) * limit;
+
+    const [totalCount, bookings] = await Promise.all([
+      prisma.booking.count({ where }),
+      prisma.booking.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          status: true,
+          startsAt: true,
+          endsAt: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: {
+              id: true,
+              phoneNumber: true,
+              fullName: true,
+              birthDate: true,
             },
           },
-        });
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
-
-    try {
-      const clientName =
-        (user as { fullName?: string | null }).fullName || "کاربر";
-
-      await smsProvider.sendBookingConfirmation({
-        phoneNumber: user.phoneNumber,
-        userName: clientName,
-        serviceName: booking.service.name,
-        startsAt: booking.startsAt,
-      });
-    } catch (smsError) {
-      console.error("Booking confirmation SMS error:", smsError);
-    }
-
-    return NextResponse.json({ success: true, booking }, { status: 201 });
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === "SERVICE_BOOKING_PER_DAY_LIMIT") {
-        return NextResponse.json(
-          {
-            success: false,
-            message:
-              "این خدمت برای این تاریخ قبلاً رزرو شده است و فقط یک نوبت در روز دارد.",
+          service: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              duration: true,
+              isActive: true,
+            },
           },
-          { status: 409 },
-        );
-      }
-      if (error.message === "APPOINTMENT_UNAVAILABLE") {
-        return NextResponse.json(
-          { success: false, message: "ظرفیت این زمان تکمیل شده است." },
-          { status: 409 },
-        );
-      }
-      if (error.message === "APPOINTMENT_BLOCKED") {
-        return NextResponse.json(
-          { success: false, message: "این زمان برای این خدمت مسدود شده است." },
-          { status: 409 },
-        );
-      }
-      if (error.message === "DUPLICATE_SERVICE_DAY") {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "شما قبلاً برای این سرویس در این تاریخ نوبت ثبت کرده‌اید.",
+          payment: {
+            select: {
+              amount: true,
+              status: true,
+              refId: true,
+            },
           },
-          { status: 409 },
-        );
-      }
-    }
-
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2034"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "این نوبت توسط شخص دیگری ثبت شد. لطفاً زمان دیگری انتخاب کنید.",
         },
-        { status: 409 },
-      );
-    }
+      }),
+    ]);
 
-    console.error("POST /api/bookings error:", error);
+    return NextResponse.json({
+      success: true,
+      bookings,
+      totalCount,
+      page,
+      totalPages: Math.ceil(totalCount / limit),
+    });
+  } catch (error) {
+    console.error("GET /api/admin/bookings error:", error);
+
     return NextResponse.json(
-      { success: false, message: "ثبت نوبت با خطا مواجه شد." },
+      {
+        success: false,
+        message: "دریافت لیست نوبت‌ها با خطا مواجه شد.",
+      },
       { status: 500 },
     );
   }

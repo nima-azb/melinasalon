@@ -19,6 +19,7 @@ model User {
   bookings             Booking[]
   generations          Generation[]
   discountCodes        DiscountCode[]
+  payments             Payment[]
 
   @@map("users")
 }
@@ -78,6 +79,7 @@ model Service {
   createdAt        DateTime      @default(now())
   bookings         Booking[]
   blockedTimes     BlockedTime[]
+  payments         Payment[]
 
   @@map("services")
 }
@@ -110,6 +112,7 @@ model Booking {
   reminderSentAt DateTime?
   service        Service       @relation(fields: [serviceId], references: [id])
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment        Payment?
 
   @@index([userId])
   @@index([serviceId])
@@ -144,6 +147,31 @@ model AiGenerationRequest {
   @@map("ai_generation_requests")
 }
 
+model Payment {
+  id        String        @id @default(cuid())
+  userId    String
+  serviceId String
+  startsAt  DateTime
+  endsAt    DateTime
+  amount    Int
+  authority String        @unique
+  status    PaymentStatus @default(PENDING)
+  refId     String?
+  cardPan   String?
+  bookingId String?       @unique
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service Service  @relation(fields: [serviceId], references: [id])
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([authority])
+  @@index([status])
+  @@map("payments")
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -163,4 +191,10 @@ enum OtpPurpose {
 enum AiWorkflowType {
   CUSTOM
   RECOMMENDATION
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
 }

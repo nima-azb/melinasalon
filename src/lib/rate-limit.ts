@@ -60,18 +60,29 @@ export function checkRateLimit(
   return { allowed: true };
 }
 
-/** Best-effort client IP extraction for a server sitting behind a reverse proxy. */
+/** Best-effort client IP extraction with preference for verified reverse-proxy headers. */
 export function getClientIp(request: Request): string {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0].trim();
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp && realIp.trim()) {
+    return realIp.trim();
   }
 
-  const realIp = request.headers.get("x-real-ip");
+  const arvanIp = request.headers.get("arvan-real-ip");
+  if (arvanIp && arvanIp.trim()) {
+    return arvanIp.trim();
+  }
 
-  if (realIp) {
-    return realIp;
+  const cfIp = request.headers.get("cf-connecting-ip");
+  if (cfIp && cfIp.trim()) {
+    return cfIp.trim();
+  }
+
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    const ip = forwardedFor.split(",")[0]?.trim();
+    if (ip) {
+      return ip;
+    }
   }
 
   return "unknown";
