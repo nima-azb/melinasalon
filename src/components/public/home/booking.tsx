@@ -1,16 +1,8 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import {
-  CalendarDays,
-  Check,
-  Clock3,
-  CreditCard,
-  Loader2,
-  Scissors,
-} from "lucide-react";
+import { CalendarDays, Check, Clock3, Loader2, Scissors } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PAYMENT_CONFIG, formatTomanPrice } from "@/lib/payment/config";
 
 type Service = {
   id: string;
@@ -111,6 +103,7 @@ function BookingForm() {
 
   const [error, setError] = useState("");
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [availabilityKey, setAvailabilityKey] = useState(0);
 
   const isSuccessBannerVisible = isPaymentSuccess || bookingSuccess;
 
@@ -250,7 +243,7 @@ function BookingForm() {
     return () => {
       cancelled = true;
     };
-  }, [selectedDate, selectedService]);
+  }, [selectedDate, selectedService, availabilityKey]);
 
   function handleDateChange(date: string) {
     if (booking) {
@@ -287,7 +280,7 @@ function BookingForm() {
   }
 
   /*
-   * کلیک روی دکمه پرداخت بیعانه و هدایت به درگاه بانک
+   * ثبت مستقیم نوبت بدون درگاه پرداخت
    */
   async function handleBooking() {
     if (!selectedService || !selectedStartsAt) {
@@ -300,7 +293,7 @@ function BookingForm() {
     setBookingSuccess(false);
 
     try {
-      const response = await fetch("/api/payments/request", {
+      const response = await fetch("/api/bookings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -315,7 +308,7 @@ function BookingForm() {
 
       if (response.status === 401) {
         setError(
-          "برای ثبت نوبت و پرداخت باید وارد حساب کاربری خود شوید. در حال انتقال به صفحه ورود...",
+          "برای ثبت نوبت باید وارد حساب کاربری خود شوید. در حال انتقال به صفحه ورود...",
         );
 
         setTimeout(() => {
@@ -325,16 +318,21 @@ function BookingForm() {
         return;
       }
 
-      if (!response.ok || !data.success || !data.paymentUrl) {
-        throw new Error(data.message || "شروع فرآیند پرداخت با خطا مواجه شد.");
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "ثبت نوبت با خطا مواجه شد.");
       }
 
-      // هدایت مرورگر به درگاه پرداخت زرین‌پال
-      window.location.href = data.paymentUrl;
+      setBookingSuccess(true);
+      setSelectedStartsAt(null);
+      setAvailabilityKey((prev) => prev + 1);
+
+      const element = document.getElementById("booking");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "خطا در اتصال به درگاه پرداخت.",
-      );
+      setError(err instanceof Error ? err.message : "خطا در ثبت نوبت.");
+    } finally {
       setBooking(false);
     }
   }
@@ -358,8 +356,8 @@ function BookingForm() {
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-[var(--text-secondary)] sm:text-base">
-            خدمت موردنظر، تاریخ و زمان مناسب خود را انتخاب کرده و با پرداخت
-            بیعانه نوبتتان را به‌سادگی قطعی کنید.
+            خدمت موردنظر، تاریخ و زمان مناسب خود را انتخاب کرده و نوبتتان را
+            به‌سادگی ثبت و نهایی کنید.
           </p>
         </div>
 
@@ -614,18 +612,17 @@ function BookingForm() {
                     </div>
                   )}
 
-                  {/* ردیف مبلغ بیعانه */}
-                  <div className="rounded-xl border border-white/15 bg-white/5 p-3.5">
-                    <p className="text-[10px] text-white/60">
-                      مبلغ بیعانه رزرو نوبت
-                    </p>
-                    <p className="mt-1 text-base font-bold text-white">
-                      {formatTomanPrice(PAYMENT_CONFIG.depositAmountToman)}
+                  {/* ردیف نحوه پرداخت */}
+                  {/* <div className="rounded-xl border border-white/15 bg-white/5 p-3.5">
+                    <p className="text-[10px] text-white/60">نحوه پرداخت</p>
+                    <p className="mt-1 text-sm font-bold text-white">
+                      پرداخت حضوری در سالن
                     </p>
                     <p className="mt-1 text-[10px] text-white/50 leading-4">
-                      مابقی هزینه خدمت در سالن تسویه خواهد شد.
+                      هزینه خدمات پس از مراجعه و انجام کار در سالن تسویه خواهد
+                      شد.
                     </p>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="mt-auto pt-8">
@@ -644,19 +641,19 @@ function BookingForm() {
                     {booking ? (
                       <>
                         <Loader2 size={17} className="animate-spin" />
-                        در حال اتصال به درگاه پرداخت...
+                        در حال ثبت نوبت...
                       </>
                     ) : (
                       <>
-                        <CreditCard size={17} />
-                        پرداخت بیعانه و ثبت نوبت
+                        <Check size={17} />
+                        تأیید و ثبت نوبت
                       </>
                     )}
                   </button>
 
                   <p className="mt-3 text-center text-[10px] leading-5 text-white/50">
-                    با کلیک بر روی دکمه بالا، جهت پرداخت بیعانه به درگاه امن
-                    زرین‌پال منتقل می‌شوید.
+                    با ثبت نوبت، پیامک تأیید بلافاصله برای شماره همراه شما ارسال
+                    خواهد شد.
                   </p>
                 </div>
               </div>

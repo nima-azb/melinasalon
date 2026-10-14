@@ -114,7 +114,7 @@ export function DashboardShell({
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-bold sm:text-lg">
-                    تولدتان مبارک! هدیه اختصاصی سالن ملینا بیوتی
+                    تولدتان مبارک! هدیه اختصاصی سالن ملین بیوتی
                   </h2>
                 </div>
 

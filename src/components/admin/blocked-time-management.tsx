@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  AlertCircle,
+  CalendarX2,
+  Clock,
+  History,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { JalaliDatePicker } from "../ui/jalali-date-picker";
 
 type Service = {
@@ -31,22 +39,46 @@ type BlockedTimeForm = {
   reason: string;
 };
 
-type ApiResponse<T> = {
+type BlockedTimesResponse = {
   success: boolean;
   message?: string;
-  services?: T[];
-  blockedTimes?: T[];
+  blockedTimes?: BlockedTime[];
+  totalCount?: number;
+  page?: number;
+  totalPages?: number;
+};
+
+type ServicesResponse = {
+  success: boolean;
+  message?: string;
+  services?: Service[];
 };
 
 function formatDateTime(value: string): string {
   return new Intl.DateTimeFormat("fa-IR", {
     timeZone: "Asia/Tehran",
     year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+    month: "long",
+    day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function formatHourRange(startsAt: string, endsAt: string): string {
+  const start = new Intl.DateTimeFormat("fa-IR", {
+    timeZone: "Asia/Tehran",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(startsAt));
+
+  const end = new Intl.DateTimeFormat("fa-IR", {
+    timeZone: "Asia/Tehran",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(endsAt));
+
+  return `${start} تا ${end}`;
 }
 
 export function BlockedTimeManagement() {
@@ -56,8 +88,12 @@ export function BlockedTimeManagement() {
   const [loading, setLoading] = useState(true);
   const [loadingServices, setLoadingServices] = useState(true);
   const [creating, setCreating] = useState(false);
-
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [includePast, setIncludePast] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -65,99 +101,32 @@ export function BlockedTimeManagement() {
   const [form, setForm] = useState<BlockedTimeForm>({
     serviceId: "",
     date: "",
-    startTime: "08:00",
-    endTime: "09:00",
+    startTime: "09:00",
+    endTime: "10:00",
     reason: "",
   });
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadInitialData = async () => {
-      try {
-        setLoading(true);
-        setLoadingServices(true);
-        setError("");
-
-        const [servicesResponse, blockedTimesResponse] = await Promise.all([
-          fetch("/api/services", {
-            method: "GET",
-            cache: "no-store",
-          }),
-          fetch("/api/admin/blocked-times", {
-            method: "GET",
-            cache: "no-store",
-          }),
-        ]);
-
-        const servicesData =
-          (await servicesResponse.json()) as ApiResponse<Service>;
-
-        const blockedTimesData =
-          (await blockedTimesResponse.json()) as ApiResponse<BlockedTime>;
-
-        if (cancelled) {
-          return;
-        }
-
-        if (!servicesResponse.ok || !servicesData.success) {
-          throw new Error(
-            servicesData.message || "دریافت خدمات با خطا مواجه شد.",
-          );
-        }
-
-        if (!blockedTimesResponse.ok || !blockedTimesData.success) {
-          throw new Error(
-            blockedTimesData.message ||
-              "دریافت زمان‌های مسدود با خطا مواجه شد.",
-          );
-        }
-
-        const activeServices = servicesData.services ?? [];
-        const loadedBlockedTimes = blockedTimesData.blockedTimes ?? [];
-
-        setServices(activeServices);
-        setBlockedTimes(loadedBlockedTimes);
-
-        if (activeServices.length > 0) {
-          setForm((current) => ({
-            ...current,
-            serviceId: current.serviceId || activeServices[0].id,
-          }));
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Failed to load blocked-time data:", error);
-
-          setError(
-            error instanceof Error
-              ? error.message
-              : "دریافت اطلاعات با خطا مواجه شد.",
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-          setLoadingServices(false);
-        }
-      }
-    };
-
-    void loadInitialData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  async function loadBlockedTimes() {
+  const loadBlockedTimes = useCallback(async () => {
     try {
-      const response = await fetch("/api/admin/blocked-times", {
-        method: "GET",
-        cache: "no-store",
-      });
+      setLoading(true);
+      setError("");
 
-      const data = (await response.json()) as ApiResponse<BlockedTime>;
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", "10");
+      if (includePast) {
+        params.set("includePast", "true");
+      }
+
+      const response = await fetch(
+        `/api/admin/blocked-times?${params.toString()}`,
+        {
+          method: "GET",
+          cache: "no-store",
+        },
+      );
+
+      const data = (await response.json()) as BlockedTimesResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -166,16 +135,79 @@ export function BlockedTimeManagement() {
       }
 
       setBlockedTimes(data.blockedTimes ?? []);
-    } catch (error) {
-      console.error("Failed to reload blocked times:", error);
-
+      setTotalPages(data.totalPages ?? 1);
+      setTotalCount(data.totalCount ?? (data.blockedTimes?.length || 0));
+    } catch (err) {
       setError(
-        error instanceof Error
-          ? error.message
+        err instanceof Error
+          ? err.message
           : "دریافت زمان‌های مسدود با خطا مواجه شد.",
       );
+    } finally {
+      setLoading(false);
     }
-  }
+  }, [page, includePast]);
+
+  // Load services once
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadServices() {
+      try {
+        setLoadingServices(true);
+        const response = await fetch("/api/services", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const data = (await response.json()) as ServicesResponse;
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || "دریافت خدمات با خطا مواجه شد.");
+        }
+
+        if (!cancelled) {
+          const activeServices = data.services ?? [];
+          setServices(activeServices);
+          if (activeServices.length > 0) {
+            setForm((current) => ({
+              ...current,
+              serviceId: current.serviceId || activeServices[0].id,
+            }));
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "دریافت خدمات با خطا مواجه شد.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingServices(false);
+        }
+      }
+    }
+
+    void loadServices();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Fetch blocked times whenever page or includePast changes
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadBlockedTimes();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [loadBlockedTimes]);
 
   function updateForm(field: keyof BlockedTimeForm, value: string) {
     setForm((current) => ({
@@ -186,12 +218,11 @@ export function BlockedTimeManagement() {
 
   async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setError("");
     setSuccessMessage("");
 
     if (!form.serviceId) {
-      setError("لطفاً خدمت را انتخاب کنید.");
+      setError("لطفاً خدمت مورد نظر را انتخاب کنید.");
       return;
     }
 
@@ -227,29 +258,22 @@ export function BlockedTimeManagement() {
         }),
       });
 
-      const data = (await response.json()) as ApiResponse<BlockedTime>;
+      const data = (await response.json()) as BlockedTimesResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || "ثبت زمان مسدود با خطا مواجه شد.");
       }
 
-      setSuccessMessage(data.message || "زمان مسدود با موفقیت ثبت شد.");
-
+      setSuccessMessage("زمان مسدود با موفقیت ثبت شد.");
       setForm((current) => ({
         ...current,
-        startTime: "08:00",
-        endTime: "09:00",
         reason: "",
       }));
 
       await loadBlockedTimes();
-    } catch (error) {
-      console.error("Failed to create blocked time:", error);
-
+    } catch (err) {
       setError(
-        error instanceof Error
-          ? error.message
-          : "ثبت زمان مسدود با خطا مواجه شد.",
+        err instanceof Error ? err.message : "ثبت زمان مسدود با خطا مواجه شد.",
       );
     } finally {
       setCreating(false);
@@ -257,9 +281,7 @@ export function BlockedTimeManagement() {
   }
 
   async function handleDelete(id: string) {
-    const confirmed = window.confirm("آیا از حذف این زمان مسدود مطمئن هستید؟");
-
-    if (!confirmed) {
+    if (!window.confirm("آیا از حذف این بازه مسدود اطمینان دارید؟")) {
       return;
     }
 
@@ -273,25 +295,17 @@ export function BlockedTimeManagement() {
         method: "DELETE",
       });
 
-      const data = (await response.json()) as {
-        success: boolean;
-        message?: string;
-      };
+      const data = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || "حذف زمان مسدود با خطا مواجه شد.");
       }
 
-      setSuccessMessage(data.message || "زمان مسدود حذف شد.");
-
+      setSuccessMessage("زمان مسدود حذف شد و مجدداً قابل رزرو است.");
       await loadBlockedTimes();
-    } catch (error) {
-      console.error("Failed to delete blocked time:", error);
-
+    } catch (err) {
       setError(
-        error instanceof Error
-          ? error.message
-          : "حذف زمان مسدود با خطا مواجه شد.",
+        err instanceof Error ? err.message : "حذف زمان مسدود با خطا مواجه شد.",
       );
     } finally {
       setDeletingId(null);
@@ -299,237 +313,285 @@ export function BlockedTimeManagement() {
   }
 
   return (
-    <section dir="rtl" className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-[var(--text-primary)]">
-          زمان‌های غیرقابل رزرو
-        </h2>
-
-        <p className="mt-1 text-sm text-[var(--text-secondary)]">
-          بازه‌ای را برای یک خدمت مشخص مسدود کنید. این بازه فقط روی همان خدمت
-          تأثیر می‌گذارد و سایر خدمات همچنان قابل رزرو خواهند بود.
-        </p>
-      </div>
-
-      {error ? (
-        <div
-          role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
-          {error}
+    <section className="space-y-6">
+      {error && (
+        <div className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-bold text-rose-800">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{error}</span>
         </div>
-      ) : null}
+      )}
 
-      {successMessage ? (
-        <div
-          role="status"
-          className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
-        >
+      {successMessage && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-bold text-emerald-800">
           {successMessage}
         </div>
-      ) : null}
+      )}
 
-      <form
-        onSubmit={handleCreate}
-        className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 shadow-sm"
-      >
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2">
-            <label
-              htmlFor="blocked-service"
-              className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
-            >
-              خدمت
-            </label>
-
-            <select
-              id="blocked-service"
-              value={form.serviceId}
-              onChange={(event) => updateForm("serviceId", event.target.value)}
-              disabled={loadingServices || creating || services.length === 0}
-              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-crimson)]"
-            >
-              <option value="">
-                {loadingServices ? "در حال دریافت خدمات..." : "انتخاب خدمت"}
-              </option>
-
-              {services.map((service) => (
-                <option key={service.id} value={service.id}>
-                  {service.name}
-                </option>
-              ))}
-            </select>
-
-            {services.length === 0 && !loadingServices ? (
-              <p className="mt-2 text-xs text-[var(--text-secondary)]">
-                هیچ خدمت فعالی برای انتخاب وجود ندارد.
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Form: Add New Blocked Time */}
+        <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6 shadow-sm">
+          <div className="flex items-center gap-2.5 border-b border-[var(--border-subtle)] pb-4">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-[var(--brand-crimson)]">
+              <CalendarX2 size={18} />
+            </span>
+            <div>
+              <h3 className="text-sm font-extrabold text-[var(--text-primary)]">
+                مسدودسازی ساعت یا تاریخ
+              </h3>
+              <p className="text-[11px] text-[var(--text-secondary)]">
+                جلوگیری از رزرو آنلاین برای یک خدمت خاص
               </p>
-            ) : null}
+            </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="blocked-date"
-              className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
-            >
-              تاریخ
-            </label>
-
-            <JalaliDatePicker
-              value={form.date}
-              onChange={(date) => updateForm("date", date)}
-              placeholder="تاریخ را انتخاب کنید"
-            />
-          </div>
-
-          <div />
-
-          <div>
-            <label
-              htmlFor="blocked-start-time"
-              className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
-            >
-              زمان شروع
-            </label>
-
-            <input
-              id="blocked-start-time"
-              type="time"
-              min="08:00"
-              max="20:30"
-              step={30 * 60}
-              value={form.startTime}
-              onChange={(event) => updateForm("startTime", event.target.value)}
-              disabled={creating}
-              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-crimson)]"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="blocked-end-time"
-              className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
-            >
-              زمان پایان
-            </label>
-
-            <input
-              id="blocked-end-time"
-              type="time"
-              min="08:30"
-              max="21:00"
-              step={30 * 60}
-              value={form.endTime}
-              onChange={(event) => updateForm("endTime", event.target.value)}
-              disabled={creating}
-              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-crimson)]"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label
-              htmlFor="blocked-reason"
-              className="mb-2 block text-sm font-medium text-[var(--text-primary)]"
-            >
-              دلیل
-              <span className="mr-1 text-xs font-normal text-[var(--text-secondary)]">
-                (اختیاری)
-              </span>
-            </label>
-
-            <textarea
-              id="blocked-reason"
-              value={form.reason}
-              onChange={(event) => updateForm("reason", event.target.value)}
-              maxLength={500}
-              rows={3}
-              disabled={creating}
-              placeholder="مثلاً جلسه، مرخصی، تعمیرات و..."
-              className="w-full resize-none rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--brand-crimson)]"
-            />
-          </div>
-        </div>
-
-        <div className="mt-5 flex justify-end">
-          <button
-            type="submit"
-            disabled={
-              creating ||
-              loadingServices ||
-              !form.serviceId ||
-              services.length === 0
-            }
-            className="rounded-xl bg-[var(--brand-crimson)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[var(--brand-crimson-hover)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {creating ? "در حال ثبت..." : "ثبت زمان مسدود"}
-          </button>
-        </div>
-      </form>
-
-      <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-sm">
-        <div className="border-b border-[var(--border-subtle)] px-5 py-4">
-          <h3 className="font-semibold text-[var(--text-primary)]">
-            زمان‌های مسدود ثبت‌شده
-          </h3>
-        </div>
-
-        {loading ? (
-          <div className="px-5 py-10 text-center text-sm text-[var(--text-secondary)]">
-            در حال دریافت اطلاعات...
-          </div>
-        ) : blockedTimes.length === 0 ? (
-          <div className="px-5 py-10 text-center text-sm text-[var(--text-secondary)]">
-            هنوز زمان مسدودی ثبت نشده است.
-          </div>
-        ) : (
-          <div className="divide-y divide-[var(--border-subtle)]">
-            {blockedTimes.map((blockedTime) => (
-              <div
-                key={blockedTime.id}
-                className="flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between"
+          <form onSubmit={handleCreate} className="mt-5 space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-[var(--text-primary)]">
+                انتخاب خدمت سالن
+              </label>
+              <select
+                value={form.serviceId}
+                onChange={(e) => updateForm("serviceId", e.target.value)}
+                disabled={loadingServices || creating || services.length === 0}
+                className="w-full rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-3 py-2.5 text-xs font-medium text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)]"
               >
-                <div className="min-w-0 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[var(--bg-card-warm)] px-3 py-1 text-sm font-medium text-[var(--text-primary)]">
-                      {blockedTime.service.name}
-                    </span>
+                <option value="">
+                  {loadingServices ? "در حال دریافت خدمات..." : "انتخاب خدمت"}
+                </option>
+                {services.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-                    {!blockedTime.service.isActive ? (
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
-                        غیرفعال
-                      </span>
-                    ) : null}
-                  </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-[var(--text-primary)]">
+                تاریخ مسدودی
+              </label>
+              <JalaliDatePicker
+                value={form.date}
+                onChange={(date) => updateForm("date", date)}
+                placeholder="انتخاب تاریخ"
+              />
+            </div>
 
-                  <p className="text-sm font-medium text-[var(--text-primary)]">
-                    {formatDateTime(blockedTime.startsAt)}
-                    {" تا "}
-                    {new Intl.DateTimeFormat("fa-IR", {
-                      timeZone: "Asia/Tehran",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }).format(new Date(blockedTime.endsAt))}
-                  </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-[var(--text-primary)]">
+                  از ساعت
+                </label>
+                <input
+                  type="time"
+                  value={form.startTime}
+                  onChange={(e) => updateForm("startTime", e.target.value)}
+                  disabled={creating}
+                  className="w-full rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)]"
+                />
+              </div>
 
-                  {blockedTime.reason ? (
-                    <p className="text-sm text-[var(--text-secondary)]">
-                      {blockedTime.reason}
-                    </p>
-                  ) : null}
-                </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-[var(--text-primary)]">
+                  تا ساعت
+                </label>
+                <input
+                  type="time"
+                  value={form.endTime}
+                  onChange={(e) => updateForm("endTime", e.target.value)}
+                  disabled={creating}
+                  className="w-full rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] outline-none focus:border-[var(--brand-crimson)]"
+                />
+              </div>
+            </div>
 
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-[var(--text-primary)]">
+                علت مسدودی (اختیاری)
+              </label>
+              <input
+                type="text"
+                value={form.reason}
+                onChange={(e) => updateForm("reason", e.target.value)}
+                disabled={creating}
+                placeholder="مثلاً مرخصی پرسنل، تعمیرات، جلسه..."
+                className="w-full rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-3 py-2.5 text-xs font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)] focus:border-[var(--brand-crimson)]"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={creating}
+              className="flex w-full items-center justify-center gap-1.5 rounded-2xl bg-[var(--brand-crimson)] py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[var(--brand-crimson-hover)] disabled:opacity-50"
+            >
+              <Plus size={15} />
+              <span>{creating ? "در حال ثبت..." : "ثبت بازه مسدود جدید"}</span>
+            </button>
+          </form>
+        </div>
+
+        {/* List of Active Blocked Times */}
+        <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6 shadow-sm lg:col-span-2 flex flex-col justify-between">
+          <div>
+            <div className="flex flex-col gap-3 border-b border-[var(--border-subtle)] pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-sm font-extrabold text-[var(--text-primary)]">
+                  زمان‌های مسدود ثبت‌شده
+                </h3>
+                <p className="text-[11px] text-[var(--text-secondary)]">
+                  {includePast
+                    ? "تمام ساعات غیرقابل رزرو (شامل گذشته)"
+                    : "ساعات غیرقابل رزرو از امروز به بعد"}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => void handleDelete(blockedTime.id)}
-                  disabled={deletingId === blockedTime.id}
-                  className="shrink-0 rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => {
+                    setIncludePast(!includePast);
+                    setPage(1);
+                  }}
+                  className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
+                    includePast
+                      ? "border-amber-300 bg-amber-50 text-amber-800"
+                      : "border-[var(--border-subtle)] bg-[var(--bg-card-warm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  }`}
+                  title="نمایش سوابق گذشته"
                 >
-                  {deletingId === blockedTime.id ? "در حال حذف..." : "حذف"}
+                  <History
+                    size={13}
+                    className={includePast ? "text-amber-600" : ""}
+                  />
+                  <span>
+                    {includePast ? "شامل سوابق گذشته" : "فقط زمان‌های آینده"}
+                  </span>
                 </button>
+
+                <span className="rounded-full bg-[var(--bg-card-warm)] px-2.5 py-1 text-xs font-bold text-[var(--brand-crimson)]">
+                  {totalCount.toLocaleString("fa-IR")} بازه
+                </span>
               </div>
-            ))}
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {loading && blockedTimes.length === 0 ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-16 animate-pulse rounded-2xl bg-[var(--bg-card-warm)]"
+                    />
+                  ))}
+                </div>
+              ) : blockedTimes.length === 0 ? (
+                <div className="py-12 text-center">
+                  <CalendarX2
+                    size={32}
+                    className="mx-auto text-[var(--text-secondary)] opacity-40"
+                  />
+                  <p className="mt-2 text-xs font-bold text-[var(--text-secondary)]">
+                    {includePast
+                      ? "هیچ بازه مسدودی در سوابق ثبت نشده است."
+                      : "در حال حاضر هیچ بازه مسدودی برای امروز و آینده وجود ندارد."}
+                  </p>
+                  {!includePast && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIncludePast(true);
+                        setPage(1);
+                      }}
+                      className="mt-3 inline-flex items-center gap-1 rounded-xl bg-[var(--bg-card-warm)] px-3 py-1.5 text-xs font-bold text-[var(--brand-crimson)] hover:bg-[var(--brand-crimson-light)]"
+                    >
+                      <History size={13} />
+                      <span>مشاهده بازه‌های مسدود گذشته</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                blockedTimes.map((bt) => {
+                  const isDeleting = deletingId === bt.id;
+
+                  return (
+                    <div
+                      key={bt.id}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] p-4 transition hover:border-[var(--brand-crimson-light)]"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-lg bg-[var(--brand-crimson-light)] px-2 py-0.5 text-xs font-bold text-[var(--brand-crimson)]">
+                            {bt.service.name}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs font-bold text-[var(--text-primary)]">
+                            <Clock
+                              size={12}
+                              className="text-[var(--brand-crimson)]"
+                            />
+                            {formatHourRange(bt.startsAt, bt.endsAt)}
+                          </span>
+                        </div>
+
+                        <div className="mt-1.5 flex items-center gap-2 text-[11px] text-[var(--text-secondary)]">
+                          <span>
+                            تاریخ:{" "}
+                            {formatDateTime(bt.startsAt).split(" ساعت")[0]}
+                          </span>
+                          {bt.reason && (
+                            <>
+                              <span>•</span>
+                              <span className="font-medium text-[var(--text-primary)]">
+                                علت: {bt.reason}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(bt.id)}
+                        disabled={isDeleting}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition hover:bg-rose-100 disabled:opacity-50"
+                        title="آزادسازی این زمان"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-3 border-t border-[var(--border-subtle)] pt-4">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1 || loading}
+                className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] px-3.5 py-1.5 text-xs font-bold text-[var(--text-primary)] transition hover:bg-[var(--bg-card-warm)] disabled:opacity-40"
+              >
+                ← صفحه قبل
+              </button>
+
+              <span className="text-xs font-bold text-[var(--text-secondary)]">
+                صفحه {page.toLocaleString("fa-IR")} از{" "}
+                {totalPages.toLocaleString("fa-IR")}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages || loading}
+                className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] px-3.5 py-1.5 text-xs font-bold text-[var(--text-primary)] transition hover:bg-[var(--bg-card-warm)] disabled:opacity-40"
+              >
+                صفحه بعد →
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

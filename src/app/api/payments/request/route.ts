@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
 
     const callbackUrl = `${origin}/payment/result`;
     const amount = PAYMENT_CONFIG.depositAmountToman;
-    const description = `بیعانه رزرو نوبت خدمت ${service.name} در سالن ملینا`;
+    const description = `بیعانه رزرو نوبت خدمت ${service.name} در سالن ملین بیوتی`;
 
     const paymentResult = await requestPayment({
       amount,

@@ -14,16 +14,24 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const pageParam = searchParams.get("page");
     const limitParam = searchParams.get("limit");
+    const workflowType = searchParams.get("workflowType");
 
     const page = pageParam ? Math.max(1, Number(pageParam)) : 1;
     const limit = limitParam
       ? Math.min(100, Math.max(1, Number(limitParam)))
-      : 50;
+      : 12;
     const skip = (page - 1) * limit;
 
+    const where = {
+      ...(workflowType === "CUSTOM" || workflowType === "RECOMMENDATION"
+        ? { workflowType: workflowType as "CUSTOM" | "RECOMMENDATION" }
+        : {}),
+    };
+
     const [totalCount, generations] = await Promise.all([
-      prisma.generation.count(),
+      prisma.generation.count({ where }),
       prisma.generation.findMany({
+        where,
         skip,
         take: limit,
         orderBy: {
@@ -46,7 +54,7 @@ export async function GET(request: NextRequest) {
       generations,
       totalCount,
       page,
-      totalPages: Math.ceil(totalCount / limit),
+      totalPages: Math.ceil(totalCount / limit) || 1,
     });
   } catch (error) {
     console.error("GET /api/admin/generations error:", error);

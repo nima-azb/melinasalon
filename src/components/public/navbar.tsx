@@ -68,13 +68,13 @@ export async function Navbar() {
           {/* Brand */}
           <Link
             href="/"
-            aria-label="صفحه اصلی سالن زیبایی ملینا بیوتی"
+            aria-label="صفحه اصلی سالن زیبایی ملین بیوتی"
             className="flex shrink-0 items-center gap-0"
           >
             <div className="relative h-23 w-23 overflow-hidden rounded-xl">
               <Image
                 src="/images/logo1.png"
-                alt="لوگوی سالن زیبایی ملینا بیوتی"
+                alt="لوگوی سالن زیبایی ملین بیوتی"
                 fill
                 priority
                 className="object-contain"
@@ -83,7 +83,7 @@ export async function Navbar() {
 
             <div className="hidden sm:block">
               <div className="text-xl font-bold text-[var(--brand-crimson-dark)]">
-                سالن زیبایی ملینا بیوتی
+                سالن زیبایی ملین بیوتی
               </div>
 
               <div className="mt-0.5 text-xs tracking-[0.18em] text-[var(--brand-crimson)]">

@@ -180,11 +180,11 @@ export function MyBookings({ bookings: initialBookings }: MyBookingsProps) {
           </div>
         </div>
 
-        {booking.payment && booking.payment.status === "PAID" && (
+        {booking.payment && booking.payment.status === "PAID" ? (
           <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3.5 py-2.5 text-xs">
             <div className="flex items-center gap-1.5 text-emerald-800">
               <CreditCard size={15} className="text-emerald-600" />
-              <span>بیعانه:</span>
+              <span>بیعانه آنلاین:</span>
               <span className="font-bold">
                 {formatToman(booking.payment.amount)} تومان
               </span>
@@ -206,6 +206,15 @@ export function MyBookings({ bookings: initialBookings }: MyBookingsProps) {
               </div>
             )}
           </div>
+        ) : (
+          booking.status === "CONFIRMED" && (
+            <div className="mt-3.5 flex items-center gap-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] px-3.5 py-2 text-xs text-[var(--text-secondary)]">
+              <span className="font-medium">نحوه پرداخت:</span>
+              <span className="font-semibold text-[var(--text-primary)]">
+                تسویه حضوری در محل سالن
+              </span>
+            </div>
+          )
         )}
 
         {canCancel && (

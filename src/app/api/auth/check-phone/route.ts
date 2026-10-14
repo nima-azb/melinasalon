@@ -48,12 +48,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await prisma.user.findUnique({
+    await prisma.user.findUnique({
       where: {
         phoneNumber,
       },
       select: {
-        id: true,
+        role: true,
       },
     });
 

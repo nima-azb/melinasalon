@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { BookingStatus } from "@/generated/prisma/client";
+import { BookingStatus, Prisma } from "@/generated/prisma/client";
+import { normalizeIranianPhone } from "@/lib/auth/phone";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
+import { smsProvider } from "@/lib/sms";
 import {
+  getSalonDayBounds,
+  getZonedWallTime,
+  isSlotAligned,
+  isWithinSalonHours,
   isValidCalendarDateString,
   parseCalendarDateString,
   zonedWallTimeToUtc,
@@ -82,21 +88,22 @@ export async function GET(request: NextRequest) {
       return admin;
     }
 
-    const searchParams = request.nextUrl.searchParams;
+    const { searchParams } = new URL(request.url);
 
-    const search = searchParams.get("search")?.trim() ?? "";
     const fromDate = searchParams.get("fromDate");
     const toDate = searchParams.get("toDate");
     const status = searchParams.get("status");
     const serviceId = searchParams.get("serviceId");
-    const sort = searchParams.get("sort") ?? "appointment";
-    const direction = searchParams.get("direction") ?? "asc";
+    const search = searchParams.get("search")?.trim() || "";
+    const sort = searchParams.get("sort") || "appointment";
+    const direction = searchParams.get("direction") || "asc";
+    const includePast = searchParams.get("includePast") === "true";
 
     if (status && !isBookingStatus(status)) {
       return NextResponse.json(
         {
           success: false,
-          message: "وضعیت نوبت معتبر نیست.",
+          message: "وضعیت انتخابی معتبر نیست.",
         },
         { status: 400 },
       );
@@ -126,7 +133,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Search text cannot exceed 100 characters.",
+          message: "متن جستجو نباید بیشتر از ۱۰۰ کاراکتر باشد.",
         },
         { status: 400 },
       );
@@ -144,6 +151,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // By default, if no explicit fromDate is passed and includePast is false,
+    // start from the beginning of today (Tehran time) into the future.
+    let startFilter = dateRange.start;
+    if (!startFilter && !fromDate && !includePast) {
+      const wallNow = getZonedWallTime(new Date());
+      startFilter = zonedWallTimeToUtc(
+        wallNow.year,
+        wallNow.month,
+        wallNow.day,
+        0,
+        0,
+        0,
+      );
+    }
+
     const where = {
       ...(status
         ? {
@@ -155,10 +177,10 @@ export async function GET(request: NextRequest) {
             serviceId,
           }
         : {}),
-      ...(dateRange.start || dateRange.end
+      ...(startFilter || dateRange.end
         ? {
             startsAt: {
-              ...(dateRange.start ? { gte: dateRange.start } : {}),
+              ...(startFilter ? { gte: startFilter } : {}),
               ...(dateRange.end ? { lt: dateRange.end } : {}),
             },
           }
@@ -229,39 +251,63 @@ export async function GET(request: NextRequest) {
         break;
     }
 
-    const bookings = await prisma.booking.findMany({
-      where,
-      orderBy,
-      select: {
-        id: true,
-        status: true,
-        startsAt: true,
-        endsAt: true,
-        createdAt: true,
-        updatedAt: true,
-        user: {
-          select: {
-            id: true,
-            phoneNumber: true,
-            fullName: true,
-            birthDate: true,
+    const pageParam = searchParams.get("page");
+    const limitParam = searchParams.get("limit");
+
+    const page = pageParam ? Math.max(1, Number(pageParam)) : 1;
+    const limit = limitParam
+      ? Math.min(100, Math.max(1, Number(limitParam)))
+      : 12;
+    const skip = (page - 1) * limit;
+
+    const [totalCount, bookings] = await Promise.all([
+      prisma.booking.count({ where }),
+      prisma.booking.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          status: true,
+          startsAt: true,
+          endsAt: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: {
+              id: true,
+              phoneNumber: true,
+              fullName: true,
+              birthDate: true,
+            },
           },
-        },
-        service: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            duration: true,
-            isActive: true,
+          service: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              duration: true,
+              isActive: true,
+            },
           },
-        },
-      },
-    });
+          payment: {
+            select: {
+              amount: true,
+              status: true,
+              refId: true,
+            },
+          },
+        } as unknown as Prisma.BookingSelect,
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,
       bookings,
+      totalCount,
+      page,
+      totalPages: Math.ceil(totalCount / limit) || 1,
     });
   } catch (error) {
     console.error("GET /api/admin/bookings error:", error);
@@ -271,6 +317,331 @@ export async function GET(request: NextRequest) {
         success: false,
         message: "دریافت لیست نوبت‌ها با خطا مواجه شد.",
       },
+      { status: 500 },
+    );
+  }
+}
+
+function pad(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function getSalonCalendarDayBounds(date: Date) {
+  const wall = getZonedWallTime(date);
+  const dateKey = `${wall.year}-${pad(wall.month)}-${pad(wall.day)}`;
+  return getSalonDayBounds(dateKey);
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const admin = await requireAdmin();
+
+    if (admin instanceof NextResponse) {
+      return admin;
+    }
+
+    const body: unknown = await request.json();
+
+    if (
+      typeof body !== "object" ||
+      body === null ||
+      !("clientName" in body) ||
+      !("clientPhone" in body) ||
+      !("serviceId" in body) ||
+      !("startsAt" in body)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "اطلاعات مشتری، سرویس و زمان نوبت الزامی است.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const {
+      clientName,
+      clientPhone,
+      serviceId,
+      startsAt: startsAtValue,
+    } = body as {
+      clientName: unknown;
+      clientPhone: unknown;
+      serviceId: unknown;
+      startsAt: unknown;
+    };
+
+    if (typeof clientName !== "string" || !clientName.trim()) {
+      return NextResponse.json(
+        { success: false, message: "نام و نام خانوادگی مشتری الزامی است." },
+        { status: 400 },
+      );
+    }
+
+    if (typeof clientPhone !== "string" || !clientPhone.trim()) {
+      return NextResponse.json(
+        { success: false, message: "شماره تلفن مشتری الزامی است." },
+        { status: 400 },
+      );
+    }
+
+    let normalizedPhone: string;
+    try {
+      normalizedPhone = normalizeIranianPhone(clientPhone);
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "شماره تلفن وارد شده معتبر نیست. مثال صحیح: ۰۹۱۲۳۴۵۶۷۸۹",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (typeof serviceId !== "string" || !serviceId) {
+      return NextResponse.json(
+        { success: false, message: "انتخاب سرویس الزامی است." },
+        { status: 400 },
+      );
+    }
+
+    if (typeof startsAtValue !== "string" || !startsAtValue) {
+      return NextResponse.json(
+        { success: false, message: "زمان شروع نوبت الزامی است." },
+        { status: 400 },
+      );
+    }
+
+    const startsAt = new Date(startsAtValue);
+    if (Number.isNaN(startsAt.getTime())) {
+      return NextResponse.json(
+        { success: false, message: "زمان شروع نوبت معتبر نیست." },
+        { status: 400 },
+      );
+    }
+
+    if (!isSlotAligned(startsAt)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "نوبت‌ها باید در بازه‌های ۳۰ دقیقه‌ای ثبت شوند.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const service = await prisma.service.findUnique({
+      where: { id: serviceId },
+      select: {
+        id: true,
+        name: true,
+        duration: true,
+        isActive: true,
+        capacity: true,
+        oneBookingPerDay: true,
+      },
+    });
+
+    if (!service) {
+      return NextResponse.json(
+        { success: false, message: "سرویس مورد نظر یافت نشد." },
+        { status: 404 },
+      );
+    }
+
+    const endsAt = new Date(startsAt.getTime() + service.duration * 60 * 1000);
+
+    if (!isWithinSalonHours(startsAt, endsAt)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "زمان انتخابی در ساعات کاری سالن نمی‌گنجد.",
+        },
+        { status: 409 },
+      );
+    }
+
+    const booking = await prisma.$transaction(
+      async (tx) => {
+        let user = await tx.user.findUnique({
+          where: { phoneNumber: normalizedPhone },
+        });
+
+        if (!user) {
+          user = await tx.user.create({
+            data: {
+              phoneNumber: normalizedPhone,
+              fullName: clientName.trim(),
+              role: "USER",
+            },
+          });
+        } else if (!user.fullName) {
+          user = await tx.user.update({
+            where: { id: user.id },
+            data: { fullName: clientName.trim() },
+          });
+        }
+
+        const { startOfDay, endOfDay } = getSalonCalendarDayBounds(startsAt);
+
+        if (service.oneBookingPerDay) {
+          const existingDailyBooking = await tx.booking.findFirst({
+            where: {
+              serviceId,
+              status: "CONFIRMED",
+              startsAt: { gte: startOfDay, lt: endOfDay },
+            },
+            select: { id: true },
+          });
+
+          if (existingDailyBooking) {
+            throw new Error("SERVICE_BOOKING_PER_DAY_LIMIT");
+          }
+        }
+
+        const overlappingBookingsCount = await tx.booking.count({
+          where: {
+            serviceId,
+            status: "CONFIRMED",
+            startsAt: { lt: endsAt },
+            endsAt: { gt: startsAt },
+          },
+        });
+
+        if (overlappingBookingsCount >= service.capacity) {
+          throw new Error("APPOINTMENT_UNAVAILABLE");
+        }
+
+        const overlappingBlockedTime = await tx.blockedTime.findFirst({
+          where: {
+            serviceId,
+            startsAt: { lt: endsAt },
+            endsAt: { gt: startsAt },
+          },
+          select: { id: true },
+        });
+
+        if (overlappingBlockedTime) {
+          throw new Error("APPOINTMENT_BLOCKED");
+        }
+
+        const existingSameServiceDay = await tx.booking.findFirst({
+          where: {
+            userId: user.id,
+            serviceId,
+            status: { in: ["CONFIRMED", "COMPLETED"] },
+            startsAt: { gte: startOfDay, lt: endOfDay },
+          },
+          select: { id: true },
+        });
+
+        if (existingSameServiceDay) {
+          throw new Error("DUPLICATE_SERVICE_DAY");
+        }
+
+        return tx.booking.create({
+          data: {
+            userId: user.id,
+            serviceId,
+            startsAt,
+            endsAt,
+            status: "CONFIRMED",
+          },
+          include: {
+            service: {
+              select: {
+                id: true,
+                name: true,
+                duration: true,
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                phoneNumber: true,
+              },
+            },
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+
+    try {
+      await smsProvider.sendBookingConfirmation({
+        phoneNumber: normalizedPhone,
+        userName: clientName.trim(),
+        serviceName: booking.service.name,
+        startsAt: booking.startsAt,
+      });
+    } catch (smsError) {
+      console.error(
+        "Booking confirmation SMS error (admin created):",
+        smsError,
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "نوبت با موفقیت ثبت شد و پیامک تأیید برای مشتری ارسال گردید.",
+        booking,
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "SERVICE_BOOKING_PER_DAY_LIMIT") {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "این خدمت برای این تاریخ قبلاً رزرو شده است و فقط یک نوبت در روز دارد.",
+          },
+          { status: 409 },
+        );
+      }
+      if (error.message === "APPOINTMENT_UNAVAILABLE") {
+        return NextResponse.json(
+          { success: false, message: "ظرفیت این زمان تکمیل شده است." },
+          { status: 409 },
+        );
+      }
+      if (error.message === "APPOINTMENT_BLOCKED") {
+        return NextResponse.json(
+          { success: false, message: "این زمان برای این خدمت مسدود شده است." },
+          { status: 409 },
+        );
+      }
+      if (error.message === "DUPLICATE_SERVICE_DAY") {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "برای این مشتری قبلاً در این تاریخ نوبتی از همین خدمت ثبت شده است.",
+          },
+          { status: 409 },
+        );
+      }
+    }
+
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2034"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "تداخل زمانی رخ داد. لطفاً زمان دیگری انتخاب کنید.",
+        },
+        { status: 409 },
+      );
+    }
+
+    console.error("POST /api/admin/bookings error:", error);
+    return NextResponse.json(
+      { success: false, message: "ثبت نوبت دستی با خطا مواجه شد." },
       { status: 500 },
     );
   }

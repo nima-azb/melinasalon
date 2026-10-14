@@ -9,8 +9,10 @@ import {
   SALON_OPEN_HOUR,
   SLOT_INTERVAL_MINUTES,
   getSalonDayBounds,
+  getZonedWallTime,
   isValidCalendarDateString,
   isWithinSalonHours,
+  zonedWallTimeToUtc,
 } from "@/lib/time/salon-time";
 
 const RATE_LIMIT_MAX_REQUESTS = 30;
@@ -51,9 +53,14 @@ export async function GET(request: NextRequest) {
     const fromDate = searchParams.get("fromDate");
     const toDate = searchParams.get("toDate");
     const serviceId = searchParams.get("serviceId");
+    const includePast = searchParams.get("includePast") === "true";
 
     const where: {
       startsAt?: {
+        gte?: Date;
+        lt?: Date;
+      };
+      endsAt?: {
         gte?: Date;
         lt?: Date;
       };
@@ -116,27 +123,59 @@ export async function GET(request: NextRequest) {
       }
 
       where.startsAt = startsAt;
+    } else if (!includePast) {
+      // By default, only show blocked times that end today or later
+      const wallNow = getZonedWallTime(new Date());
+      const startOfToday = zonedWallTimeToUtc(
+        wallNow.year,
+        wallNow.month,
+        wallNow.day,
+        0,
+        0,
+        0,
+      );
+
+      where.endsAt = {
+        gte: startOfToday,
+      };
     }
 
-    const blockedTimes = await prisma.blockedTime.findMany({
-      where,
-      orderBy: {
-        startsAt: "asc",
-      },
-      include: {
-        service: {
-          select: {
-            id: true,
-            name: true,
-            isActive: true,
+    const pageParam = searchParams.get("page");
+    const limitParam = searchParams.get("limit");
+
+    const page = pageParam ? Math.max(1, Number(pageParam)) : 1;
+    const limit = limitParam
+      ? Math.min(100, Math.max(1, Number(limitParam)))
+      : 10;
+    const skip = (page - 1) * limit;
+
+    const [totalCount, blockedTimes] = await Promise.all([
+      prisma.blockedTime.count({ where }),
+      prisma.blockedTime.findMany({
+        where,
+        orderBy: {
+          startsAt: "asc",
+        },
+        skip,
+        take: limit,
+        include: {
+          service: {
+            select: {
+              id: true,
+              name: true,
+              isActive: true,
+            },
           },
         },
-      },
-    });
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,
       blockedTimes,
+      totalCount,
+      page,
+      totalPages: Math.ceil(totalCount / limit) || 1,
     });
   } catch (error) {
     console.error("GET /api/admin/blocked-times error:", error);
@@ -292,13 +331,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    /*
-     * A blocked period is service-specific.
-     *
-     * Therefore:
-     * - a booking for another service does NOT prevent this block
-     * - another service's blocked period does NOT prevent this block
-     */
     const overlappingBooking = await prisma.booking.findFirst({
       where: {
         serviceId,
