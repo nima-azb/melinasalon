@@ -6,9 +6,11 @@ import {
   RefreshCw,
   Search,
   Sparkles,
+  UserPlus,
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { AdminCreateUserModal } from "./admin-create-user-modal";
 
 type AdminUser = {
   id: string;
@@ -46,6 +48,7 @@ export function UsersManagement() {
   const [roleFilter, setRoleFilter] = useState<"ALL" | "USER" | "ADMIN">("ALL");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -121,29 +124,42 @@ export function UsersManagement() {
           />
         </div>
 
-        {/* Role Filters */}
-        <div className="flex items-center gap-2">
-          {[
-            { id: "ALL", label: "همه مراجعین" },
-            { id: "USER", label: "مشتریان" },
-            { id: "ADMIN", label: "مدیران سالن" },
-          ].map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => {
-                setRoleFilter(item.id as typeof roleFilter);
-                setPage(1);
-              }}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
-                roleFilter === item.id
-                  ? "bg-[var(--brand-crimson)] text-white shadow-xs"
-                  : "bg-[var(--bg-card-warm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+        {/* Actions & Role Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Role Filters */}
+          <div className="flex items-center gap-1.5">
+            {[
+              { id: "ALL", label: "همه مراجعین" },
+              { id: "USER", label: "مشتریان" },
+              { id: "ADMIN", label: "مدیران سالن" },
+            ].map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setRoleFilter(item.id as typeof roleFilter);
+                  setPage(1);
+                }}
+                className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+                  roleFilter === item.id
+                    ? "bg-[var(--brand-crimson)] text-white shadow-xs"
+                    : "bg-[var(--bg-card-warm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Add User Button */}
+          <button
+            type="button"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl bg-[var(--brand-crimson)] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-[var(--brand-crimson-hover)]"
+          >
+            <UserPlus size={14} />
+            <span>افزودن کاربر جدید</span>
+          </button>
         </div>
       </div>
 
@@ -328,6 +344,12 @@ export function UsersManagement() {
           </div>
         )}
       </div>
+
+      <AdminCreateUserModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={() => void loadUsers()}
+      />
     </div>
   );
 }

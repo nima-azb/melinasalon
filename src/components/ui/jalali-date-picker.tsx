@@ -10,6 +10,8 @@ interface JalaliDatePickerProps {
   onChange: (dateStr: string) => void;
   placeholder?: string;
   className?: string;
+  minDate?: Date | string | number | null;
+  maxDate?: Date | string | number | null;
 }
 
 export function JalaliDatePicker({
@@ -17,12 +19,25 @@ export function JalaliDatePicker({
   onChange,
   placeholder,
   className,
+  minDate,
+  maxDate,
 }: JalaliDatePickerProps) {
+  const parsedValue = React.useMemo(() => {
+    if (!value) return "";
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return new Date(`${value}T12:00:00`);
+    }
+    return new Date(value);
+  }, [value]);
+
   return (
     <DatePicker
       calendar={persian}
       locale={persian_fa}
-      value={value ? new Date(value) : ""}
+      value={parsedValue}
+      minDate={minDate ?? undefined}
+      maxDate={maxDate ?? undefined}
+      containerClassName="w-full"
       onChange={(dateObject) => {
         if (
           dateObject &&

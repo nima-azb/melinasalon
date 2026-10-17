@@ -1,0 +1,298 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { Prisma } from "@/generated/prisma/client";
+import { requireAdmin } from "@/lib/auth/require-admin";
+import { prisma } from "@/lib/prisma";
+import {
+  deleteFromArvan,
+  getArvanKeyFromPublicUrl,
+} from "@/lib/storage/arvan-upload";
+
+const packageSchema = z.object({
+  id: z.string().trim().min(1),
+  name: z.string().trim().min(1, "نام پکیج الزامی است."),
+  price: z.coerce.number().int().nonnegative("مبلغ پکیج نمی‌تواند منفی باشد."),
+  duration: z.preprocess(
+    (val) =>
+      val === "" || val === null || val === undefined || Number(val) <= 0
+        ? null
+        : Number(val),
+    z.number().int().positive().nullable().optional(),
+  ),
+  description: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.string().trim().optional().nullable(),
+  ),
+});
+
+const updateServiceSchema = z.object({
+  name: z.string().trim().min(1, "نام خدمت الزامی است.").max(100).optional(),
+  description: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.string().trim().max(1000).nullable().optional(),
+  ),
+  duration: z.coerce
+    .number()
+    .int()
+    .positive("مدت زمان خدمت باید بیشتر از صفر باشد.")
+    .max(480)
+    .optional(),
+  price: z.preprocess(
+    (val) =>
+      val === "" || val === null || val === undefined ? null : Number(val),
+    z
+      .number()
+      .int()
+      .nonnegative("مبلغ خدمت نمی‌تواند منفی باشد.")
+      .nullable()
+      .optional(),
+  ),
+  imageUrl: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.string().trim().max(1000).nullable().optional(),
+  ),
+  capacity: z.coerce.number().int().min(1).max(20).optional(),
+  oneBookingPerDay: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  packages: z.array(packageSchema).nullable().optional(),
+  linkedServiceIds: z.array(z.string().trim()).optional(),
+});
+
+type RouteContext = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export async function GET(_request: NextRequest, context: RouteContext) {
+  try {
+    const admin = await requireAdmin();
+
+    if (admin instanceof NextResponse) {
+      return admin;
+    }
+
+    const { id } = await context.params;
+
+    const service = await prisma.service.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!service) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "خدمت مورد نظر یافت نشد.",
+        },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      service,
+    });
+  } catch (error) {
+    console.error("GET /api/admin/services/[id] error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "دریافت اطلاعات خدمت با خطا مواجه شد.",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  try {
+    const admin = await requireAdmin();
+
+    if (admin instanceof NextResponse) {
+      return admin;
+    }
+
+    const { id } = await context.params;
+    const body: unknown = await request.json();
+
+    const result = updateServiceSchema.safeParse(body);
+
+    if (!result.success) {
+      const flattened = result.error.flatten();
+      const firstError =
+        Object.values(flattened.fieldErrors)[0]?.[0] ||
+        flattened.formErrors[0] ||
+        "اطلاعات خدمت معتبر نیست.";
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: firstError,
+          errors: flattened,
+        },
+        { status: 400 },
+      );
+    }
+
+    const existingService = await prisma.service.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!existingService) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "خدمت مورد نظر یافت نشد.",
+        },
+        { status: 404 },
+      );
+    }
+
+    const service = await prisma.service.update({
+      where: {
+        id,
+      },
+      data: {
+        ...(result.data.name !== undefined ? { name: result.data.name } : {}),
+        ...(result.data.description !== undefined
+          ? { description: result.data.description || null }
+          : {}),
+        ...(result.data.duration !== undefined
+          ? { duration: result.data.duration }
+          : {}),
+        ...(result.data.price !== undefined
+          ? { price: result.data.price }
+          : {}),
+        ...(result.data.imageUrl !== undefined
+          ? { imageUrl: result.data.imageUrl || null }
+          : {}),
+        ...(result.data.capacity !== undefined
+          ? { capacity: result.data.capacity }
+          : {}),
+        ...(result.data.oneBookingPerDay !== undefined
+          ? { oneBookingPerDay: result.data.oneBookingPerDay }
+          : {}),
+        ...(result.data.isActive !== undefined
+          ? { isActive: result.data.isActive }
+          : {}),
+        ...(result.data.packages !== undefined
+          ? {
+              packages: (result.data.packages ?? []) as Prisma.InputJsonValue,
+            }
+          : {}),
+        ...(result.data.linkedServiceIds !== undefined
+          ? { linkedServiceIds: result.data.linkedServiceIds }
+          : {}),
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      service,
+    });
+  } catch (error) {
+    console.error("PATCH /api/admin/services/[id] error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "ویرایش خدمت با خطا مواجه شد.",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  try {
+    const admin = await requireAdmin();
+
+    if (admin instanceof NextResponse) {
+      return admin;
+    }
+
+    const { id } = await context.params;
+
+    const existingService = await prisma.service.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        imageUrl: true,
+      },
+    });
+
+    if (!existingService) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "خدمت مورد نظر یافت نشد.",
+        },
+        { status: 404 },
+      );
+    }
+
+    const bookingCount = await prisma.booking.count({
+      where: {
+        serviceId: id,
+      },
+    });
+
+    if (bookingCount > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "این خدمت دارای سابقه نوبت است و قابل حذف نیست. به‌جای حذف، آن را غیرفعال کنید.",
+        },
+        { status: 409 },
+      );
+    }
+
+    await prisma.service.delete({
+      where: {
+        id,
+      },
+    });
+
+    if (existingService.imageUrl) {
+      const key = getArvanKeyFromPublicUrl(existingService.imageUrl);
+
+      if (key) {
+        try {
+          await deleteFromArvan(key);
+        } catch (error) {
+          console.error(
+            "Failed to delete service image after service deletion:",
+            error,
+          );
+        }
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "خدمت با موفقیت حذف شد.",
+    });
+  } catch (error) {
+    console.error("DELETE /api/admin/services/[id] error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "حذف خدمت با خطا مواجه شد.",
+      },
+      { status: 500 },
+    );
+  }
+}

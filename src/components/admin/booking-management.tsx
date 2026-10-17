@@ -36,6 +36,8 @@ type Booking = {
   endsAt: string;
   createdAt: string;
   updatedAt: string;
+  packageName?: string | null;
+  price?: number | null;
   user: {
     id: string;
     phoneNumber: string;
@@ -45,6 +47,7 @@ type Booking = {
     id: string;
     name: string;
     duration: number;
+    price?: number | null;
   };
   payment?: PaymentInfo | null;
 };
@@ -596,10 +599,25 @@ export function BookingManagement() {
                       <span className="rounded-lg bg-[var(--brand-crimson-light)] px-2.5 py-1 text-xs font-bold text-[var(--brand-crimson)]">
                         {booking.service.name}
                       </span>
+                      {booking.packageName && (
+                        <span className="rounded-lg bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-900 border border-amber-200">
+                          پکیج {booking.packageName}
+                        </span>
+                      )}
                       <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--text-secondary)]">
                         <Clock size={12} />
                         {booking.service.duration.toLocaleString("fa-IR")} دقیقه
                       </span>
+                      {booking.price !== null && booking.price !== undefined ? (
+                        <span className="rounded-lg bg-[var(--bg-card-warm)] px-2 py-0.5 text-[11px] font-bold text-[var(--brand-crimson)]">
+                          {booking.price.toLocaleString("fa-IR")} تومان
+                        </span>
+                      ) : booking.service.price !== null &&
+                        booking.service.price !== undefined ? (
+                        <span className="rounded-lg bg-[var(--bg-card-warm)] px-2 py-0.5 text-[11px] font-bold text-[var(--brand-crimson)]">
+                          {booking.service.price.toLocaleString("fa-IR")} تومان
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </div>

@@ -3,6 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import {
+  getConsumerServiceIds,
+  getRequiredComponentServices,
+  isSlotAvailable,
+  parseServicePackages,
+} from "@/lib/services/service-capacity";
+import {
   SLOT_INTERVAL_MINUTES,
   getSalonDayBounds,
   isValidCalendarDateString,
@@ -10,10 +16,6 @@ import {
 
 const RATE_LIMIT_MAX_REQUESTS = 30;
 const RATE_LIMIT_WINDOW_MS = 60_000;
-
-function intervalsOverlap(startA: Date, endA: Date, startB: Date, endB: Date) {
-  return startA < endB && endA > startB;
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,21 +75,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const service = await prisma.service.findUnique({
+    const packageId = searchParams.get("packageId");
+
+    const allServices = await prisma.service.findMany({
       where: {
-        id: serviceId,
+        isActive: true,
       },
       select: {
         id: true,
         name: true,
         duration: true,
-        isActive: true,
         capacity: true,
         oneBookingPerDay: true,
+        isActive: true,
+        packages: true,
+        linkedServiceIds: true,
       },
     });
 
-    if (!service || !service.isActive) {
+    const targetService = allServices.find((s) => s.id === serviceId);
+
+    if (!targetService) {
       return NextResponse.json(
         {
           success: false,
@@ -97,15 +105,32 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const packages = parseServicePackages(targetService.packages);
+    const selectedPkg = packages.find((p) => p.id === packageId);
+    const effectiveDuration = selectedPkg?.duration || targetService.duration;
+
     const { startOfDay, endOfDay, dayOpen, dayClose } = getSalonDayBounds(date);
 
     const now = new Date();
     const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
 
+    const requiredComponents = getRequiredComponentServices(
+      targetService,
+      allServices,
+    );
+    const relevantServiceIds = new Set<string>();
+    relevantServiceIds.add(targetService.id);
+    for (const comp of requiredComponents) {
+      const consumers = getConsumerServiceIds(comp.id, allServices);
+      for (const c of consumers) {
+        relevantServiceIds.add(c);
+      }
+    }
+
     const [bookings, pendingPayments, blockedTimes] = await Promise.all([
       prisma.booking.findMany({
         where: {
-          serviceId,
+          serviceId: { in: Array.from(relevantServiceIds) },
           status: "CONFIRMED",
           startsAt: {
             lt: endOfDay,
@@ -116,6 +141,7 @@ export async function GET(request: NextRequest) {
         },
         select: {
           id: true,
+          serviceId: true,
           startsAt: true,
           endsAt: true,
         },
@@ -123,7 +149,7 @@ export async function GET(request: NextRequest) {
 
       prisma.payment.findMany({
         where: {
-          serviceId,
+          serviceId: { in: Array.from(relevantServiceIds) },
           status: "PENDING",
           createdAt: {
             gte: fifteenMinutesAgo,
@@ -137,6 +163,7 @@ export async function GET(request: NextRequest) {
         },
         select: {
           id: true,
+          serviceId: true,
           startsAt: true,
           endsAt: true,
         },
@@ -144,7 +171,7 @@ export async function GET(request: NextRequest) {
 
       prisma.blockedTime.findMany({
         where: {
-          serviceId,
+          serviceId: { in: Array.from(relevantServiceIds) },
           startsAt: {
             lt: endOfDay,
           },
@@ -154,6 +181,7 @@ export async function GET(request: NextRequest) {
         },
         select: {
           id: true,
+          serviceId: true,
           startsAt: true,
           endsAt: true,
         },
@@ -161,7 +189,8 @@ export async function GET(request: NextRequest) {
     ]);
 
     const hasBookingForDay =
-      service.oneBookingPerDay &&
+      (targetService.oneBookingPerDay ||
+        requiredComponents.some((c) => c.oneBookingPerDay)) &&
       (bookings.length > 0 || pendingPayments.length > 0);
 
     const timeSlots: Array<{
@@ -174,7 +203,7 @@ export async function GET(request: NextRequest) {
 
     while (currentStart < dayClose) {
       const currentEnd = new Date(
-        currentStart.getTime() + service.duration * 60 * 1000,
+        currentStart.getTime() + effectiveDuration * 60 * 1000,
       );
 
       if (currentEnd > dayClose) {
@@ -182,38 +211,17 @@ export async function GET(request: NextRequest) {
       }
 
       if (currentStart > now && !hasBookingForDay) {
-        const overlappingBookingsCount = bookings.filter((booking) =>
-          intervalsOverlap(
-            currentStart,
-            currentEnd,
-            booking.startsAt,
-            booking.endsAt,
-          ),
-        ).length;
+        const available = isSlotAvailable({
+          targetService,
+          allServices,
+          bookings,
+          pendingPayments,
+          blockedTimes,
+          slotStart: currentStart,
+          slotEnd: currentEnd,
+        });
 
-        const overlappingPendingCount = pendingPayments.filter((payment) =>
-          intervalsOverlap(
-            currentStart,
-            currentEnd,
-            payment.startsAt,
-            payment.endsAt,
-          ),
-        ).length;
-
-        const isFull =
-          overlappingBookingsCount + overlappingPendingCount >=
-          service.capacity;
-
-        const overlapsBlockedTime = blockedTimes.some((blockedTime) =>
-          intervalsOverlap(
-            currentStart,
-            currentEnd,
-            blockedTime.startsAt,
-            blockedTime.endsAt,
-          ),
-        );
-
-        if (!isFull && !overlapsBlockedTime) {
+        if (available) {
           timeSlots.push({
             startsAt: new Date(currentStart),
             endsAt: currentEnd,
@@ -231,11 +239,11 @@ export async function GET(request: NextRequest) {
       success: true,
       date,
       service: {
-        id: service.id,
-        name: service.name,
-        duration: service.duration,
-        capacity: service.capacity,
-        oneBookingPerDay: service.oneBookingPerDay,
+        id: targetService.id,
+        name: targetService.name,
+        duration: effectiveDuration,
+        capacity: targetService.capacity,
+        oneBookingPerDay: targetService.oneBookingPerDay,
       },
       timeSlots,
     });

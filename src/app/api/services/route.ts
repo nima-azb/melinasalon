@@ -2,26 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { z } from "zod";
 
+import { Prisma } from "@/generated/prisma/client";
 import { requireAdmin } from "@/lib/auth/require-admin";
-
 import { prisma } from "@/lib/prisma";
-
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const RATE_LIMIT_MAX_REQUESTS = 30;
-
 const RATE_LIMIT_WINDOW_MS = 60_000;
+
+const packageSchema = z.object({
+  id: z.string().trim().min(1),
+  name: z.string().trim().min(1),
+  price: z.number().int().nonnegative(),
+  duration: z.number().int().positive().optional().nullable(),
+  description: z.string().trim().optional().nullable(),
+});
 
 const createServiceSchema = z.object({
   name: z.string().trim().min(1).max(100),
-
-  description: z.string().trim().max(1000).optional(),
-
+  description: z.string().trim().max(1000).optional().nullable(),
   duration: z.number().int().positive().max(480),
-
+  price: z.number().int().nonnegative().optional().nullable(),
+  imageUrl: z.string().trim().max(1000).optional().nullable(),
   capacity: z.number().int().min(1).max(20).default(1),
-
   oneBookingPerDay: z.boolean().default(false),
+  isActive: z.boolean().default(true),
+  packages: z.array(packageSchema).optional().nullable(),
+  linkedServiceIds: z.array(z.string().trim()).optional().default([]),
 });
 
 export async function GET(request: NextRequest) {
@@ -114,8 +121,13 @@ export async function POST(request: NextRequest) {
         name: result.data.name,
         description: result.data.description || null,
         duration: result.data.duration,
+        price: result.data.price !== undefined ? result.data.price : null,
+        imageUrl: result.data.imageUrl || null,
         capacity: result.data.capacity,
         oneBookingPerDay: result.data.oneBookingPerDay,
+        isActive: result.data.isActive,
+        packages: (result.data.packages ?? []) as Prisma.InputJsonValue,
+        linkedServiceIds: result.data.linkedServiceIds ?? [],
       },
     });
 

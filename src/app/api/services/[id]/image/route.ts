@@ -1,19 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
+import { Prisma } from "@/generated/prisma/client";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
-import { createServiceImageKey } from "@/lib/storage/arvan-key";
 import {
   deleteFromArvan,
   getArvanKeyFromPublicUrl,
-  getArvanPublicUrl,
-  uploadToArvan,
 } from "@/lib/storage/arvan-upload";
-import {
-  MAX_UPLOAD_IMAGE_SIZE,
-  getExtensionFromImageType,
-  isAllowedImageType,
-} from "@/lib/storage/image-validation";
+
+const packageSchema = z.object({
+  id: z.string().trim().min(1),
+  name: z.string().trim().min(1, "نام پکیج الزامی است."),
+  price: z.number().int().nonnegative("مبلغ پکیج نمی‌تواند منفی باشد."),
+  duration: z.number().int().positive().optional().nullable(),
+  description: z.string().trim().optional().nullable(),
+});
+
+const updateServiceSchema = z.object({
+  name: z.string().trim().min(1, "نام خدمت الزامی است.").max(100).optional(),
+  description: z.string().trim().max(1000).nullable().optional(),
+  duration: z
+    .number()
+    .int()
+    .positive("مدت زمان خدمت باید بیشتر از صفر باشد.")
+    .max(480)
+    .optional(),
+  price: z
+    .number()
+    .int()
+    .nonnegative("مبلغ خدمت نمی‌تواند منفی باشد.")
+    .nullable()
+    .optional(),
+  imageUrl: z.string().trim().max(1000).nullable().optional(),
+  capacity: z.number().int().min(1).max(20).optional(),
+  oneBookingPerDay: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  packages: z.array(packageSchema).nullable().optional(),
+  linkedServiceIds: z.array(z.string().trim()).optional(),
+});
 
 type RouteContext = {
   params: Promise<{
@@ -21,26 +46,7 @@ type RouteContext = {
   }>;
 };
 
-/** Best-effort cleanup — a failed delete of the old image should never block updating the new one. */
-async function deleteServiceImageIfAny(imageUrl: string | null) {
-  if (!imageUrl) {
-    return;
-  }
-
-  const key = getArvanKeyFromPublicUrl(imageUrl);
-
-  if (!key) {
-    return;
-  }
-
-  try {
-    await deleteFromArvan(key);
-  } catch (error) {
-    console.error("Failed to delete old service image:", error);
-  }
-}
-
-export async function POST(request: NextRequest, context: RouteContext) {
+export async function GET(_request: NextRequest, context: RouteContext) {
   try {
     const admin = await requireAdmin();
 
@@ -50,9 +56,70 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
 
+    const service = await prisma.service.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!service) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "خدمت مورد نظر یافت نشد.",
+        },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      service,
+    });
+  } catch (error) {
+    console.error("GET /api/admin/services/[id] error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "دریافت اطلاعات خدمت با خطا مواجه شد.",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  try {
+    const admin = await requireAdmin();
+
+    if (admin instanceof NextResponse) {
+      return admin;
+    }
+
+    const { id } = await context.params;
+    const body: unknown = await request.json();
+
+    const result = updateServiceSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "اطلاعات خدمت معتبر نیست.",
+          errors: result.error.flatten(),
+        },
+        { status: 400 },
+      );
+    }
+
     const existingService = await prisma.service.findUnique({
-      where: { id },
-      select: { id: true, imageUrl: true },
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+      },
     });
 
     if (!existingService) {
@@ -65,74 +132,55 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const formData = await request.formData();
-    const image = formData.get("image");
-
-    if (!(image instanceof File)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "انتخاب یک تصویر الزامی است.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (!isAllowedImageType(image.type)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "فرمت تصویر پشتیبانی نمی‌شود. از JPEG، PNG یا WebP استفاده کنید.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (image.size <= 0 || image.size > MAX_UPLOAD_IMAGE_SIZE) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "حجم تصویر باید حداکثر ۱۰ مگابایت باشد.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const extension = getExtensionFromImageType(image.type);
-    const key = createServiceImageKey(id, extension);
-    const buffer = Buffer.from(await image.arrayBuffer());
-
-    await uploadToArvan({
-      key,
-      body: buffer,
-      contentType: image.type,
-      publicRead: true,
-    });
-
-    const imageUrl = getArvanPublicUrl(key);
-
     const service = await prisma.service.update({
-      where: { id },
-      data: { imageUrl },
+      where: {
+        id,
+      },
+      data: {
+        ...(result.data.name !== undefined ? { name: result.data.name } : {}),
+        ...(result.data.description !== undefined
+          ? { description: result.data.description || null }
+          : {}),
+        ...(result.data.duration !== undefined
+          ? { duration: result.data.duration }
+          : {}),
+        ...(result.data.price !== undefined
+          ? { price: result.data.price }
+          : {}),
+        ...(result.data.imageUrl !== undefined
+          ? { imageUrl: result.data.imageUrl || null }
+          : {}),
+        ...(result.data.capacity !== undefined
+          ? { capacity: result.data.capacity }
+          : {}),
+        ...(result.data.oneBookingPerDay !== undefined
+          ? { oneBookingPerDay: result.data.oneBookingPerDay }
+          : {}),
+        ...(result.data.isActive !== undefined
+          ? { isActive: result.data.isActive }
+          : {}),
+        ...(result.data.packages !== undefined
+          ? {
+              packages: (result.data.packages ?? []) as Prisma.InputJsonValue,
+            }
+          : {}),
+        ...(result.data.linkedServiceIds !== undefined
+          ? { linkedServiceIds: result.data.linkedServiceIds }
+          : {}),
+      },
     });
-
-    // Clean up the previous image only after the new one is safely stored
-    // and the DB row is updated, so a mid-request failure never leaves the
-    // service without any image at all.
-    await deleteServiceImageIfAny(existingService.imageUrl);
 
     return NextResponse.json({
       success: true,
       service,
     });
   } catch (error) {
-    console.error("POST /api/services/[id]/image error:", error);
+    console.error("PATCH /api/admin/services/[id] error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: "بارگذاری تصویر خدمت با خطا مواجه شد.",
+        message: "ویرایش خدمت با خطا مواجه شد.",
       },
       { status: 500 },
     );
@@ -150,8 +198,13 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
 
     const existingService = await prisma.service.findUnique({
-      where: { id },
-      select: { id: true, imageUrl: true },
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        imageUrl: true,
+      },
     });
 
     if (!existingService) {
@@ -164,24 +217,55 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       );
     }
 
-    const service = await prisma.service.update({
-      where: { id },
-      data: { imageUrl: null },
+    const bookingCount = await prisma.booking.count({
+      where: {
+        serviceId: id,
+      },
     });
 
-    await deleteServiceImageIfAny(existingService.imageUrl);
+    if (bookingCount > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "این خدمت دارای سابقه نوبت است و قابل حذف نیست. به‌جای حذف، آن را غیرفعال کنید.",
+        },
+        { status: 409 },
+      );
+    }
+
+    await prisma.service.delete({
+      where: {
+        id,
+      },
+    });
+
+    if (existingService.imageUrl) {
+      const key = getArvanKeyFromPublicUrl(existingService.imageUrl);
+
+      if (key) {
+        try {
+          await deleteFromArvan(key);
+        } catch (error) {
+          console.error(
+            "Failed to delete service image after service deletion:",
+            error,
+          );
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      service,
+      message: "خدمت با موفقیت حذف شد.",
     });
   } catch (error) {
-    console.error("DELETE /api/services/[id]/image error:", error);
+    console.error("DELETE /api/admin/services/[id] error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: "حذف تصویر خدمت با خطا مواجه شد.",
+        message: "حذف خدمت با خطا مواجه شد.",
       },
       { status: 500 },
     );

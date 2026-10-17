@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { smsProvider } from "@/lib/sms";
 
 const DISCOUNT_PERCENT = 20;
-const DISCOUNT_VALID_DAYS = 7;
+const DISCOUNT_VALID_DAYS = 2;
 
 function getJalaliDateParts(date: Date) {
   const parts = new Intl.DateTimeFormat("en-US-u-ca-persian", {

@@ -72,8 +72,11 @@ model Service {
   name             String
   description      String?
   duration         Int
+  price            Int?
   imageUrl         String?
   capacity         Int           @default(1)
+  packages         Json?         @default("[]")
+  linkedServiceIds String[]      @default([])
   oneBookingPerDay Boolean       @default(false)
   isActive         Boolean       @default(true)
   createdAt        DateTime      @default(now())
@@ -110,6 +113,8 @@ model Booking {
   endsAt         DateTime
   startsAt       DateTime
   reminderSentAt DateTime?
+  packageName    String?
+  price          Int?
   service        Service       @relation(fields: [serviceId], references: [id])
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   payment        Payment?
@@ -147,6 +152,27 @@ model AiGenerationRequest {
   @@map("ai_generation_requests")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum OtpPurpose {
+  LOGIN
+  REGISTER
+}
+
+enum AiWorkflowType {
+  CUSTOM
+  RECOMMENDATION
+}
+
 model Payment {
   id        String        @id @default(cuid())
   userId    String
@@ -170,27 +196,6 @@ model Payment {
   @@index([authority])
   @@index([status])
   @@map("payments")
-}
-
-enum UserRole {
-  USER
-  ADMIN
-}
-
-enum BookingStatus {
-  CONFIRMED
-  CANCELLED
-  COMPLETED
-}
-
-enum OtpPurpose {
-  LOGIN
-  REGISTER
-}
-
-enum AiWorkflowType {
-  CUSTOM
-  RECOMMENDATION
 }
 
 enum PaymentStatus {

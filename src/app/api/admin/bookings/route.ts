@@ -4,6 +4,12 @@ import { BookingStatus, Prisma } from "@/generated/prisma/client";
 import { normalizeIranianPhone } from "@/lib/auth/phone";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
+import {
+  getConsumerServiceIds,
+  getRequiredComponentServices,
+  isSlotAvailable,
+  parseServicePackages,
+} from "@/lib/services/service-capacity";
 import { smsProvider } from "@/lib/sms";
 import {
   getSalonDayBounds,
@@ -88,22 +94,22 @@ export async function GET(request: NextRequest) {
       return admin;
     }
 
-    const { searchParams } = new URL(request.url);
+    const searchParams = request.nextUrl.searchParams;
 
+    const search = searchParams.get("search")?.trim() ?? "";
     const fromDate = searchParams.get("fromDate");
     const toDate = searchParams.get("toDate");
     const status = searchParams.get("status");
     const serviceId = searchParams.get("serviceId");
-    const search = searchParams.get("search")?.trim() || "";
-    const sort = searchParams.get("sort") || "appointment";
-    const direction = searchParams.get("direction") || "asc";
     const includePast = searchParams.get("includePast") === "true";
+    const sort = searchParams.get("sort") ?? "appointment";
+    const direction = searchParams.get("direction") ?? "asc";
 
     if (status && !isBookingStatus(status)) {
       return NextResponse.json(
         {
           success: false,
-          message: "وضعیت انتخابی معتبر نیست.",
+          message: "وضعیت نوبت معتبر نیست.",
         },
         { status: 400 },
       );
@@ -274,6 +280,8 @@ export async function GET(request: NextRequest) {
           endsAt: true,
           createdAt: true,
           updatedAt: true,
+          packageName: true,
+          price: true,
           user: {
             select: {
               id: true,
@@ -334,11 +342,7 @@ function getSalonCalendarDayBounds(date: Date) {
 
 export async function POST(request: NextRequest) {
   try {
-    const admin = await requireAdmin();
-
-    if (admin instanceof NextResponse) {
-      return admin;
-    }
+    await requireAdmin();
 
     const body: unknown = await request.json();
 
@@ -362,13 +366,19 @@ export async function POST(request: NextRequest) {
     const {
       clientName,
       clientPhone,
+      birthDate: birthDateVal,
       serviceId,
       startsAt: startsAtValue,
+      packageName,
+      price,
     } = body as {
       clientName: unknown;
       clientPhone: unknown;
+      birthDate?: unknown;
       serviceId: unknown;
       startsAt: unknown;
+      packageName?: unknown;
+      price?: unknown;
     };
 
     if (typeof clientName !== "string" || !clientName.trim()) {
@@ -430,17 +440,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const service = await prisma.service.findUnique({
-      where: { id: serviceId },
+    const allServices = await prisma.service.findMany({
+      where: { isActive: true },
       select: {
         id: true,
         name: true,
         duration: true,
+        price: true,
         isActive: true,
         capacity: true,
+        packages: true,
+        linkedServiceIds: true,
         oneBookingPerDay: true,
       },
     });
+
+    const service = allServices.find((s) => s.id === serviceId);
 
     if (!service) {
       return NextResponse.json(
@@ -449,7 +464,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const endsAt = new Date(startsAt.getTime() + service.duration * 60 * 1000);
+    const packages = parseServicePackages(service.packages);
+    let effectiveDuration = service.duration;
+    let finalPrice: number | null = service.price ?? null;
+    let finalPackageName: string | null = null;
+
+    if (typeof packageName === "string" && packageName.trim()) {
+      const foundPkg = packages.find(
+        (p) =>
+          p.name.trim().toLowerCase() === packageName.trim().toLowerCase() ||
+          p.id === packageName.trim(),
+      );
+      if (foundPkg) {
+        finalPackageName = foundPkg.name;
+        finalPrice = foundPkg.price;
+        if (foundPkg.duration) {
+          effectiveDuration = foundPkg.duration;
+        }
+      } else {
+        finalPackageName = packageName.trim();
+      }
+    }
+
+    if (typeof price === "number" && price >= 0) {
+      finalPrice = price;
+    }
+
+    const endsAt = new Date(startsAt.getTime() + effectiveDuration * 60 * 1000);
 
     if (!isWithinSalonHours(startsAt, endsAt)) {
       return NextResponse.json(
@@ -459,6 +500,14 @@ export async function POST(request: NextRequest) {
         },
         { status: 409 },
       );
+    }
+
+    let parsedBirthDate: Date | null = null;
+    if (typeof birthDateVal === "string" && birthDateVal.trim()) {
+      const d = new Date(`${birthDateVal.trim()}T12:00:00`);
+      if (!Number.isNaN(d.getTime())) {
+        parsedBirthDate = d;
+      }
     }
 
     const booking = await prisma.$transaction(
@@ -472,22 +521,49 @@ export async function POST(request: NextRequest) {
             data: {
               phoneNumber: normalizedPhone,
               fullName: clientName.trim(),
+              birthDate: parsedBirthDate,
               role: "USER",
             },
           });
-        } else if (!user.fullName) {
-          user = await tx.user.update({
-            where: { id: user.id },
-            data: { fullName: clientName.trim() },
-          });
+        } else {
+          const userUpdate: Prisma.UserUpdateInput = {};
+          if (!user.fullName) {
+            userUpdate.fullName = clientName.trim();
+          }
+          if (parsedBirthDate && !user.birthDate) {
+            userUpdate.birthDate = parsedBirthDate;
+          }
+          if (Object.keys(userUpdate).length > 0) {
+            user = await tx.user.update({
+              where: { id: user.id },
+              data: userUpdate,
+            });
+          }
         }
 
         const { startOfDay, endOfDay } = getSalonCalendarDayBounds(startsAt);
 
-        if (service.oneBookingPerDay) {
+        const requiredComponents = getRequiredComponentServices(
+          service,
+          allServices,
+        );
+        const relevantServiceIds = new Set<string>();
+        relevantServiceIds.add(service.id);
+        for (const comp of requiredComponents) {
+          const consumers = getConsumerServiceIds(comp.id, allServices);
+          for (const c of consumers) {
+            relevantServiceIds.add(c);
+          }
+        }
+        const relevantIdsList = Array.from(relevantServiceIds);
+
+        if (
+          service.oneBookingPerDay ||
+          requiredComponents.some((c) => c.oneBookingPerDay)
+        ) {
           const existingDailyBooking = await tx.booking.findFirst({
             where: {
-              serviceId,
+              serviceId: { in: relevantIdsList },
               status: "CONFIRMED",
               startsAt: { gte: startOfDay, lt: endOfDay },
             },
@@ -499,36 +575,76 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        const overlappingBookingsCount = await tx.booking.count({
+        const overlappingBookings = await tx.booking.findMany({
           where: {
-            serviceId,
+            serviceId: { in: relevantIdsList },
             status: "CONFIRMED",
             startsAt: { lt: endsAt },
             endsAt: { gt: startsAt },
           },
+          select: {
+            id: true,
+            serviceId: true,
+            startsAt: true,
+            endsAt: true,
+          },
         });
 
-        if (overlappingBookingsCount >= service.capacity) {
-          throw new Error("APPOINTMENT_UNAVAILABLE");
-        }
-
-        const overlappingBlockedTime = await tx.blockedTime.findFirst({
+        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+        const activePendingPayments = await tx.payment.findMany({
           where: {
-            serviceId,
+            serviceId: { in: relevantIdsList },
+            status: "PENDING",
+            createdAt: { gte: fifteenMinutesAgo },
             startsAt: { lt: endsAt },
             endsAt: { gt: startsAt },
           },
-          select: { id: true },
+          select: {
+            id: true,
+            serviceId: true,
+            startsAt: true,
+            endsAt: true,
+          },
         });
 
-        if (overlappingBlockedTime) {
-          throw new Error("APPOINTMENT_BLOCKED");
+        const overlappingBlockedTimes = await tx.blockedTime.findMany({
+          where: {
+            serviceId: { in: relevantIdsList },
+            startsAt: { lt: endsAt },
+            endsAt: { gt: startsAt },
+          },
+          select: {
+            id: true,
+            serviceId: true,
+            startsAt: true,
+            endsAt: true,
+          },
+        });
+
+        const available = isSlotAvailable({
+          targetService: service,
+          allServices,
+          bookings: overlappingBookings,
+          pendingPayments: activePendingPayments,
+          blockedTimes: overlappingBlockedTimes,
+          slotStart: startsAt,
+          slotEnd: endsAt,
+        });
+
+        if (!available) {
+          const isDirectBlocked = overlappingBlockedTimes.some((b) =>
+            relevantServiceIds.has(b.serviceId),
+          );
+          if (isDirectBlocked) {
+            throw new Error("APPOINTMENT_BLOCKED");
+          }
+          throw new Error("APPOINTMENT_UNAVAILABLE");
         }
 
         const existingSameServiceDay = await tx.booking.findFirst({
           where: {
             userId: user.id,
-            serviceId,
+            serviceId: { in: relevantIdsList },
             status: { in: ["CONFIRMED", "COMPLETED"] },
             startsAt: { gte: startOfDay, lt: endOfDay },
           },
@@ -546,6 +662,8 @@ export async function POST(request: NextRequest) {
             startsAt,
             endsAt,
             status: "CONFIRMED",
+            packageName: finalPackageName,
+            price: finalPrice,
           },
           include: {
             service: {

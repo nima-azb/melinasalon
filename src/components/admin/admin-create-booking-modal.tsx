@@ -5,18 +5,23 @@ import {
   Check,
   Clock3,
   Loader2,
+  Phone,
   Scissors,
+  Sparkles,
   User,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { JalaliDatePicker } from "../ui/jalali-date-picker";
+import { parseServicePackages } from "@/lib/services/service-capacity";
 
 type Service = {
   id: string;
   name: string;
   duration: number;
+  price?: number | null;
   isActive: boolean;
+  packages?: unknown;
 };
 
 type AvailabilityTimeSlot = {
@@ -60,7 +65,9 @@ export function AdminCreateBookingModal({
 }: AdminCreateBookingModalProps) {
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [serviceId, setServiceId] = useState("");
+  const [selectedPackageName, setSelectedPackageName] = useState("");
   const [selectedDate, setSelectedDate] = useState(getTodayDateKey());
   const [selectedStartsAt, setSelectedStartsAt] = useState<string | null>(null);
 
@@ -96,6 +103,10 @@ export function AdminCreateBookingModal({
           setServices(activeServices);
           if (activeServices.length > 0 && !serviceId) {
             setServiceId(activeServices[0].id);
+            const pkgs = parseServicePackages(activeServices[0].packages);
+            if (pkgs.length > 0) {
+              setSelectedPackageName(pkgs[0].name);
+            }
           }
         }
       } catch (err) {
@@ -114,8 +125,20 @@ export function AdminCreateBookingModal({
     };
   }, [isOpen, serviceId]);
 
+  const selectedServiceObj = services.find((s) => s.id === serviceId);
+  const availablePackages = useMemo(() => {
+    return selectedServiceObj
+      ? parseServicePackages(selectedServiceObj.packages)
+      : [];
+  }, [selectedServiceObj]);
+
+  const selectedPackageObj =
+    availablePackages.find((p) => p.name === selectedPackageName) ||
+    availablePackages[0] ||
+    null;
+
   /*
-   * دریافت زمان‌های در دسترس با تغییر تاریخ یا سرویس
+   * دریافت زمان‌های در دسترس با تغییر تاریخ، سرویس یا پکیج
    */
   useEffect(() => {
     if (!isOpen || !serviceId || !selectedDate) {
@@ -133,6 +156,9 @@ export function AdminCreateBookingModal({
         const params = new URLSearchParams();
         params.set("date", selectedDate);
         params.set("serviceId", serviceId);
+        if (selectedPackageObj?.id) {
+          params.set("packageId", selectedPackageObj.id);
+        }
 
         const res = await fetch(`/api/availability?${params.toString()}`, {
           cache: "no-store",
@@ -166,12 +192,14 @@ export function AdminCreateBookingModal({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, serviceId, selectedDate]);
+  }, [isOpen, serviceId, selectedDate, selectedPackageObj?.id]);
 
   function resetForm() {
     setClientName("");
     setClientPhone("");
+    setBirthDate("");
     setSelectedStartsAt(null);
+    setSelectedPackageName("");
     setError(null);
     setSuccessMessage(null);
   }
@@ -212,6 +240,9 @@ export function AdminCreateBookingModal({
       setError(null);
       setSuccessMessage(null);
 
+      const finalPrice =
+        selectedPackageObj?.price ?? selectedServiceObj?.price ?? undefined;
+
       const res = await fetch("/api/admin/bookings", {
         method: "POST",
         headers: {
@@ -220,7 +251,10 @@ export function AdminCreateBookingModal({
         body: JSON.stringify({
           clientName: clientName.trim(),
           clientPhone: clientPhone.trim(),
+          birthDate: birthDate.trim() || undefined,
           serviceId,
+          packageName: selectedPackageName || undefined,
+          price: finalPrice,
           startsAt: selectedStartsAt,
         }),
       });
@@ -254,7 +288,10 @@ export function AdminCreateBookingModal({
     return null;
   }
 
-  const selectedServiceObj = services.find((s) => s.id === serviceId);
+  const effectivePrice =
+    selectedPackageObj?.price ?? selectedServiceObj?.price ?? null;
+  const effectiveDuration =
+    selectedPackageObj?.duration || selectedServiceObj?.duration;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
@@ -324,8 +361,9 @@ export function AdminCreateBookingModal({
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-[var(--text-primary)]">
-                شماره موبایل مشتری *
+              <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]">
+                <Phone size={13} className="text-[var(--brand-crimson)]" />
+                <span>شماره موبایل مشتری *</span>
               </label>
               <input
                 type="tel"
@@ -333,10 +371,32 @@ export function AdminCreateBookingModal({
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
                 placeholder="09123456789"
+                required
                 disabled={submitting}
                 className="w-full rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-3.5 py-2.5 text-left text-xs font-bold text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-crimson)] focus:bg-[var(--bg-card)]"
               />
             </div>
+          </div>
+
+          {/* Client Birthday (Optional) */}
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]">
+                <CalendarDays
+                  size={13}
+                  className="text-[var(--brand-crimson)]"
+                />
+                <span>تاریخ تولد مشتری (اختیاری)</span>
+              </label>
+              <span className="text-[10px] text-[var(--text-secondary)]">
+                جهت دریافت خودکار پیامک و کد تخفیف تولد
+              </span>
+            </div>
+            <JalaliDatePicker
+              value={birthDate}
+              onChange={(dateStr) => setBirthDate(dateStr)}
+              placeholder="انتخاب تاریخ تولد (در صورت تمایل)"
+            />
           </div>
 
           {/* Service & Date */}
@@ -348,13 +408,25 @@ export function AdminCreateBookingModal({
               </label>
               <select
                 value={serviceId}
-                onChange={(e) => setServiceId(e.target.value)}
+                onChange={(e) => {
+                  const newId = e.target.value;
+                  setServiceId(newId);
+                  const target = services.find((s) => s.id === newId);
+                  const pkgs = target
+                    ? parseServicePackages(target.packages)
+                    : [];
+                  setSelectedPackageName(pkgs.length > 0 ? pkgs[0].name : "");
+                }}
                 disabled={loadingServices || submitting}
                 className="w-full rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-3.5 py-2.5 text-xs font-medium text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-crimson)] focus:bg-[var(--bg-card)]"
               >
                 {services.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} ({s.duration} دقیقه)
+                    {s.name} ({s.duration} دقیقه
+                    {s.price !== null && s.price !== undefined
+                      ? ` - ${s.price.toLocaleString("fa-IR")} تومان`
+                      : ""}
+                    )
                   </option>
                 ))}
               </select>
@@ -376,6 +448,43 @@ export function AdminCreateBookingModal({
             </div>
           </div>
 
+          {/* Package Selection if service has packages */}
+          {availablePackages.length > 0 && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5">
+              <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                <Sparkles size={14} className="text-amber-600" />
+                <span>انتخاب پکیج خدمت *</span>
+              </label>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {availablePackages.map((pkg) => {
+                  const isSelected = selectedPackageName === pkg.name;
+                  return (
+                    <button
+                      key={pkg.id}
+                      type="button"
+                      onClick={() => setSelectedPackageName(pkg.name)}
+                      className={`flex flex-col items-start rounded-xl border p-2.5 text-right transition ${
+                        isSelected
+                          ? "border-[var(--brand-crimson)] bg-white text-[var(--brand-crimson)] shadow-xs"
+                          : "border-amber-200/80 bg-white/60 text-[var(--text-primary)] hover:border-amber-400"
+                      }`}
+                    >
+                      <span className="text-xs font-extrabold">{pkg.name}</span>
+                      <span className="mt-1 text-[11px] font-bold text-[var(--brand-crimson)]">
+                        {pkg.price.toLocaleString("fa-IR")} تومان
+                      </span>
+                      {pkg.duration && (
+                        <span className="mt-0.5 text-[10px] text-[var(--text-secondary)]">
+                          {pkg.duration} دقیقه
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Time Slots */}
           <div>
             <div className="mb-2 flex items-center justify-between">
@@ -385,9 +494,14 @@ export function AdminCreateBookingModal({
               </label>
 
               {selectedServiceObj && (
-                <span className="text-[11px] text-[var(--text-secondary)]">
-                  مدت زمان خدمت: {selectedServiceObj.duration} دقیقه
-                </span>
+                <div className="flex items-center gap-2 text-[11px] text-[var(--text-secondary)]">
+                  <span>مدت: {effectiveDuration} دقیقه</span>
+                  {effectivePrice !== null && (
+                    <span className="font-bold text-[var(--brand-crimson)]">
+                      ({effectivePrice.toLocaleString("fa-IR")} تومان)
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 

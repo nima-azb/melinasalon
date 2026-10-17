@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { Prisma } from "@/generated/prisma/client";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/prisma";
 import {
@@ -8,18 +9,25 @@ import {
   getArvanKeyFromPublicUrl,
 } from "@/lib/storage/arvan-upload";
 
+const packageSchema = z.object({
+  id: z.string().trim().min(1),
+  name: z.string().trim().min(1),
+  price: z.number().int().nonnegative(),
+  duration: z.number().int().positive().optional().nullable(),
+  description: z.string().trim().optional().nullable(),
+});
+
 const updateServiceSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
-
   description: z.string().trim().max(1000).nullable().optional(),
-
   duration: z.number().int().positive().max(480).optional(),
-
+  price: z.number().int().nonnegative().nullable().optional(),
+  imageUrl: z.string().trim().max(1000).nullable().optional(),
   capacity: z.number().int().min(1).max(20).optional(),
-
   oneBookingPerDay: z.boolean().optional(),
-
   isActive: z.boolean().optional(),
+  packages: z.array(packageSchema).nullable().optional(),
+  linkedServiceIds: z.array(z.string().trim()).optional(),
 });
 
 type RouteContext = {
@@ -138,6 +146,18 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             }
           : {}),
 
+        ...(result.data.price !== undefined
+          ? {
+              price: result.data.price,
+            }
+          : {}),
+
+        ...(result.data.imageUrl !== undefined
+          ? {
+              imageUrl: result.data.imageUrl || null,
+            }
+          : {}),
+
         ...(result.data.capacity !== undefined
           ? {
               capacity: result.data.capacity,
@@ -153,6 +173,18 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         ...(result.data.isActive !== undefined
           ? {
               isActive: result.data.isActive,
+            }
+          : {}),
+
+        ...(result.data.packages !== undefined
+          ? {
+              packages: (result.data.packages ?? []) as Prisma.InputJsonValue,
+            }
+          : {}),
+
+        ...(result.data.linkedServiceIds !== undefined
+          ? {
+              linkedServiceIds: result.data.linkedServiceIds,
             }
           : {}),
       },

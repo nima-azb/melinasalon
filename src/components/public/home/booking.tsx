@@ -1,15 +1,27 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Check, Clock3, Loader2, Scissors } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  Clock3,
+  Loader2,
+  Scissors,
+  Sparkles,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { JalaliDatePicker } from "@/components/ui/jalali-date-picker";
+import { parseServicePackages } from "@/lib/services/service-capacity";
 
 type Service = {
   id: string;
   name: string;
   description: string | null;
   duration: number;
+  price: number | null;
   isActive: boolean;
+  packages?: unknown;
+  linkedServiceIds?: string[];
 };
 
 type AvailabilityTimeSlot = {
@@ -30,11 +42,15 @@ type AvailabilityResponse = {
   message?: string;
 };
 
-function formatPersianDate(date: Date) {
+function formatPersianDateString(dateKey: string) {
+  if (!dateKey) return "انتخاب نشده";
+  const date = new Date(`${dateKey}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return dateKey;
   return new Intl.DateTimeFormat("fa-IR", {
     weekday: "long",
     day: "numeric",
     month: "long",
+    year: "numeric",
   }).format(date);
 }
 
@@ -61,25 +77,21 @@ function BookingForm() {
   const isPaymentSuccess = searchParams.get("payment") === "success";
   const paymentRefId = searchParams.get("refId");
 
-  const dates = useMemo(() => {
+  const quickDates = useMemo(() => {
+    const today = new Date();
+    const labels = ["امروز", "فردا", "پس‌فردا"];
     const result: Array<{
-      id: string;
-      value: string;
       label: string;
+      value: string;
     }> = [];
 
-    const today = new Date();
-
-    for (let index = 0; index < 7; index += 1) {
+    for (let index = 0; index < 3; index += 1) {
       const date = new Date(today);
-
-      date.setHours(0, 0, 0, 0);
       date.setDate(today.getDate() + index);
 
       result.push({
-        id: getDateKey(date),
+        label: labels[index],
         value: getDateKey(date),
-        label: formatPersianDate(date),
       });
     }
 
@@ -93,6 +105,7 @@ function BookingForm() {
 
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [selectedPackageName, setSelectedPackageName] = useState<string>("");
 
   const [timeSlots, setTimeSlots] = useState<AvailabilityTimeSlot[]>([]);
   const [selectedStartsAt, setSelectedStartsAt] = useState<string | null>(null);
@@ -110,6 +123,17 @@ function BookingForm() {
   const selectedServiceData = services.find(
     (service) => service.id === selectedService,
   );
+
+  const servicePackages = useMemo(() => {
+    return selectedServiceData
+      ? parseServicePackages(selectedServiceData.packages)
+      : [];
+  }, [selectedServiceData]);
+
+  const selectedPackageData =
+    servicePackages.find((p) => p.name === selectedPackageName) ||
+    servicePackages[0] ||
+    null;
 
   const selectedTimeSlotData = timeSlots.find(
     (slot) => slot.startsAt === selectedStartsAt,
@@ -163,9 +187,12 @@ function BookingForm() {
               (service: Service) => service.id === requestedServiceId,
             );
 
-            setSelectedService(
-              requestedService ? requestedService.id : activeServices[0].id,
-            );
+            const chosen = requestedService || activeServices[0];
+            setSelectedService(chosen.id);
+            const pkgs = parseServicePackages(chosen.packages);
+            if (pkgs.length > 0) {
+              setSelectedPackageName(pkgs[0].name);
+            }
           }
         }
       } catch (err) {
@@ -187,7 +214,7 @@ function BookingForm() {
   }, [searchParams]);
 
   /*
-   * دریافت زمان‌های خالی بر اساس تاریخ و خدمت انتخاب‌شده
+   * دریافت زمان‌های خالی بر اساس تاریخ، خدمت و پکیج انتخاب‌شده
    */
   useEffect(() => {
     const serviceId = selectedService;
@@ -208,6 +235,9 @@ function BookingForm() {
 
         params.set("date", selectedDate);
         params.set("serviceId", serviceId);
+        if (selectedPackageData?.id) {
+          params.set("packageId", selectedPackageData.id);
+        }
 
         const response = await fetch(`/api/availability?${params.toString()}`, {
           method: "GET",
@@ -243,7 +273,7 @@ function BookingForm() {
     return () => {
       cancelled = true;
     };
-  }, [selectedDate, selectedService, availabilityKey]);
+  }, [selectedDate, selectedService, selectedPackageData?.id, availabilityKey]);
 
   function handleDateChange(date: string) {
     if (booking) {
@@ -262,6 +292,9 @@ function BookingForm() {
     }
 
     setSelectedService(serviceId);
+    const target = services.find((s) => s.id === serviceId);
+    const pkgs = target ? parseServicePackages(target.packages) : [];
+    setSelectedPackageName(pkgs.length > 0 ? pkgs[0].name : "");
     setBookingSuccess(false);
     setSelectedStartsAt(null);
     setError("");
@@ -293,6 +326,9 @@ function BookingForm() {
     setBookingSuccess(false);
 
     try {
+      const finalPrice =
+        selectedPackageData?.price ?? selectedServiceData?.price ?? undefined;
+
       const response = await fetch("/api/bookings", {
         method: "POST",
         headers: {
@@ -301,6 +337,8 @@ function BookingForm() {
         body: JSON.stringify({
           serviceId: selectedService,
           startsAt: selectedStartsAt,
+          packageName: selectedPackageData?.name || undefined,
+          price: finalPrice,
         }),
       });
 
@@ -336,6 +374,11 @@ function BookingForm() {
       setBooking(false);
     }
   }
+
+  const effectiveDuration =
+    selectedPackageData?.duration || selectedServiceData?.duration;
+  const effectivePrice =
+    selectedPackageData?.price ?? selectedServiceData?.price ?? null;
 
   return (
     <section
@@ -397,6 +440,11 @@ function BookingForm() {
                   ) : (
                     services.map((service) => {
                       const active = selectedService === service.id;
+                      const pkgs = parseServicePackages(service.packages);
+                      const minPrice =
+                        pkgs.length > 0
+                          ? Math.min(...pkgs.map((p) => p.price))
+                          : null;
 
                       return (
                         <button
@@ -431,14 +479,90 @@ function BookingForm() {
                             </p>
                           )}
 
-                          <p className="mt-3 text-xs text-[var(--text-secondary)]">
-                            {service.duration} دقیقه
-                          </p>
+                          <div className="mt-3 flex items-center justify-between text-xs">
+                            <span className="text-[var(--text-secondary)]">
+                              {service.duration} دقیقه
+                            </span>
+                            {minPrice !== null ? (
+                              <span className="font-bold text-[var(--brand-crimson)]">
+                                از {minPrice.toLocaleString("fa-IR")} تومان
+                              </span>
+                            ) : service.price !== null &&
+                              service.price !== undefined ? (
+                              <span className="font-bold text-[var(--brand-crimson)]">
+                                {service.price.toLocaleString("fa-IR")} تومان
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-[var(--text-secondary)]"></span>
+                            )}
+                          </div>
                         </button>
                       );
                     })
                   )}
                 </div>
+
+                {/* پکیج‌های اختصاصی خدمت انتخاب‌شده */}
+                {servicePackages.length > 0 && (
+                  <div className="mt-5 rounded-2xl border border-[var(--brand-crimson)]/20 bg-[var(--brand-crimson-light)]/40 p-4">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-primary)]">
+                      <Sparkles
+                        size={15}
+                        className="text-[var(--brand-crimson)]"
+                      />
+                      <span>
+                        انتخاب سطح پکیج خدمت ({servicePackages.length} پکیج):
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                      این خدمت در چند سطح مختلف ارائه می‌شود. لطفاً پکیج مدنظر
+                      خود را انتخاب نمایید:
+                    </p>
+
+                    <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
+                      {servicePackages.map((pkg) => {
+                        const isSelected =
+                          selectedPackageData?.name === pkg.name;
+                        return (
+                          <button
+                            key={pkg.id}
+                            type="button"
+                            onClick={() => setSelectedPackageName(pkg.name)}
+                            disabled={booking}
+                            className={`relative flex flex-col justify-between rounded-xl border p-3 text-right transition-all disabled:opacity-60 ${
+                              isSelected
+                                ? "border-[var(--brand-crimson)] bg-white shadow-xs"
+                                : "border-[var(--border-subtle)] bg-[var(--bg-card)] hover:border-[var(--brand-crimson)]/40"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <span className="text-xs font-black text-[var(--text-primary)]">
+                                پکیج {pkg.name}
+                              </span>
+                              {isSelected && (
+                                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--brand-crimson)] text-white">
+                                  <Check size={10} />
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="mt-2.5">
+                              <span className="block text-xs font-extrabold text-[var(--brand-crimson)]">
+                                {pkg.price.toLocaleString("fa-IR")} تومان
+                              </span>
+                              {pkg.duration && (
+                                <span className="mt-0.5 block text-[10px] text-[var(--text-secondary)]">
+                                  مدت: {pkg.duration} دقیقه
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="my-8 h-px bg-[var(--border-subtle)]" />
@@ -461,34 +585,63 @@ function BookingForm() {
                   </div>
                 </div>
 
-                {/* Dates */}
-                <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {dates.map((date) => {
-                    const active = selectedDate === date.value;
-                    const dateParts = date.label.split("،");
+                {/* Date Picker & Quick Shortcuts */}
+                <div className="mt-5 space-y-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <div className="flex-1">
+                      <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]">
+                        <CalendarDays
+                          size={14}
+                          className="text-[var(--brand-crimson)]"
+                        />
+                        <span>انتخاب تاریخ از تقویم:</span>
+                      </label>
+                      <JalaliDatePicker
+                        value={selectedDate}
+                        onChange={(d) => {
+                          if (d) handleDateChange(d);
+                        }}
+                        minDate={new Date()}
+                        placeholder="انتخاب تاریخ نوبت"
+                        className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] py-2.5 px-3.5 text-xs font-bold text-[var(--text-primary)]"
+                      />
+                    </div>
 
-                    return (
-                      <button
-                        key={date.id}
-                        type="button"
-                        onClick={() => handleDateChange(date.value)}
-                        disabled={booking}
-                        className={`rounded-xl border px-3 py-3 text-center transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
-                          active
-                            ? "border-[var(--brand-crimson)] bg-[var(--brand-crimson-light)]"
-                            : "border-[var(--border-subtle)] bg-[var(--bg-card-warm)] hover:border-[var(--brand-crimson)]/30"
-                        }`}
-                      >
-                        <p className="text-xs font-semibold text-[var(--text-primary)]">
-                          {dateParts[0]}
-                        </p>
+                    {/* Quick shortcut chips */}
+                    <div className="sm:self-end">
+                      <span className="mb-1.5 block text-[11px] font-semibold text-[var(--text-secondary)]">
+                        دسترسی سریع:
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {quickDates.map((q) => {
+                          const active = selectedDate === q.value;
+                          return (
+                            <button
+                              key={q.value}
+                              type="button"
+                              onClick={() => handleDateChange(q.value)}
+                              disabled={booking}
+                              className={`rounded-xl border px-3.5 py-2 text-xs font-bold transition ${
+                                active
+                                  ? "border-[var(--brand-crimson)] bg-[var(--brand-crimson)] text-white shadow-xs"
+                                  : "border-[var(--border-subtle)] bg-[var(--bg-card-warm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--brand-crimson)]/30"
+                              }`}
+                            >
+                              {q.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
 
-                        <p className="mt-1 text-[10px] text-[var(--text-secondary)]">
-                          {dateParts.slice(1).join("،")}
-                        </p>
-                      </button>
-                    );
-                  })}
+                  {/* Selected Date Indicator Badge */}
+                  <div className="flex items-center gap-2 rounded-xl border border-[var(--brand-crimson)]/15 bg-[var(--brand-crimson-light)]/60 px-3.5 py-2 text-xs font-bold text-[var(--brand-crimson)]">
+                    <CalendarDays size={14} />
+                    <span>
+                      تاریخ انتخاب شده: {formatPersianDateString(selectedDate)}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Times */}
@@ -496,9 +649,9 @@ function BookingForm() {
                   <div className="mb-3 flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]">
                     <Clock3 size={14} />
                     <span>ساعت‌های موجود</span>
-                    {selectedServiceData && (
+                    {effectiveDuration && (
                       <span className="text-[10px]">
-                        ({selectedServiceData.duration} دقیقه)
+                        ({effectiveDuration} دقیقه)
                       </span>
                     )}
                   </div>
@@ -587,10 +740,21 @@ function BookingForm() {
                     </p>
                   </div>
 
+                  {selectedPackageData && (
+                    <div>
+                      <p className="text-[10px] text-white/50">سطح پکیج</p>
+                      <p className="mt-1 text-sm font-semibold text-amber-200">
+                        پکیج {selectedPackageData.name}
+                      </p>
+                    </div>
+                  )}
+
                   <div>
                     <p className="text-[10px] text-white/50">تاریخ</p>
                     <p className="mt-1 text-sm font-semibold">
-                      {dates.find((date) => date.value === selectedDate)?.label}
+                      {selectedDate
+                        ? formatPersianDateString(selectedDate)
+                        : "انتخاب نشده"}
                     </p>
                   </div>
 
@@ -603,11 +767,22 @@ function BookingForm() {
                     </p>
                   </div>
 
-                  {selectedServiceData && (
+                  {effectiveDuration && (
                     <div>
                       <p className="text-[10px] text-white/50">مدت زمان</p>
                       <p className="mt-1 text-sm font-semibold">
-                        {selectedServiceData.duration} دقیقه
+                        {effectiveDuration} دقیقه
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedServiceData && (
+                    <div>
+                      <p className="text-[10px] text-white/50">هزینه خدمت</p>
+                      <p className="mt-1 text-base font-bold text-amber-200">
+                        {effectivePrice !== null
+                          ? `${effectivePrice.toLocaleString("fa-IR")} تومان`
+                          : "تماس بگیرید"}
                       </p>
                     </div>
                   )}

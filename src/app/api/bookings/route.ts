@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { prisma } from "@/lib/prisma";
+import {
+  getConsumerServiceIds,
+  getRequiredComponentServices,
+  isSlotAvailable,
+  parseServicePackages,
+} from "@/lib/services/service-capacity";
 import { smsProvider } from "@/lib/sms";
 import {
   getSalonDayBounds,
@@ -101,8 +107,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const serviceId = body.serviceId;
-    const startsAtValue = body.startsAt;
+    const {
+      serviceId,
+      startsAt: startsAtValue,
+      packageName,
+      price,
+    } = body as {
+      serviceId?: unknown;
+      startsAt?: unknown;
+      packageName?: unknown;
+      price?: unknown;
+    };
 
     if (typeof serviceId !== "string" || !serviceId) {
       return NextResponse.json(
@@ -144,17 +159,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const service = await prisma.service.findUnique({
-      where: { id: serviceId },
+    const allServices = await prisma.service.findMany({
+      where: { isActive: true },
       select: {
         id: true,
         name: true,
         duration: true,
+        price: true,
         isActive: true,
         capacity: true,
+        packages: true,
+        linkedServiceIds: true,
         oneBookingPerDay: true,
       },
     });
+
+    const service = allServices.find((s) => s.id === serviceId);
 
     if (!service) {
       return NextResponse.json(
@@ -163,14 +183,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!service.isActive) {
-      return NextResponse.json(
-        { success: false, message: "این سرویس در حال حاضر فعال نیست." },
-        { status: 409 },
+    const packages = parseServicePackages(service.packages);
+    let effectiveDuration = service.duration;
+    let finalPrice: number | null = service.price ?? null;
+    let finalPackageName: string | null = null;
+
+    if (typeof packageName === "string" && packageName.trim()) {
+      const foundPkg = packages.find(
+        (p) =>
+          p.name.trim().toLowerCase() === packageName.trim().toLowerCase() ||
+          p.id === packageName.trim(),
       );
+      if (foundPkg) {
+        finalPackageName = foundPkg.name;
+        finalPrice = foundPkg.price;
+        if (foundPkg.duration) {
+          effectiveDuration = foundPkg.duration;
+        }
+      } else {
+        finalPackageName = packageName.trim();
+      }
     }
 
-    const endsAt = new Date(startsAt.getTime() + service.duration * 60 * 1000);
+    if (typeof price === "number" && price >= 0) {
+      finalPrice = price;
+    }
+
+    const endsAt = new Date(startsAt.getTime() + effectiveDuration * 60 * 1000);
 
     if (!isWithinSalonHours(startsAt, endsAt)) {
       return NextResponse.json(
@@ -186,10 +225,27 @@ export async function POST(request: NextRequest) {
       async (tx) => {
         const { startOfDay, endOfDay } = getSalonCalendarDayBounds(startsAt);
 
-        if (service.oneBookingPerDay) {
+        const requiredComponents = getRequiredComponentServices(
+          service,
+          allServices,
+        );
+        const relevantServiceIds = new Set<string>();
+        relevantServiceIds.add(service.id);
+        for (const comp of requiredComponents) {
+          const consumers = getConsumerServiceIds(comp.id, allServices);
+          for (const c of consumers) {
+            relevantServiceIds.add(c);
+          }
+        }
+        const relevantIdsList = Array.from(relevantServiceIds);
+
+        if (
+          service.oneBookingPerDay ||
+          requiredComponents.some((c) => c.oneBookingPerDay)
+        ) {
           const existingDailyBooking = await tx.booking.findFirst({
             where: {
-              serviceId,
+              serviceId: { in: relevantIdsList },
               status: "CONFIRMED",
               startsAt: { gte: startOfDay, lt: endOfDay },
             },
@@ -201,36 +257,76 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        const overlappingBookingsCount = await tx.booking.count({
+        const overlappingBookings = await tx.booking.findMany({
           where: {
-            serviceId,
+            serviceId: { in: relevantIdsList },
             status: "CONFIRMED",
             startsAt: { lt: endsAt },
             endsAt: { gt: startsAt },
           },
+          select: {
+            id: true,
+            serviceId: true,
+            startsAt: true,
+            endsAt: true,
+          },
         });
 
-        if (overlappingBookingsCount >= service.capacity) {
-          throw new Error("APPOINTMENT_UNAVAILABLE");
-        }
-
-        const overlappingBlockedTime = await tx.blockedTime.findFirst({
+        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+        const activePendingPayments = await tx.payment.findMany({
           where: {
-            serviceId,
+            serviceId: { in: relevantIdsList },
+            status: "PENDING",
+            createdAt: { gte: fifteenMinutesAgo },
             startsAt: { lt: endsAt },
             endsAt: { gt: startsAt },
           },
-          select: { id: true },
+          select: {
+            id: true,
+            serviceId: true,
+            startsAt: true,
+            endsAt: true,
+          },
         });
 
-        if (overlappingBlockedTime) {
-          throw new Error("APPOINTMENT_BLOCKED");
+        const overlappingBlockedTimes = await tx.blockedTime.findMany({
+          where: {
+            serviceId: { in: relevantIdsList },
+            startsAt: { lt: endsAt },
+            endsAt: { gt: startsAt },
+          },
+          select: {
+            id: true,
+            serviceId: true,
+            startsAt: true,
+            endsAt: true,
+          },
+        });
+
+        const available = isSlotAvailable({
+          targetService: service,
+          allServices,
+          bookings: overlappingBookings,
+          pendingPayments: activePendingPayments,
+          blockedTimes: overlappingBlockedTimes,
+          slotStart: startsAt,
+          slotEnd: endsAt,
+        });
+
+        if (!available) {
+          const isDirectBlocked = overlappingBlockedTimes.some((b) =>
+            relevantServiceIds.has(b.serviceId),
+          );
+          if (isDirectBlocked) {
+            throw new Error("APPOINTMENT_BLOCKED");
+          }
+          throw new Error("APPOINTMENT_UNAVAILABLE");
         }
 
         const existingSameServiceDay = await tx.booking.findFirst({
           where: {
             userId: user.id,
-            serviceId,
+            serviceId: { in: relevantIdsList },
             status: { in: ["CONFIRMED", "COMPLETED"] },
             startsAt: { gte: startOfDay, lt: endOfDay },
           },
@@ -248,6 +344,8 @@ export async function POST(request: NextRequest) {
             startsAt,
             endsAt,
             status: "CONFIRMED",
+            packageName: finalPackageName,
+            price: finalPrice,
           },
           include: {
             service: {

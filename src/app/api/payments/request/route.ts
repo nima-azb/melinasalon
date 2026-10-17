@@ -4,6 +4,12 @@ import { PAYMENT_CONFIG } from "@/lib/payment/config";
 import { requestPayment } from "@/lib/payment/zarinpal";
 import { prisma } from "@/lib/prisma";
 import {
+  getConsumerServiceIds,
+  getRequiredComponentServices,
+  isSlotAvailable,
+  parseServicePackages,
+} from "@/lib/services/service-capacity";
+import {
   getSalonDayBounds,
   getZonedWallTime,
   isSlotAligned,
@@ -98,17 +104,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const service = await prisma.service.findUnique({
-      where: { id: serviceId },
+    const allServices = await prisma.service.findMany({
+      where: { isActive: true },
       select: {
         id: true,
         name: true,
         duration: true,
+        price: true,
         isActive: true,
         capacity: true,
+        packages: true,
+        linkedServiceIds: true,
         oneBookingPerDay: true,
       },
     });
+
+    const service = allServices.find((s) => s.id === serviceId);
 
     if (!service) {
       return NextResponse.json(
@@ -117,14 +128,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!service.isActive) {
-      return NextResponse.json(
-        { success: false, message: "این خدمت در حال حاضر فعال نیست." },
-        { status: 409 },
+    const { packageName } = body as { packageName?: unknown };
+    const packages = parseServicePackages(service.packages);
+    let effectiveDuration = service.duration;
+
+    if (typeof packageName === "string" && packageName.trim()) {
+      const foundPkg = packages.find(
+        (p) =>
+          p.name.trim().toLowerCase() === packageName.trim().toLowerCase() ||
+          p.id === packageName.trim(),
       );
+      if (foundPkg && foundPkg.duration) {
+        effectiveDuration = foundPkg.duration;
+      }
     }
 
-    const endsAt = new Date(startsAt.getTime() + service.duration * 60 * 1000);
+    const endsAt = new Date(startsAt.getTime() + effectiveDuration * 60 * 1000);
 
     if (!isWithinSalonHours(startsAt, endsAt)) {
       return NextResponse.json(
@@ -138,11 +157,28 @@ export async function POST(request: NextRequest) {
 
     const { startOfDay, endOfDay } = getSalonCalendarDayBounds(startsAt);
 
+    const requiredComponents = getRequiredComponentServices(
+      service,
+      allServices,
+    );
+    const relevantServiceIds = new Set<string>();
+    relevantServiceIds.add(service.id);
+    for (const comp of requiredComponents) {
+      const consumers = getConsumerServiceIds(comp.id, allServices);
+      for (const c of consumers) {
+        relevantServiceIds.add(c);
+      }
+    }
+    const relevantIdsList = Array.from(relevantServiceIds);
+
     // ۱. بررسی محدودیت یک نوبت در روز
-    if (service.oneBookingPerDay) {
+    if (
+      service.oneBookingPerDay ||
+      requiredComponents.some((c) => c.oneBookingPerDay)
+    ) {
       const existingDailyBooking = await prisma.booking.findFirst({
         where: {
-          serviceId,
+          serviceId: { in: relevantIdsList },
           status: "CONFIRMED",
           startsAt: { gte: startOfDay, lt: endOfDay },
         },
@@ -161,54 +197,76 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ۲. بررسی ظرفیت همزمان سالن
-    const overlappingBookingsCount = await prisma.booking.count({
-      where: {
-        serviceId,
-        status: "CONFIRMED",
-        startsAt: { lt: endsAt },
-        endsAt: { gt: startsAt },
-      },
-    });
-
-    // بررسی پرداخت‌های در انتظار تا ۱۵ دقیقه قبل (جلوگیری از پرداخت همزمان دو نفر برای یک اسلات)
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-    const activePendingPayments = await prisma.payment.count({
-      where: {
-        serviceId,
-        status: "PENDING",
-        startsAt: { lt: endsAt },
-        endsAt: { gt: startsAt },
-        createdAt: { gte: fifteenMinutesAgo },
-      },
-    });
-
-    if (overlappingBookingsCount + activePendingPayments >= service.capacity) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "ظرفیت این زمان تکمیل شده یا کاربر دیگری هم‌اکنون در حال پرداخت این نوبت است.",
+    // ۲. بررسی ظرفیت همزمان و مسدود بودن
+    const [
+      overlappingBookings,
+      activePendingPayments,
+      overlappingBlockedTimes,
+    ] = await Promise.all([
+      prisma.booking.findMany({
+        where: {
+          serviceId: { in: relevantIdsList },
+          status: "CONFIRMED",
+          startsAt: { lt: endsAt },
+          endsAt: { gt: startsAt },
         },
-        { status: 409 },
-      );
-    }
+        select: {
+          id: true,
+          serviceId: true,
+          startsAt: true,
+          endsAt: true,
+        },
+      }),
+      prisma.payment.findMany({
+        where: {
+          serviceId: { in: relevantIdsList },
+          status: "PENDING",
+          startsAt: { lt: endsAt },
+          endsAt: { gt: startsAt },
+          createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) },
+        },
+        select: {
+          id: true,
+          serviceId: true,
+          startsAt: true,
+          endsAt: true,
+        },
+      }),
+      prisma.blockedTime.findMany({
+        where: {
+          serviceId: { in: relevantIdsList },
+          startsAt: { lt: endsAt },
+          endsAt: { gt: startsAt },
+        },
+        select: {
+          id: true,
+          serviceId: true,
+          startsAt: true,
+          endsAt: true,
+        },
+      }),
+    ]);
 
-    // ۳. بررسی بازه‌های مسدودشده توسط ادمین
-    const overlappingBlockedTime = await prisma.blockedTime.findFirst({
-      where: {
-        serviceId,
-        startsAt: { lt: endsAt },
-        endsAt: { gt: startsAt },
-      },
-      select: { id: true },
+    const available = isSlotAvailable({
+      targetService: service,
+      allServices,
+      bookings: overlappingBookings,
+      pendingPayments: activePendingPayments,
+      blockedTimes: overlappingBlockedTimes,
+      slotStart: startsAt,
+      slotEnd: endsAt,
     });
 
-    if (overlappingBlockedTime) {
+    if (!available) {
+      const isBlocked = overlappingBlockedTimes.some((b) =>
+        relevantServiceIds.has(b.serviceId),
+      );
       return NextResponse.json(
         {
           success: false,
-          message: "این زمان برای این خدمت مسدود شده است.",
+          message: isBlocked
+            ? "این زمان برای این خدمت مسدود شده است."
+            : "ظرفیت این زمان تکمیل شده یا کاربر دیگری هم‌اکنون در حال پرداخت این نوبت است.",
         },
         { status: 409 },
       );
@@ -243,7 +301,7 @@ export async function POST(request: NextRequest) {
 
     const callbackUrl = `${origin}/payment/result`;
     const amount = PAYMENT_CONFIG.depositAmountToman;
-    const description = `بیعانه رزرو نوبت خدمت ${service.name} در سالن ملین بیوتی`;
+    const description = `بیعانه رزرو نوبت خدمت ${service.name} در سالن ملینا`;
 
     const paymentResult = await requestPayment({
       amount,
