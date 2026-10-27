@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  Cake,
   CalendarDays,
+  Pencil,
   Phone,
   RefreshCw,
   Search,
@@ -11,11 +13,13 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AdminCreateUserModal } from "./admin-create-user-modal";
+import { AdminEditUserModal } from "./admin-edit-user-modal";
 
 type AdminUser = {
   id: string;
   fullName: string | null;
   phoneNumber: string;
+  birthDate: string | null;
   role: "USER" | "ADMIN";
   createdAt: string;
   _count: {
@@ -49,6 +53,7 @@ export function UsersManagement() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -219,10 +224,12 @@ export function UsersManagement() {
                       نام و اطلاعات مشتری
                     </th>
                     <th className="px-6 py-3.5 font-bold">شماره تماس</th>
+                    <th className="px-6 py-3.5 font-bold">تاریخ تولد</th>
                     <th className="px-6 py-3.5 font-bold">تاریخ عضویت</th>
                     <th className="px-6 py-3.5 font-bold">تعداد نوبت‌ها</th>
                     <th className="px-6 py-3.5 font-bold">تست‌های AI</th>
                     <th className="px-6 py-3.5 font-bold">نقش کاربری</th>
+                    <th className="px-6 py-3.5 font-bold">عملیات</th>
                   </tr>
                 </thead>
 
@@ -267,6 +274,23 @@ export function UsersManagement() {
                           </a>
                         </td>
 
+                        {/* Birth Date */}
+                        <td className="px-6 py-4">
+                          {user.birthDate ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--bg-card-warm)] px-2.5 py-1 font-medium text-[var(--text-primary)]">
+                              <Cake
+                                size={12}
+                                className="text-[var(--brand-crimson)]"
+                              />
+                              <span>{formatDate(user.birthDate)}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[var(--text-secondary)] opacity-60">
+                              ثبت نشده
+                            </span>
+                          )}
+                        </td>
+
                         {/* Created date */}
                         <td className="px-6 py-4 font-medium text-[var(--text-secondary)]">
                           {formatDate(user.createdAt)}
@@ -306,6 +330,18 @@ export function UsersManagement() {
                           >
                             {user.role === "ADMIN" ? "مدیر سالن" : "مشتری"}
                           </span>
+                        </td>
+
+                        {/* Edit Action */}
+                        <td className="px-6 py-4">
+                          <button
+                            type="button"
+                            onClick={() => setEditingUser(user)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card-warm)] px-3 py-1.5 text-xs font-bold text-[var(--text-primary)] transition hover:border-[var(--brand-crimson)] hover:text-[var(--brand-crimson)]"
+                          >
+                            <Pencil size={12} />
+                            <span>ویرایش</span>
+                          </button>
                         </td>
                       </tr>
                     );
@@ -348,6 +384,13 @@ export function UsersManagement() {
       <AdminCreateUserModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={() => void loadUsers()}
+      />
+
+      <AdminEditUserModal
+        user={editingUser}
+        isOpen={Boolean(editingUser)}
+        onClose={() => setEditingUser(null)}
         onSuccess={() => void loadUsers()}
       />
     </div>

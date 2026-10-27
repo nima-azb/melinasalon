@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
           id: true,
           fullName: true,
           phoneNumber: true,
+          birthDate: true,
           role: true,
           createdAt: true,
           _count: {
@@ -216,6 +217,117 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: "ثبت کاربر جدید با خطا مواجه شد.",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const admin = await requireAdmin();
+
+    if (admin instanceof NextResponse) {
+      return admin;
+    }
+
+    const body: unknown = await request.json();
+
+    if (typeof body !== "object" || body === null || !("id" in body)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "شناسه کاربر الزامی است.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const {
+      id,
+      fullName,
+      birthDate: birthDateVal,
+    } = body as {
+      id: unknown;
+      fullName?: unknown;
+      birthDate?: unknown;
+    };
+
+    if (typeof id !== "string" || !id.trim()) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "شناسه کاربر معتبر نیست.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: id.trim() },
+    });
+
+    if (!existingUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "کاربر مورد نظر یافت نشد.",
+        },
+        { status: 404 },
+      );
+    }
+
+    let parsedBirthDate: Date | null = null;
+    if (typeof birthDateVal === "string" && birthDateVal.trim()) {
+      const d = new Date(`${birthDateVal.trim()}T12:00:00`);
+      if (Number.isNaN(d.getTime())) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "تاریخ تولد وارد شده معتبر نیست.",
+          },
+          { status: 400 },
+        );
+      }
+      parsedBirthDate = d;
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: id.trim() },
+      data: {
+        fullName:
+          typeof fullName === "string" && fullName.trim()
+            ? fullName.trim()
+            : null,
+        birthDate: parsedBirthDate,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        phoneNumber: true,
+        birthDate: true,
+        role: true,
+        createdAt: true,
+        _count: {
+          select: {
+            bookings: true,
+            generations: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "اطلاعات کاربر با موفقیت ویرایش شد.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("PATCH /api/admin/users error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: "ویرایش اطلاعات کاربر با خطا مواجه شد.",
       },
       { status: 500 },
     );
